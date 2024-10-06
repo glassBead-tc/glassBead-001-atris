@@ -69,12 +69,27 @@ Here are all the high level categories, and every tool name that falls under the
   const modelWithTools = llm.withStructuredOutput(tool);
   const chain = prompt.pipe(modelWithTools).pipe(tool);
 
-  const allApis: DatasetSchema[] = JSON.parse(
+  const allApisData: { endpoints: DatasetSchema[] } = JSON.parse(
     fs.readFileSync(TRIMMED_CORPUS_PATH, "utf-8")
   );
+  console.log("allApisData type:", typeof allApisData, "allApisData:", allApisData);
+  
+  if (!allApisData || !Array.isArray(allApisData.endpoints)) {
+    console.error("Invalid data structure in TRIMMED_CORPUS_PATH");
+    console.error("Actual content:", allApisData);
+    throw new Error("Expected an object with an 'endpoints' array");
+  }
+
+  const allApis: DatasetSchema[] = allApisData.endpoints;
+
   const categoriesAndTools = Object.entries(HIGH_LEVEL_CATEGORY_MAPPING)
     .map(([high, low]) => {
-      const allTools = allApis.filter((api) => low.includes(api.category_name));
+      console.log(`Processing high-level category: ${high}`);
+      console.log(`Low-level categories: ${low.join(', ')}`);
+      const allTools = allApis.filter((api) => 
+        api.category_name.toLowerCase() === high.toLowerCase()
+      );
+      console.log(`Found ${allTools.length} tools for ${high}`);
       return `High Level Category: ${high}\nTools:\n${allTools
         .map((item) => `Name: ${item.tool_name}`)
         .join("\n")}`;

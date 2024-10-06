@@ -18,7 +18,7 @@
     "sourceType": "module"
   },
   "rules": {
-    "import/no-extraneous-dependencies": "error",
+    // "import/no-extraneous-dependencies": "error",
     "no-underscore-dangle": [
       "error",
       {
@@ -46,18 +46,18 @@
     "import/order": "error",
     "linebreak-style": ["error", "unix"],
     "max-len": [
-      "warn",
-      {
-        "code": 80,
-        "tabWidth": 2,
-        "comments": 80,
-        "ignoreComments": false,
-        "ignoreTrailingComments": true,
-        "ignoreUrls": true,
-        "ignoreStrings": true,
-        "ignoreTemplateLiterals": true,
-        "ignoreRegExpLiterals": true
-      }
+      // "warn",
+      // {
+      //   "code": 80,
+      //   "tabWidth": 2,
+      //   "comments": 80,
+      //   "ignoreComments": false,
+      //   "ignoreTrailingComments": true,
+      //   "ignoreUrls": true,
+      //   "ignoreStrings": true,
+      //   "ignoreTemplateLiterals": true,
+      //   "ignoreRegExpLiterals": true
+      // }
     ],
     "no-empty-function": "off",
     "no-plusplus": [

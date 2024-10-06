@@ -88,8 +88,12 @@ export async function selectApi(
   const prompt = ChatPromptTemplate.fromMessages([
     [
       "system",
-      `You are an expert software engineer, helping a junior engineer select the best API for their query.
-Given their query, use the 'Select_API' tool to select the best API for the query.`,
+      `You are an expert on the Audius API, helping to select the best API endpoint for user queries about Audius music streaming platform.
+Given the user's query, use the 'Select_API' tool to choose the most appropriate Audius API endpoint.
+Consider the following when making your selection:
+- Is the query about tracks, users, playlists, or general Audius information?
+- Does the query require searching or fetching a specific item by ID?
+- Are there any special parameters or filters mentioned in the query?`,
     ],
     ["human", `Query: {query}`],
   ]);
@@ -107,5 +111,6 @@ Given their query, use the 'Select_API' tool to select the best API for the quer
 
   return {
     bestApi,
+    query, // Include the query in the return value
   };
 }

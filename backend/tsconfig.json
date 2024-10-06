@@ -8,7 +8,7 @@
       "DOM"
     ],
     "target": "ES2021",
-    "module": "nodenext",
+    "module": "NodeNext",
     "sourceMap": true,
     "allowSyntheticDefaultImports": true,
     "baseUrl": "./src",
@@ -26,5 +26,5 @@
   ],
   "include": [
     "./src"
-  ]
+  ],
 }

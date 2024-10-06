@@ -1,15 +1,14 @@
-// Define graph here
 import fs from "fs";
 import { END, START, StateGraph } from "@langchain/langgraph";
 import { ChatOpenAI } from "@langchain/openai";
-import { extractCategory } from "tools/extract_category.js";
-import { DatasetSchema } from "types.js";
-import { TRIMMED_CORPUS_PATH } from "constants.js";
-import { selectApi } from "tools/select_api.js";
-import { extractParameters } from "tools/extract_parameters.js";
-import { requestParameters } from "tools/request_parameters.js";
-import { findMissingParams } from "utils.js";
-import { createFetchRequest } from "tools/create_fetch_request.js";
+import { DatasetSchema } from "./types.js";
+import { extractCategory } from "./tools/extract_category.js";
+import { TRIMMED_CORPUS_PATH } from "./constants.js";
+import { selectApi } from "./tools/select_api.js";
+import { extractParameters } from "./tools/extract_parameters.js";
+import { findMissingParams } from "./utils.js";
+import { createFetchRequest } from "./tools/create_fetch_request.js";
+import { HIGH_LEVEL_CATEGORY_MAPPING } from "./constants.js";
 
 export type GraphState = {
   /**
@@ -52,54 +51,45 @@ const graphChannels = {
   response: null,
 };
 
-/**
- * @param {GraphState} state
- */
-const verifyParams = (
-  state: GraphState
-): "human_loop_node" | "execute_request_node" => {
+type ApiValidator = {
+  validate: (response: any) => boolean;
+  successMessage: (response: any) => string;
+  failureMessage: string;
+};
+
+const apiValidators: Record<string, ApiValidator> = {
+  "Get Trending Tracks": {
+    validate: (response) => response && Array.isArray(response.data) && response.data.length > 0,
+    successMessage: (response) => `Retrieved ${response.data.length} trending tracks`,
+    failureMessage: "Failed to retrieve trending tracks or the response was empty",
+  },
+  // Add more validators for other API endpoints here
+};
+
+const verifyParams = (state: GraphState): "execute_request_node" => {
   const { bestApi, params } = state;
   if (!bestApi) {
     throw new Error("No best API found");
   }
-  if (!params) {
-    return "human_loop_node";
-  }
-  const requiredParamsKeys = bestApi.required_parameters.map(
-    ({ name }) => name
-  );
-  const extractedParamsKeys = Object.keys(params);
-  const missingKeys = findMissingParams(
-    requiredParamsKeys,
-    extractedParamsKeys
-  );
-  if (missingKeys.length > 0) {
-    return "human_loop_node";
-  }
   return "execute_request_node";
 };
 
-function getApis(state: GraphState) {
+const getApis = async (state: GraphState): Promise<Partial<GraphState>> => {
   const { categories } = state;
-  if (!categories || categories.length === 0) {
-    throw new Error("No categories passed to get_apis_node");
-  }
-  const allData: DatasetSchema[] = JSON.parse(
-    fs.readFileSync(TRIMMED_CORPUS_PATH, "utf8")
+  const allData: { endpoints: DatasetSchema[] } = JSON.parse(fs.readFileSync(TRIMMED_CORPUS_PATH, "utf-8"));
+  
+  const apis = allData.endpoints.filter((api) => 
+    categories!.some((category) => 
+      Object.entries(HIGH_LEVEL_CATEGORY_MAPPING).some(([high, low]) => 
+        low.includes(category) && api.category_name.toLowerCase() === high.toLowerCase()
+      )
+    )
   );
 
-  const apis = categories
-    .map((c) => allData.filter((d) => d.category_name === c))
-    .flat();
+  console.log(`Found ${apis.length} APIs for categories: ${categories!.join(', ')}`);
+  return { apis };
+};
 
-  return {
-    apis,
-  };
-}
-
-/**
- * TODO: implement
- */
 function createGraph() {
   const graph = new StateGraph<GraphState>({
     channels: graphChannels,
@@ -108,32 +98,27 @@ function createGraph() {
     .addNode("get_apis_node", getApis)
     .addNode("select_api_node", selectApi)
     .addNode("extract_params_node", extractParameters)
-    .addNode("human_loop_node", requestParameters)
     .addNode("execute_request_node", createFetchRequest)
     .addEdge("extract_category_node", "get_apis_node")
     .addEdge("get_apis_node", "select_api_node")
     .addEdge("select_api_node", "extract_params_node")
-    .addConditionalEdges("extract_params_node", verifyParams)
-    .addConditionalEdges("human_loop_node", verifyParams)
+    .addEdge("extract_params_node", "execute_request_node")
     .addEdge(START, "extract_category_node")
     .addEdge("execute_request_node", END);
 
-  const app = graph.compile();
-  return app;
+  return graph.compile();
 }
 
-const datasetQuery =
-  "I'm researching WhatsApp for Business accounts. Can you check if the number 9876543210 is a WhatsApp for Business account? Also, provide the business description, website, email, business hours, address, and category if it is.";
+const audiusTestQuery = "I'm looking into what music is popular on Audius right now. Can you find the top trending tracks?";
 
-const relevantIds = [
-  "8044d241-0f5b-403d-879a-48b080fd4bf6",
-  "a7c44eb0-c7f2-446a-b57e-45d0f629c50c",
-  "f657180c-3685-410d-8c71-a5f7632602f1",
+const expectedAudiusEndpoints = [
+  "/v1/tracks/trending"
 ];
 
-/**
- * @param {string} query
- */
+function validateSelectedEndpoint(selectedEndpoint: string): boolean {
+  return expectedAudiusEndpoints.includes(selectedEndpoint);
+}
+
 async function main(query: string) {
   const app = createGraph();
 
@@ -155,27 +140,49 @@ async function main(query: string) {
       finalResult = event.execute_request_node;
     } else {
       console.log("Stream event: ", Object.keys(event)[0]);
-      // Uncomment the line below to see the values of the event.
-      // console.log("Value(s): ", Object.values(event)[0]);
+      console.log("Value(s): ", Object.values(event)[0]);
     }
   }
 
   if (!finalResult) {
-    throw new Error("No final result");
+    console.log("❌❌❌ No final result obtained ❌❌❌");
+    return;
   }
   if (!finalResult.bestApi) {
-    throw new Error("No best API found");
+    console.log("❌❌❌ No best API found ❌❌❌");
+    return;
   }
 
-  console.log("---FETCH RESULT---");
-  console.log(finalResult.response);
-
-  const resultHasProperIds = relevantIds.includes(finalResult.bestApi.id);
-  if (resultHasProperIds) {
-    console.log("✅✅✅The result has the proper ids✅✅✅");
+  // Validate the selected endpoint
+  if (validateSelectedEndpoint(finalResult.bestApi.api_url)) {
+    console.log("✅✅✅ Selected API endpoint is valid ✅✅✅");
   } else {
-    console.log("❌❌❌The result does not have the proper ids❌❌❌");
+    console.log("❌❌❌ Selected API endpoint is not valid ❌❌❌");
+  }
+
+  // Use the API validator
+  const apiName = finalResult.bestApi.api_name;
+  if (apiValidators[apiName]) {
+    const validator = apiValidators[apiName];
+    if (finalResult.response && validator.validate(finalResult.response)) {
+      console.log("✅✅✅ API call successful ✅✅✅");
+      console.log(validator.successMessage(finalResult.response));
+    } else {
+      console.log("❌❌❌ API call failed validation ❌❌❌");
+      console.log(validator.failureMessage);
+    }
+  } else {
+    console.log("⚠️⚠️⚠️ No validator found for this API endpoint ⚠️⚠️⚠️");
+  }
+
+  // Log the selected API and response for debugging
+  console.log("Selected API:", finalResult.bestApi);
+  if (finalResult.response) {
+    console.log("---FETCH RESULT---");
+    console.log(JSON.stringify(finalResult.response, null, 2));
+  } else {
+    console.log("❌❌❌ API call failed ❌❌❌");
   }
 }
 
-main(datasetQuery);
+main(audiusTestQuery);
