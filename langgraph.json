@@ -1,0 +1,8 @@
+{
+  "dockerfile_lines": [],
+  "graphs": {
+    "graph": "./backend/src/index.ts:graph"
+  },
+  "env": "./.env",
+  "node_version": "20"
+}

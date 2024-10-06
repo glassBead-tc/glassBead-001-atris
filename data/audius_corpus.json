@@ -1,0 +1,337 @@
+{
+    "endpoints": [
+      {
+        "id": "1",
+        "category_name": "Tracks",
+        "tool_name": "Audius API",
+        "api_name": "Get Track",
+        "api_description": "Fetch a track by ID",
+        "required_parameters": [
+          {
+            "name": "track_id",
+            "type": "string",
+            "description": "A Track ID",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [],
+        "method": "GET",
+        "template_response": {
+          "data": {
+            "id": "string",
+            "title": "string",
+            "user": {
+              "id": "string",
+              "name": "string"
+            },
+            "duration": "number",
+            "play_count": "number"
+          }
+        },
+        "api_url": "/v1/tracks/{track_id}"
+      },
+      {
+        "id": "2",
+        "category_name": "Tracks",
+        "tool_name": "Audius API",
+        "api_name": "Search Tracks",
+        "api_description": "Search for tracks",
+        "required_parameters": [
+          {
+            "name": "query",
+            "type": "string",
+            "description": "Search Query",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [
+          {
+            "name": "limit",
+            "type": "number",
+            "description": "Number of results to return",
+            "default": "10"
+          },
+          {
+            "name": "offset",
+            "type": "number",
+            "description": "Number of results to skip",
+            "default": "0"
+          }
+        ],
+        "method": "GET",
+        "template_response": {
+          "data": [
+            {
+              "id": "string",
+              "title": "string",
+              "user": {
+                "id": "string",
+                "name": "string"
+              },
+              "duration": "number",
+              "play_count": "number"
+            }
+          ]
+        },
+        "api_url": "/v1/tracks/search"
+      },
+      {
+        "id": "3",
+        "category_name": "Tracks",
+        "tool_name": "Audius API",
+        "api_name": "Get Trending Tracks",
+        "api_description": "Get trending tracks on Audius",
+        "required_parameters": [],
+        "optional_parameters": [
+          {
+            "name": "genre",
+            "type": "string",
+            "description": "Genre to filter trending tracks",
+            "default": "all"
+          },
+          {
+            "name": "time",
+            "type": "string",
+            "description": "Time range to query",
+            "default": "week"
+          },
+          {
+            "name": "limit",
+            "type": "number",
+            "description": "Number of results to return",
+            "default": "10"
+          },
+          {
+            "name": "offset",
+            "type": "number",
+            "description": "Number of results to skip",
+            "default": "0"
+          }
+        ],
+        "method": "GET",
+        "template_response": {
+          "data": [
+            {
+              "id": "string",
+              "title": "string",
+              "user": {
+                "id": "string",
+                "name": "string"
+              },
+              "duration": "number",
+              "play_count": "number"
+            }
+          ]
+        },
+        "api_url": "/v1/tracks/trending"
+      },
+      {
+        "id": "4",
+        "category_name": "Users",
+        "tool_name": "Audius API",
+        "api_name": "Get User",
+        "api_description": "Fetch a user by ID",
+        "required_parameters": [
+          {
+            "name": "user_id",
+            "type": "string",
+            "description": "A User ID",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [],
+        "method": "GET",
+        "template_response": {
+          "data": {
+            "id": "string",
+            "name": "string",
+            "handle": "string",
+            "follower_count": "number",
+            "following_count": "number"
+          }
+        },
+        "api_url": "/v1/users/{user_id}"
+      },
+      {
+        "id": "5",
+        "category_name": "Users",
+        "tool_name": "Audius API",
+        "api_name": "Search Users",
+        "api_description": "Search for users",
+        "required_parameters": [
+          {
+            "name": "query",
+            "type": "string",
+            "description": "Search Query",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [
+          {
+            "name": "limit",
+            "type": "number",
+            "description": "Number of results to return",
+            "default": "10"
+          },
+          {
+            "name": "offset",
+            "type": "number",
+            "description": "Number of results to skip",
+            "default": "0"
+          }
+        ],
+        "method": "GET",
+        "template_response": {
+          "data": [
+            {
+              "id": "string",
+              "name": "string",
+              "handle": "string",
+              "follower_count": "number",
+              "following_count": "number"
+            }
+          ]
+        },
+        "api_url": "/v1/users/search"
+      },
+      {
+        "id": "6",
+        "category_name": "Playlists",
+        "tool_name": "Audius API",
+        "api_name": "Get Playlist",
+        "api_description": "Fetch a playlist by ID",
+        "required_parameters": [
+          {
+            "name": "playlist_id",
+            "type": "string",
+            "description": "A Playlist ID",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [],
+        "method": "GET",
+        "template_response": {
+          "data": {
+            "id": "string",
+            "playlist_name": "string",
+            "user": {
+              "id": "string",
+              "name": "string"
+            },
+            "track_count": "number"
+          }
+        },
+        "api_url": "/v1/playlists/{playlist_id}"
+      },
+      {
+        "id": "7",
+        "category_name": "Playlists",
+        "tool_name": "Audius API",
+        "api_name": "Search Playlists",
+        "api_description": "Search for playlists",
+        "required_parameters": [
+          {
+            "name": "query",
+            "type": "string",
+            "description": "Search Query",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [
+          {
+            "name": "limit",
+            "type": "number",
+            "description": "Number of results to return",
+            "default": "10"
+          },
+          {
+            "name": "offset",
+            "type": "number",
+            "description": "Number of results to skip",
+            "default": "0"
+          }
+        ],
+        "method": "GET",
+        "template_response": {
+          "data": [
+            {
+              "id": "string",
+              "playlist_name": "string",
+              "user": {
+                "id": "string",
+                "name": "string"
+              },
+              "track_count": "number"
+            }
+          ]
+        },
+        "api_url": "/v1/playlists/search"
+      },
+      {
+        "id": "8",
+        "category_name": "Metrics",
+        "tool_name": "Audius API",
+        "api_name": "Get Track Listen History",
+        "api_description": "Fetch track listen history",
+        "required_parameters": [
+          {
+            "name": "track_id",
+            "type": "string",
+            "description": "A Track ID",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [
+          {
+            "name": "start_time",
+            "type": "string",
+            "description": "Start time of listen history (ISO 8601 format)",
+            "default": ""
+          },
+          {
+            "name": "end_time",
+            "type": "string",
+            "description": "End time of listen history (ISO 8601 format)",
+            "default": ""
+          }
+        ],
+        "method": "GET",
+        "template_response": {
+          "data": [
+            {
+              "date": "string",
+              "listen_count": "number"
+            }
+          ]
+        },
+        "api_url": "/v1/metrics/tracks/{track_id}/listen_history"
+      },
+      {
+        "id": "9",
+        "category_name": "General",
+        "tool_name": "Audius API",
+        "api_name": "Audius Web Search",
+        "api_description": "Search for Audius-related information across the web",
+        "required_parameters": [
+          {
+            "name": "web-search",
+            "type": "string",
+            "description": "A web search query related to Audius",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [],
+        "method": "GET",
+        "template_response": {
+          "results": [
+            {
+              "title": "string",
+              "url": "string",
+              "content": "string"
+            }
+          ]
+        },
+        "api_url": "https://api.tavily.com/search"
+      }
+    ]
+  }
