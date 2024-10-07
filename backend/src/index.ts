@@ -113,13 +113,13 @@ const audiusTestQuery = "I'm looking into what music is popular on Audius right 
 
 const expectedAudiusEndpoints = [
   "/v1/tracks/trending"
-];
+]; 
 
 function validateSelectedEndpoint(selectedEndpoint: string): boolean {
   return expectedAudiusEndpoints.includes(selectedEndpoint);
 }
 
-async function main(query: string) {
+async function main(queries: string[]) {
   const app = createGraph();
 
   const llm = new ChatOpenAI({
@@ -127,62 +127,78 @@ async function main(query: string) {
     temperature: 0,
   });
 
-  const stream = await app.stream({
-    llm,
-    query,
-  });
+  for (const query of queries) {
+    console.log(`\n\nProcessing query: "${query}"\n`);
 
-  let finalResult: GraphState | null = null;
-  for await (const event of stream) {
-    console.log("\n------\n");
-    if (Object.keys(event)[0] === "execute_request_node") {
-      console.log("---FINISHED---");
-      finalResult = event.execute_request_node;
-    } else {
-      console.log("Stream event: ", Object.keys(event)[0]);
-      console.log("Value(s): ", Object.values(event)[0]);
+    const stream = await app.stream({
+      llm,
+      query,
+    });
+
+    let finalResult: GraphState | null = null;
+    for await (const event of stream) {
+      console.log("\n------\n");
+      if (Object.keys(event)[0] === "execute_request_node") {
+        console.log("---FINISHED---");
+        finalResult = event.execute_request_node;
+      } else {
+        console.log("Stream event: ", Object.keys(event)[0]);
+        console.log("Value(s): ", Object.values(event)[0]);
+      }
     }
-  }
 
-  if (!finalResult) {
-    console.log("❌❌❌ No final result obtained ❌❌❌");
-    return;
-  }
-  if (!finalResult.bestApi) {
-    console.log("❌❌❌ No best API found ❌❌❌");
-    return;
-  }
-
-  // Validate the selected endpoint
-  if (validateSelectedEndpoint(finalResult.bestApi.api_url)) {
-    console.log("✅✅✅ Selected API endpoint is valid ✅✅✅");
-  } else {
-    console.log("❌❌❌ Selected API endpoint is not valid ❌❌❌");
-  }
-
-  // Use the API validator
-  const apiName = finalResult.bestApi.api_name;
-  if (apiValidators[apiName]) {
-    const validator = apiValidators[apiName];
-    if (finalResult.response && validator.validate(finalResult.response)) {
-      console.log("✅✅✅ API call successful ✅✅✅");
-      console.log(validator.successMessage(finalResult.response));
-    } else {
-      console.log("❌❌❌ API call failed validation ❌❌❌");
-      console.log(validator.failureMessage);
+    if (!finalResult) {
+      console.log("❌❌❌ No final result obtained ❌❌❌");
+      continue;
     }
-  } else {
-    console.log("⚠️⚠️⚠️ No validator found for this API endpoint ⚠️⚠️⚠️");
-  }
+    if (!finalResult.bestApi) {
+      console.log("❌❌❌ No best API found ❌❌❌");
+      continue;
+    }
 
-  // Log the selected API and response for debugging
-  console.log("Selected API:", finalResult.bestApi);
-  if (finalResult.response) {
-    console.log("---FETCH RESULT---");
-    console.log(JSON.stringify(finalResult.response, null, 2));
-  } else {
-    console.log("❌❌❌ API call failed ❌❌❌");
+    // Validate the selected endpoint
+    if (validateSelectedEndpoint(finalResult.bestApi.api_url)) {
+      console.log("✅✅✅ Selected API endpoint is valid ✅✅✅");
+    } else {
+      console.log("❌❌❌ Selected API endpoint is not valid ❌❌❌");
+    }
+
+    // Use the API validator
+    const apiName = finalResult.bestApi.api_name;
+    if (apiValidators[apiName]) {
+      const validator = apiValidators[apiName];
+      if (finalResult.response && validator.validate(finalResult.response)) {
+        console.log("✅✅✅ API call successful ✅✅✅");
+        console.log(validator.successMessage(finalResult.response));
+      } else {
+        console.log("❌❌❌ API call failed validation ❌❌❌");
+        console.log(validator.failureMessage);
+      }
+    } else {
+      console.log("⚠️⚠️⚠️ No validator found for this API endpoint ⚠️⚠️⚠️");
+    }
+
+    // Log the selected API and response for debugging
+    console.log("Selected API:", finalResult.bestApi);
+    if (finalResult.response) {
+      console.log("---FETCH RESULT---");
+      console.log(JSON.stringify(finalResult.response, null, 2));
+    } else {
+      console.log("❌❌❌ API call failed ❌❌❌");
+    }
   }
 }
 
-main(audiusTestQuery);
+const testQueries = [
+  "Can you find information about the track with ID 'D7KyD'?",
+  "Search for tracks with the keyword 'electronic'",
+  "What are the current trending tracks on Audius?",
+  "Can you get information about the user with ID 'eJ57D'?",
+  "Find users with 'DJ' in their name",
+  "Retrieve the playlist with ID 'MPk3P'",
+  "Search for playlists containing 'workout' in the title",
+  "What's the listen history for the track with ID 'D7KyD' over the last week?",
+  "Find recent news articles about Audius blockchain integration"
+];
+
+main(testQueries);

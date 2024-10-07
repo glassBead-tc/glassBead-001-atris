@@ -65,5 +65,3 @@ package-lock.json
 dist
 .turbo
 .yarn
-ai-assistant-context/
-.ai-assistant-context//ai-assistant-context

@@ -6,7 +6,7 @@ This folder (langgraph-agent/ai-assistant-context) contains context from other p
 
 These files are from the repo for Brace Sproul's LangGraph.js demo on YouTube for "Langtool," a
 multi-tool agent that can intelligently choose which API's to choose for a given query. The
-setup of his project is very similar to the one we will be using here.
+setup of his project is very similar to the initial one we will be using here.
 
 Github repo for Brace's demo: https://github.com/bracesproul/langtool-template/tree/main
 Link to YouTube lecture: https://www.youtube.com/watch?v=xbZzJjBm6t4
