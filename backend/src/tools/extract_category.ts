@@ -2,9 +2,10 @@ import fs from "fs";
 import { StructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { GraphState } from "index.js";
+import { GraphState } from "../types.js";
 import { HIGH_LEVEL_CATEGORY_MAPPING, TRIMMED_CORPUS_PATH } from "constants.js";
 import { DatasetSchema } from "types.js";
+import { logger, redactSensitiveInfo } from '../logger.js';
 
 /**
  * Given a users query, extract the high level category which
@@ -72,11 +73,8 @@ Here are all the high level categories, and every tool name that falls under the
   const allApisData: { endpoints: DatasetSchema[] } = JSON.parse(
     fs.readFileSync(TRIMMED_CORPUS_PATH, "utf-8")
   );
-  console.log("allApisData type:", typeof allApisData, "allApisData:", allApisData);
   
   if (!allApisData || !Array.isArray(allApisData.endpoints)) {
-    console.error("Invalid data structure in TRIMMED_CORPUS_PATH");
-    console.error("Actual content:", allApisData);
     throw new Error("Expected an object with an 'endpoints' array");
   }
 
@@ -84,25 +82,61 @@ Here are all the high level categories, and every tool name that falls under the
 
   const categoriesAndTools = Object.entries(HIGH_LEVEL_CATEGORY_MAPPING)
     .map(([high, low]) => {
-      console.log(`Processing high-level category: ${high}`);
-      console.log(`Low-level categories: ${low.join(', ')}`);
       const allTools = allApis.filter((api) => 
         api.category_name.toLowerCase() === high.toLowerCase()
       );
-      console.log(`Found ${allTools.length} tools for ${high}`);
       return `High Level Category: ${high}\nTools:\n${allTools
         .map((item) => `Name: ${item.tool_name}`)
         .join("\n")}`;
     })
     .join("\n\n");
 
-  const response = await chain.invoke({
-    query,
+  // Format the prompt with the necessary input
+  const formattedPrompt = await prompt.format({
     categoriesAndTools,
+    query
   });
-  const highLevelCategories: string[] = JSON.parse(response);
 
+  // Use the chain instead of directly invoking the LLM
+  const result = await chain.invoke({
+    query,
+    categoriesAndTools
+  });
+
+  // The result should already be an array of categories
+  const categories = JSON.parse(result);
+
+  // Return the categories as part of the state update
   return {
-    categories: highLevelCategories,
+    categories: categories,
+    // Make sure to include any other state properties that this function might modify
   };
+}
+
+function parseCategories(content: string): string[] {
+  // Remove any leading/trailing whitespace
+  content = content.trim();
+
+  // Check if the content is wrapped in brackets or quotes
+  const unwrappedContent = content.replace(/^[\[\("']|[\]\)"']$/g, '');
+
+  // Split the content by commas, semicolons, or newlines
+  const rawCategories = unwrappedContent.split(/[,;\n]+/);
+
+  // Process each category
+  const categories = rawCategories
+    .map(category => {
+      // Remove leading/trailing whitespace and quotes
+      category = category.trim().replace(/^["']|["']$/g, '');
+      
+      // Remove any numbering or bullet points
+      category = category.replace(/^\d+\.|\-|\*/, '').trim();
+
+      // Convert to title case (capitalize first letter of each word)
+      return category.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+    })
+    .filter(category => category.length > 0); // Remove any empty categories
+
+  // Remove duplicates
+  return Array.from(new Set(categories));
 }

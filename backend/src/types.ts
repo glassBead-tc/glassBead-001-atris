@@ -33,7 +33,6 @@ export interface ApiEndpoint {
   api_url: string;
 }
 
-
 export type GraphState = {
   /**
    * The LLM to use for the graph
@@ -58,10 +57,15 @@ export type GraphState = {
   /**
    * The params for the API call
    */
-  params: Record<string, string> | null;
+  params: Record<string, string>;
   /**
    * The API response
    */
   response: Record<string, any> | null;
+  error?: string;
+};
+
+export type FetchResult = {
+  response?: any;
   error?: string;
 };

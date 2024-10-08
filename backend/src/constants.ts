@@ -16,9 +16,6 @@ export const HIGH_LEVEL_CATEGORY_MAPPING = {
     "Get Playlist",
     "Search Playlists"
   ],
-  Metrics: [
-    "Get Track Listen History"
-  ],
   General: [
     "Audius Web Search"
   ]

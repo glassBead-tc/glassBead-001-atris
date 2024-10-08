@@ -17,7 +17,9 @@
     "noFallthroughCasesInSwitch": true,
     "noUnusedParameters": true,
     "useDefineForClassFields": true,
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "esModuleInterop": true,
+    "types": ["node", "lodash"]
   },
   "exclude": [
     "node_modules/",

@@ -1,67 +1,41 @@
-import { GraphState } from "../index.js";
-import { sdk } from '@audius/sdk';
+import { logger } from '../logger.js';
+import { GraphState } from '../types.js';
+import { AudiusApi } from '../tools/create_fetch_request.js';  
 
-const APP_NAME = "Atris"; // Replace with your actual app name
-const audiusSdk = sdk({ appName: APP_NAME });
+const audiusApi = new AudiusApi(); // Create an instance of AudiusApi
 
-/**
- * @param {GraphState} state
- */
-export const extractParameters = async (
-  state: GraphState
-): Promise<Partial<GraphState>> => {
+export const extractParameters = async (state: GraphState): Promise<Partial<GraphState>> => {
   const { query, bestApi } = state;
-  
-  if (!bestApi) {
-    return { params: null };
-  }
 
   let params: Record<string, string> = {};
 
-  switch (bestApi.api_url) {
-    case "/v1/tracks/trending":
-      // No required parameters for trending tracks
-      break;
-    case "/v1/tracks/search":
-      params.query = extractSearchQuery(query);
-      break;
-    case "/v1/tracks/{track_id}":
-      params.track_id = await extractTrackId(query);
-      break;
-    default:
-      console.log("Unhandled API URL:", bestApi.api_url);
-      break;
-  }
-
-  // Add any optional parameters if they're mentioned in the query
-  if (query.toLowerCase().includes("limit")) {
-    params.limit = extractLimit(query);
-  }
-
-  console.log("Extracted parameters:", params);
-  return { params };
-};
-
-function extractSearchQuery(query: string): string {
-  const matches = query.match(/'([^']+)'|"([^"]+)"|(?:about|by)\s+(\w+(?:\s+\w+)*)/i);
-  return matches ? (matches[1] || matches[2] || matches[3]).trim() : "";
-}
-
-async function extractTrackId(query: string): Promise<string> {
-  // Use the Audius SDK to search for the track and get its ID
-  const searchQuery = extractSearchQuery(query);
   try {
-    const searchResults = await audiusSdk.tracks.searchTracks({ query: searchQuery });
-    if (searchResults.data && searchResults.data.length > 0) {
-      return searchResults.data[0].id;
+    if (bestApi?.api_name === 'Get Playlist') {
+      // Extract playlist name from the query
+      const playlistNameMatch = query.match(/'([^']+)'/);
+      if (playlistNameMatch) {
+        const playlistName = playlistNameMatch[1];
+        
+        const searchResult = await audiusApi.searchPlaylists({ query: playlistName });
+        if (searchResult && searchResult.data && searchResult.data.length > 0) {
+          const playlistId = searchResult.data[0].id;
+          params.playlist_id = playlistId;
+        } else {
+          logger.warn("No playlist found for the given name");
+        }
+      } else {
+        throw new Error("Could not extract playlist name from query");
+      }
+    } else if (bestApi?.api_name === 'Search Playlists') {
+      // Extract search query
+      params.query = query.toLowerCase().includes('lofi') ? 'lofi' : query;
+      params.limit = '10';
+      params.offset = '0';
     }
-  } catch (error) {
-    console.error("Error searching for track:", error);
-  }
-  return "";
-}
+    // Add more conditions for other API types as needed
 
-function extractLimit(query: string): string {
-  const match = query.match(/limit\s+(\d+)/i);
-  return match ? match[1] : "10"; // Default to 10 if not specified
-}
+    return { params };
+  } catch (error) {
+    throw error;
+  }
+};

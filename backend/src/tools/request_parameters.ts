@@ -1,7 +1,7 @@
 import * as readline from "readline";
-import { GraphState } from "index.js";
-import { DatasetParameters } from "types.js";
-import { findMissingParams } from "utils.js";
+import { DatasetParameters, GraphState } from "../types.js";
+import { findMissingParams } from "../utils.js";
+import { logger } from '../logger.js';
 
 const paramsFormat = `<name>,<value>:::<name>,<value>`;
 
@@ -23,6 +23,7 @@ export function readUserInput(
     .join("\n----\n");
   const question = `LangTool couldn't find all the required params for the API.\nMissing params:\n${missingParamsString}\nPlease provide the missing params in the following format:\n${paramsFormat}\n`;
 
+  logger.debug("Requesting user input for missing params:", missingParams);
   return new Promise((resolve) => {
     rl.question(question, (answer) => {
       rl.close();
