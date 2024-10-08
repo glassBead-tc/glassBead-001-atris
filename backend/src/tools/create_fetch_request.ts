@@ -1,5 +1,14 @@
 import axios, { AxiosError, AxiosRequestConfig, Method } from 'axios';
 import { GraphState } from "../types.js";
+import stringSimilarity from 'string-similarity'; // You'll need to install this package
+
+const apiKey = process.env.AUDIUS_API_KEY;
+const apiSecret = process.env.AUDIUS_API_SECRET;
+const appName = 'Atris';
+
+if (!apiKey || !apiSecret) {
+  throw new Error('AUDIUS_API_KEY and AUDIUS_API_SECRET must be set in the environment variables');
+}
 
 const BASE_URL = 'https://discoveryprovider.audius.co/v1';
 const FETCH_TIMEOUT = 30000; // 30 seconds timeout
@@ -39,8 +48,8 @@ export class AudiusApi {
     return this.request<any>('/tracks/trending', 'GET', params);
   }
 
-  async searchTracks(params: any = {}) {
-    return this.request<any>('/tracks/search', 'GET', params);
+  async searchTracks(query: string) {
+    return this.request<any>('/tracks/search', 'GET', { query });
   }
 
   async getTrack(trackId: string) {
@@ -59,41 +68,103 @@ export class AudiusApi {
     return this.request<any>(`/playlists/${playlistId}`, 'GET');
   }
 
+  async getUser(userId: string) {
+    return this.request<any>(`/users/${userId}`, 'GET');
+  }
+
+  private parseQuery(query: string): [string, string] {
+    const parts = query.split(' by ');
+    if (parts.length === 2) {
+      return [parts[0].trim(), parts[1].trim()];
+    }
+    return [query, ''];
+  }
+
+  async getTrackByPermalink(permalink: string) {
+    try {
+      const url = new URL(permalink.startsWith('http') ? permalink : `https://audius.co${permalink}`);
+      const response = await axios.get(url.toString());
+      // Extract track ID from the HTML response
+      const trackIdMatch = response.data.match(/trackId:\s*['"](\w+)['"]/);
+      if (trackIdMatch) {
+        return this.getTrack(trackIdMatch[1]);
+      }
+      return null;
+    } catch (error) {
+      console.error(`Error fetching track by permalink: ${error}`);
+      return null;
+    }
+  }
+
   // Add more methods for other endpoints as needed
 }
 
 const audiusApi = new AudiusApi();
+export { audiusApi };
 
 export async function createFetchRequest(state: GraphState): Promise<GraphState> {
-  const { bestApi, params } = state;
+  const { bestApi, params, query } = state;
   if (!bestApi) {
-    throw new Error("No best API selected");
+    return { ...state, error: "No best API selected" };
   }
 
   try {
     let response;
-    switch (bestApi.api_url) {
-      case "/v1/tracks/trending":
+    switch (bestApi.api_name) {
+      case "Get Track":
+        const searchResponse = await audiusApi.searchTracks(query);
+        if (searchResponse && searchResponse.data && searchResponse.data.length > 0) {
+          const trackId = searchResponse.data[0].id;
+          response = await audiusApi.getTrack(trackId);
+        } else {
+          return { ...state, error: "No tracks found matching the query" };
+        }
+        break;
+      case "Search Tracks":
+        response = await audiusApi.searchTracks(query);
+        if (!response || !response.data || response.data.length === 0) {
+          return { ...state, error: "No tracks found" };
+        }
+        break;
+      case "Search Users":
+        response = await audiusApi.searchUsers(params);
+        if (!response || !response.data || response.data.length === 0) {
+          return { ...state, error: "No users found" };
+        }
+        if (response.data && response.data.length > 0) {
+          const userId = response.data[0].id;
+          response = await audiusApi.getUser(userId);
+        }
+        break;
+      case "Get Trending Tracks":
         response = await audiusApi.getTrendingTracks(params);
+        if (!response.data || response.data.length === 0) {
+          return { ...state, error: "No trending tracks found" };
+        }
         break;
-      case "/v1/tracks/search":
-        response = await audiusApi.searchTracks(params);
-        break;
-      case "/v1/playlists/search":
+      case "Search Playlists":
         response = await audiusApi.searchPlaylists(params);
+        if (!response.data || response.data.length === 0) {
+          return { ...state, error: "No playlists found" };
+        }
         break;
-      case "/v1/playlists/{playlist_id}":
+      case "Get Playlist":
         response = await audiusApi.getPlaylist(params.playlist_id);
+        if (!response.data) {
+          return { ...state, error: "Playlist not found" };
+        }
         break;
-      // Add more cases for other endpoints as needed
       default:
-        throw new Error(`Unsupported API endpoint: ${bestApi.api_url}`);
+        return { ...state, error: `Unsupported API endpoint: ${bestApi.api_name}` };
     }
     return {
       ...state,
       response: response
     };
   } catch (error) {
-    throw error;
+    return {
+      ...state,
+      error: error instanceof Error ? error.message : "An unknown error occurred"
+    };
   }
 }

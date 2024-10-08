@@ -5,7 +5,6 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { GraphState } from "../types.js";
 import { HIGH_LEVEL_CATEGORY_MAPPING, TRIMMED_CORPUS_PATH } from "constants.js";
 import { DatasetSchema } from "types.js";
-import { logger, redactSensitiveInfo } from '../logger.js';
 
 /**
  * Given a users query, extract the high level category which

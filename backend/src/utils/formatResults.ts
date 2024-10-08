@@ -1,4 +1,3 @@
-
 export function formatTrackResults(response: any, originalQuery: string): string {
     if (!response || !response.data || !response.data.data || !Array.isArray(response.data.data)) {
       return "Unable to find information about the requested track.";
@@ -13,132 +12,147 @@ export function formatTrackResults(response: any, originalQuery: string): string
   
     if (exactMatch) {
       const artist = exactMatch.user.name || exactMatch.user.handle || "Unknown Artist";
-      return `The artist who performed the track '${searchedTrackName}' is ${artist}.`;
+      if (originalQuery.toLowerCase().includes("who is the artist") || originalQuery.toLowerCase().includes("who performed")) {
+        return `The artist who performed the track '${searchedTrackName}' is ${artist}.`;
+      } else {
+        return `Track: '${exactMatch.title}' by ${artist}. Plays: ${exactMatch.play_count || 'Unknown'}`;
+      }
     } else {
-      return `Unable to find an exact match for the track '${searchedTrackName}'.`;
+      // If no exact match, return information about the top result
+      const topResult = response.data.data[0];
+      if (topResult) {
+        const artist = topResult.user.name || topResult.user.handle || "Unknown Artist";
+        return `I couldn't find an exact match for '${searchedTrackName}', but the top result is "${topResult.title}" by ${artist}.`;
+      } else {
+        return `Unable to find any tracks matching '${searchedTrackName}'.`;
+      }
     }
-  }
+  } 
   
   // Add this new function to format API results
-export function formatApiResults(response: any, originalQuery: string, apiName: string): string {
+  export function formatApiResults(response: any, originalQuery: string, apiName: string): string {
     if (!response || !response.data) {
       return "Unable to find the requested information.";
     }
   
-    switch (apiName) {
-      case "Get Trending Tracks":
-      case "Search Tracks":
-        return formatTrackResults(response, originalQuery);
+    const ensureArray = (data: any) => Array.isArray(data) ? data : [data];
   
-      case "Get Track":
-        const track = response.data;
-        return `Track Information:
-          Title: ${track.title}
-          Artist: ${track.user.name}
-          Genre: ${track.genre}
-          Plays: ${track.play_count}`;
+    try {
+      switch (apiName) {
+        case "Get Trending Tracks":
+        case "Search Tracks":
+          return formatTrackResults(response, originalQuery);
   
-      case "Get User":
-        const user = response.data;
-        return `User Information:
-          Name: ${user.name}
-          Handle: ${user.handle}
-          Follower Count: ${user.follower_count}
-          Track Count: ${user.track_count}`;
+        case "Get Track":
+          const trackData = ensureArray(response.data);
+          if (trackData.length === 0) {
+            return "No track information found.";
+          }
+          const track = trackData[0];
+          return `Track Information:
+            Title: ${track.title || 'Unknown'}
+            Artist: ${track.user?.name || 'Unknown'}
+            Genre: ${track.genre || 'Unknown'}
+            Plays: ${track.play_count || 'Unknown'}`;
   
-      case "Search Users":
-        const users = response.data;
-        return `Found ${users.length} users:
-          ${users.slice(0, 5).map((u: any) => `- ${u.name} (@${u.handle})`).join('\n')}`;
+        case "Get User":
+        case "Search Users":
+          const users = ensureArray(response.data);
+          if (users.length === 0) {
+            return "No users found.";
+          }
+          return users.length === 1 ? formatUserInfo([users[0]], originalQuery) :
+            `Found ${users.length} users:\n${users.slice(0, 5).map((u: any) => `- ${u.name || u.handle || 'Unknown'} (@${u.handle || 'Unknown'})`).join('\n')}`;
   
-      case "Search Playlists":
-        const playlists = response.data.data;
-        if (playlists.length === 0) {
-          return "No playlists found matching your query.";
-        }
-        
-        // If the query is about a specific playlist
-        if (originalQuery.toLowerCase().includes("playlist")) {
-          const bestMatch = playlists[0]; // Assume the first result is the best match
-          return `Found playlist: "${bestMatch.playlist_name}" by ${bestMatch.user.name}
-            Tracks: ${bestMatch.track_count}
-            Favorites: ${bestMatch.favorite_count}
-            ${bestMatch.description ? `Description: ${bestMatch.description}` : ''}`;
-        }
-        
-        // If it's a general search
-        return `Found ${playlists.length} playlists:
-          ${playlists.slice(0, 5).map((p: any, index: number) => 
-            `${index + 1}. "${p.playlist_name}" by ${p.user.name} (${p.track_count} tracks)`
-          ).join('\n')}`;
+        case "Search Playlists":
+        case "Get Playlist":
+          const playlists = ensureArray(response.data.data || response.data);
+          return formatPlaylistInfo(playlists, originalQuery, response.fullPlaylistDetails);
   
-      default:
-        return "Unsupported API response format.";
+        default:
+          return "Unsupported API response format.";
+      }
+    } catch (error) {
+      console.error("Error in formatApiResults:", error);
+      return "An error occurred while processing the API response.";
     }
   }
 
-  export function formatSearchTracks(data: any, query: string): string {
-    if (!data || data.length === 0) {
-      return `I couldn't find any tracks matching your query: "${query}"`;
-    }
-  
-    const tracks = data.slice(0, 5); // Limit to top 5 results
-    const trackList = tracks.map((track: any) => {
-      return `"${track.title}" by ${track.user.name} (${track.play_count} plays)`;
-    }).join(', ');
-  
-    if (query.toLowerCase().includes("genre")) {
-      const genres = [...new Set(tracks.map((track: any) => track.genre))];
-      return `The genre(s) for the tracks matching "${query}" are: ${genres.join(', ')}. Here are some matching tracks: ${trackList}`;
-    }
-  
-    if (query.toLowerCase().includes("plays") || query.toLowerCase().includes("popular")) {
-      return `Here are the top tracks matching your query "${query}": ${trackList}`;
-    }
-  
-    return `Here are some tracks matching your query "${query}": ${trackList}`;
+export function formatSearchTracks(tracks: any[], query: string): string {
+  const [trackName, artistName] = query.split(' by ').map(s => s.trim());
+
+  const filteredTracks = tracks.filter(track => {
+    const titleMatch = track.title.toLowerCase().includes(trackName.toLowerCase());
+    const artistMatch = artistName ? track.user.name.toLowerCase().includes(artistName.toLowerCase()) : true;
+    return titleMatch && artistMatch;
+  });
+
+  if (filteredTracks.length === 0) {
+    return `No tracks found matching "${query}".`;
   }
+
+  const trackInfo = filteredTracks.map(track => 
+    `"${track.title}" by ${track.user.name} (Genre: ${track.genre || 'Unknown'}, ${track.play_count} plays)`
+  ).join(', ');
+
+  return `Here are the tracks matching "${query}": ${trackInfo}`;
+}
   
   export function formatUserInfo(data: any, query: string): string {
-    if (!data || (Array.isArray(data) && data.length === 0)) {
-      return `I couldn't find any user information matching your query: "${query}"`;
+    // Ensure data is always an array
+    const users = Array.isArray(data) ? data : [data];
+  
+    if (!users || users.length === 0) {
+      return `No users found matching "${query}"`;
     }
   
-    // If it's an array (search result), take the first user
-    const user = Array.isArray(data) ? data[0] : data;
+    const formatUser = (user: any) => `
+      User Information:
+      Name: ${user.name || 'Unknown'}
+      Handle: @${user.handle || 'Unknown'}
+      Followers: ${user.follower_count || 'Unknown'}
+      Following: ${user.followee_count || 'Unknown'}
+      Tracks: ${user.track_count || 'Unknown'}
+      ${user.bio ? `Bio: ${user.bio}` : ''}
+    `;
+  
+    // If there's only one user, return detailed information
+    if (users.length === 1) {
+      return formatUser(users[0]);
+    }
+  
+    // If there are multiple users, return a summary
+    return `Found ${users.length} users:\n${users.slice(0, 5).map(user => 
+      `- ${user.name || user.handle || 'Unknown'} (@${user.handle || 'Unknown'})`
+    ).join('\n')}`;
+  } 
+  
+  export function formatPlaylistInfo(data: any[], query: string, fullPlaylistDetails?: any): string {
+    if (!data || data.length === 0) {
+      return `No playlists found matching "${query}"`;
+    }
+  
+    const playlist = fullPlaylistDetails || data[0];
+    let topTracks = 'No tracks available';
+  
+    if (playlist.tracks && Array.isArray(playlist.tracks)) {
+      topTracks = playlist.tracks.slice(0, 5).map((track: any) => 
+        `"${track.title}" by ${track.user?.name || 'Unknown Artist'}`
+      ).join(', ');
+    }
   
     return `
-      User Information:
-      Name: ${user.name}
-      Handle: @${user.handle}
-      Followers: ${user.follower_count}
-      Following: ${user.following_count}
-      Tracks: ${user.track_count}
-      ${user.bio ? `Bio: ${user.bio}` : ''}
-    `.trim();
+      Playlist Information:
+      Name: ${playlist.playlist_name || 'Unknown'}
+      Created by: ${playlist.user?.name || 'Unknown'}
+      Tracks: ${playlist.track_count || 'Unknown'}
+      Followers: ${playlist.follower_count || 'Unknown'}
+      Description: ${playlist.description || 'No description available'}
+      Top 5 Tracks: ${topTracks}
+    `;
   }
-  
-  export function formatPlaylistInfo(data: any, query: string): string {
-    if (!data || (Array.isArray(data) && data.length === 0)) {
-      return `I couldn't find any playlist information matching your query: "${query}"`;
-    }
-  
-    // If it's an array (search result), take the first playlist or limit to top 5
-    const playlists = Array.isArray(data) ? data.slice(0, 5) : [data];
-  
-    if (playlists.length === 1) {
-      const playlist = playlists[0];
-      return `
-        Playlist Information:
-        Name: ${playlist.playlist_name}
-        Created by: ${playlist.user.name}
-        Tracks: ${playlist.track_count}
-        ${playlist.description ? `Description: ${playlist.description}` : ''}
-      `.trim();
-    } else {
-      const playlistList = playlists.map((playlist: any) => {
-        return `"${playlist.playlist_name}" by ${playlist.user.name} (${playlist.track_count} tracks)`;
-      }).join(', ');
-      return `Here are some playlists matching your query "${query}": ${playlistList}`;
-    }
+  export function formatTrendingTracks(data: any[]): string {
+    const tracks = data.slice(0, 5);
+    const trackList = tracks.map((track: any) => `"${track.title}" by ${track.user.name}`).join(', ');
+    return `The top trending tracks on Audius right now are: ${trackList}`;
   }

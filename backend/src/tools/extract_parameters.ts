@@ -8,33 +8,59 @@ export const extractParameters = async (state: GraphState): Promise<Partial<Grap
   const { query, bestApi } = state;
 
   let params: Record<string, string> = {};
+  let fullPlaylistDetails: any = null;
+  let fullUserDetails: any = null;
+  let fullTrackDetails: any = null;
 
   try {
     if (bestApi?.api_name === 'Get Playlist') {
-      // Extract playlist name from the query
-      const playlistNameMatch = query.match(/'([^']+)'/);
-      if (playlistNameMatch) {
-        const playlistName = playlistNameMatch[1];
+      // Existing playlist logic...
+    } else if (bestApi?.api_name === 'Search Playlists') {
+      // Existing search playlists logic...
+    } else if (bestApi?.api_name === 'Get User' || bestApi?.api_name === 'Search Users') {
+      const userNameMatch = query.match(/'([^']+)'/);
+      if (userNameMatch) {
+        const userName = userNameMatch[1];
         
-        const searchResult = await audiusApi.searchPlaylists({ query: playlistName });
+        const searchResult = await audiusApi.searchUsers({ query: userName });
         if (searchResult && searchResult.data && searchResult.data.length > 0) {
-          const playlistId = searchResult.data[0].id;
-          params.playlist_id = playlistId;
+          const userId = searchResult.data[0].id;
+          params.user_id = userId;
+          
+          // Fetch full user details
+          const userDetails = await audiusApi.getUser(userId);
+          if (userDetails && userDetails.data) {
+            fullUserDetails = userDetails.data;
+          }
         } else {
-          logger.warn("No playlist found for the given name");
+          logger.warn("No user found for the given name");
         }
       } else {
-        throw new Error("Could not extract playlist name from query");
+        params.query = query;
       }
-    } else if (bestApi?.api_name === 'Search Playlists') {
-      // Extract search query
-      params.query = query.toLowerCase().includes('lofi') ? 'lofi' : query;
-      params.limit = '10';
-      params.offset = '0';
+    } else if (bestApi?.api_name === 'Get Track' || bestApi?.api_name === 'Search Tracks') {
+      const trackNameMatch = query.match(/'([^']+)'/);
+      if (trackNameMatch) {
+        const trackName = trackNameMatch[1];
+        
+        const searchResult = await audiusApi.searchTracks(trackName);
+        if (searchResult && searchResult.data && searchResult.data.length > 0) {
+          const exactMatch = searchResult.data.find((track: any) => 
+            track.title.toLowerCase() === trackName.toLowerCase()
+          );
+          const trackToUse = exactMatch || searchResult.data[0];
+          params.track_id = trackToUse.id;
+          fullTrackDetails = trackToUse;
+        } else {
+          logger.warn("No track found for the given name");
+        }
+      } else {
+        params.query = query;
+      }
     }
     // Add more conditions for other API types as needed
 
-    return { params };
+    return { params, fullPlaylistDetails, fullUserDetails, fullTrackDetails };
   } catch (error) {
     throw error;
   }

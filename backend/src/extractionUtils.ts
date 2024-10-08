@@ -1,7 +1,23 @@
-function extractSearchQuery(query: string): string {
-    const matches = query.match(/'([^']+)'|"([^"]+)"|(?:about|by)\s+(\w+(?:\s+\w+)*)/i);
-    return matches ? (matches[1] || matches[2] || matches[3]).trim() : "";
+function extractSearchQuery(query: string): { track: string; artist: string } {
+  // Remove any trailing question marks from the query
+  query = query.trim().replace(/\?+$/, '');
+
+  const genrePattern = /What (?:is the )?genre (?:of|is) "(.*?)" by (.*?)$/i;
+  const match = query.match(genrePattern);
+
+  if (match) {
+    return { track: match[1].trim(), artist: match[2].trim() };
   }
+
+  // If no specific pattern matches, try a more general approach
+  const parts = query.split(' by ');
+  if (parts.length === 2) {
+    return { track: parts[0].replace(/^What (?:is the )?genre (?:of|is) /i, '').trim(), artist: parts[1].trim() };
+  }
+
+  // If all else fails, return the whole query as the track name
+  return { track: query.trim(), artist: '' };
+}
   
   function extractTrackId(query: string): string {
     const matches = query.match(/track(?:\s+id)?\s+(\w+)/i);
@@ -53,7 +69,7 @@ function extractSearchQuery(query: string): string {
     return match ? match[1] : "week"; // Default to 'week' if not specified
   }
 
-  function extractParam(param: string, query: string): string {
+  function extractParam(param: string, query: string): string | { track: string; artist: string } {
     switch (param) {
       case "track_id":
         return extractTrackId(query);
