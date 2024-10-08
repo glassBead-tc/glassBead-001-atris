@@ -15,7 +15,7 @@ export async function extractParameters(
       "system",
       `You are an expert software engineer. You're provided with a list of required and optional parameters for an API, along with a users query.
 
-Given the query and the parameters, use the 'extract_params' tool to extract the parameters from the query.
+Given the query and the parameters, use the 'extract_parameters' tool to extract the parameters from the query.
 
 If the query does not contain any of the parameters, do not return params.
 

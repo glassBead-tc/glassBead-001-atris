@@ -88,32 +88,33 @@ function extractGenre(query: string): string | null {
   return null;
 }
 
-export async function createFetchRequest(
+export const createFetchRequest = async (
   state: GraphState
-): Promise<Partial<GraphState>> {
-  const { bestApi, query } = state;
+): Promise<Partial<GraphState>> => {
+  const { bestApi, params } = state;
   if (!bestApi) {
-    throw new Error("No best API found");
+    return { bestApi: null, response: null };
   }
 
   let url = bestApi.api_url;
-  console.log("Original URL:", url);
+  
+  // Replace path parameters
+  Object.entries(params || {}).forEach(([key, value]) => {
+    url = url.replace(`{${key}}`, value);
+  });
 
-  // Remove the genre parameter for now
-  // const params = new URLSearchParams();
-  // const genre = extractGenre(query);
-  // if (genre) {
-  //   params.append("genre", genre);
-  // }
-  // if (params.toString()) {
-  //   url += `?${params.toString()}`;
-  // }
+  // Add query parameters
+  const queryParams = new URLSearchParams(params || {}).toString();
+  if (queryParams) {
+    url += `?${queryParams}`;
+  }
 
-  console.log("Final URL:", url);
+  console.log(`Attempting to fetch from URL: ${url}`);
+  console.log(`With params:`, params);
 
   const discoveryNodes = await getDiscoveryNodes();
   if (discoveryNodes.length === 0) {
-    throw new Error("No discovery nodes available");
+    return { bestApi, response: null };
   }
 
   try {
@@ -129,17 +130,17 @@ export async function createFetchRequest(
 
     const data = await response.json();
     console.log("Response data:", JSON.stringify(data, null, 2));
-    return { response: data };
-  } catch (error) {
-    console.error("Error fetching API:", error);
-    if (error instanceof Error) {
-      console.error("Error name:", error.name);
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
-      if ('cause' in error) {
-        console.error("Error cause:", error.cause);
-      }
+    
+    if (data && data.data) {
+      return { 
+        response: data,
+        bestApi: bestApi
+      };
+    } else {
+      return { bestApi, response: null };
     }
-    return { response: null };
+  } catch (error) {
+    console.error(`Error fetching from ${url}:`, error);
+    return { bestApi, response: null };
   }
-}
+};

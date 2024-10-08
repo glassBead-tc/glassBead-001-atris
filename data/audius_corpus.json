@@ -332,6 +332,400 @@
           ]
         },
         "api_url": "https://api.tavily.com/search"
+      },
+      {
+        "id": "10",
+        "category_name": "Tracks",
+        "tool_name": "Audius API",
+        "api_name": "Get Bulk Tracks",
+        "api_description": "Fetch multiple tracks by ID",
+        "required_parameters": [
+          {
+            "name": "track_ids",
+            "type": "string",
+            "description": "Comma-separated list of Track IDs",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [],
+        "method": "GET",
+        "template_response": {
+          "data": [
+    
+          ]
+        },
+        "api_url": "/v1/tracks"
+      },
+      {
+        "id": "11",
+        "category_name": "Tracks",
+        "tool_name": "Audius API",
+        "api_name": "Search Tracks",
+        "api_description": "Search for tracks",
+        "required_parameters": [
+          {
+            "name": "query",
+            "type": "string",
+            "description": "Search query",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [
+          {
+            "name": "only_downloadable",
+            "type": "boolean",
+            "description": "Return only downloadable tracks",
+            "default": "false"
+          }
+        ],
+        "method": "GET",
+        "template_response": {
+          "data": [
+        
+          ]
+        },
+        "api_url": "/v1/tracks/search"
+      },
+      {
+        "id": "12",
+        "category_name": "Tracks",
+        "tool_name": "Audius API",
+        "api_name": "Get Trending Tracks",
+        "api_description": "Get trending tracks",
+        "required_parameters": [],
+        "optional_parameters": [
+          {
+            "name": "genre",
+            "type": "string",
+            "description": "Genre to filter",
+            "default": "all"
+          },
+          {
+            "name": "time",
+            "type": "string",
+            "description": "Time range",
+            "default": "week"
+          }
+        ],
+        "method": "GET",
+        "template_response": {
+          "data": [
+          
+          ]
+        },
+        "api_url": "/v1/tracks/trending"
+      },
+      {
+        "id": "13",
+        "category_name": "Tracks",
+        "tool_name": "Audius API",
+        "api_name": "Get Underground Trending Tracks",
+        "api_description": "Get trending underground tracks",
+        "required_parameters": [],
+        "optional_parameters": [
+          {
+            "name": "genre",
+            "type": "string",
+            "description": "Genre to filter",
+            "default": "all"
+          },
+          {
+            "name": "offset",
+            "type": "integer",
+            "description": "Offset for pagination",
+            "default": "0"
+          },
+          {
+            "name": "limit",
+            "type": "integer",
+            "description": "Limit of results",
+            "default": "100"
+          }
+        ],
+        "method": "GET",
+        "template_response": {
+          "data": [
+           
+          ]
+        },
+        "api_url": "/v1/tracks/trending/underground"
+      },
+      {
+        "id": "14",
+        "category_name": "Tracks",
+        "tool_name": "Audius API",
+        "api_name": "Stream Track",
+        "api_description": "Get the streamable mp3 file of a track",
+        "required_parameters": [
+          {
+            "name": "track_id",
+            "type": "string",
+            "description": "A Track ID",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [],
+        "method": "GET",
+        "template_response": {
+       
+        },
+        "api_url": "AUDIUS_API_HOST/v1/tracks/{track_id}/stream"
+      },
+      {
+        "id": "15",
+        "category_name": "Users",
+        "tool_name": "Audius API",
+        "api_name": "Get User",
+        "api_description": "Get a user",
+        "required_parameters": [
+          {
+            "name": "user_id",
+            "type": "string",
+            "description": "A User ID",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [],
+        "method": "GET",
+        "template_response": {
+          "data": {
+           
+          }
+        },
+        "api_url": "/v1/users/{user_id}"
+      },
+      {
+        "id": "16",
+        "category_name": "Users",
+        "tool_name": "Audius API",
+        "api_name": "Get User ID from Wallet",
+        "api_description": "Get user ID from wallet address",
+        "required_parameters": [
+          {
+            "name": "associated_wallet",
+            "type": "string",
+            "description": "Wallet address",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [],
+        "method": "GET",
+        "template_response": {
+          "data": {
+            "user_id": "string"
+          }
+        },
+        "api_url": "/v1/users/id"
+      },
+      {
+        "id": "17",
+        "category_name": "Users",
+        "tool_name": "Audius API",
+        "api_name": "Search Users",
+        "api_description": "Search for users",
+        "required_parameters": [
+          {
+            "name": "query",
+            "type": "string",
+            "description": "Search query",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [],
+        "method": "GET",
+        "template_response": {
+          "data": [
+        
+          ]
+        },
+        "api_url": "/v1/users/search"
+      },
+      {
+        "id": "18",
+        "category_name": "Users",
+        "tool_name": "Audius API",
+        "api_name": "Get User's Favorite Tracks",
+        "api_description": "Get a user's favorite tracks",
+        "required_parameters": [
+          {
+            "name": "user_id",
+            "type": "string",
+            "description": "A User ID",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [],
+        "method": "GET",
+        "template_response": {
+          "data": [
+        
+          ]
+        },
+        "api_url": "/v1/users/{user_id}/favorites"
+      },
+      {
+        "id": "19",
+        "category_name": "Users",
+        "tool_name": "Audius API",
+        "api_name": "Get User's Reposts",
+        "api_description": "Get a user's reposts",
+        "required_parameters": [
+          {
+            "name": "user_id",
+            "type": "string",
+            "description": "A User ID",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [],
+        "method": "GET",
+        "template_response": {
+          "data": [
+    
+          ]
+        },
+        "api_url": "/v1/users/{user_id}/reposts"
+      },
+      {
+        "id": "20",
+        "category_name": "Users",
+        "tool_name": "Audius API",
+        "api_name": "Get User's Most Used Track Tags",
+        "api_description": "Get a user's most used track tags",
+        "required_parameters": [
+          {
+            "name": "user_id",
+            "type": "string",
+            "description": "A User ID",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [
+          {
+            "name": "limit",
+            "type": "integer",
+            "description": "Limit of results",
+            "default": "10"
+          }
+        ],
+        "method": "GET",
+        "template_response": {
+          "data": [
+     
+          ]
+        },
+        "api_url": "/v1/users/{user_id}/tags"
+      },
+      {
+        "id": "21",
+        "category_name": "Playlists",
+        "tool_name": "Audius API",
+        "api_name": "Get Playlist",
+        "api_description": "Get a playlist",
+        "required_parameters": [
+          {
+            "name": "playlist_id",
+            "type": "string",
+            "description": "Playlist ID",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [],
+        "method": "GET",
+        "template_response": {
+          "data": {
+     
+          }
+        },
+        "api_url": "/v1/playlists/{playlist_id}"
+      },
+      {
+        "id": "22",
+        "category_name": "Playlists",
+        "tool_name": "Audius API",
+        "api_name": "Search Playlists",
+        "api_description": "Search for playlists",
+        "required_parameters": [
+          {
+            "name": "query",
+            "type": "string",
+            "description": "Search query",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [],
+        "method": "GET",
+        "template_response": {
+          "data": [
+       
+          ]
+        },
+        "api_url": "/v1/playlists/search"
+      },
+      {
+        "id": "23",
+        "category_name": "Playlists",
+        "tool_name": "Audius API",
+        "api_name": "Get Trending Playlists",
+        "api_description": "Get trending playlists",
+        "required_parameters": [],
+        "optional_parameters": [
+          {
+            "name": "time",
+            "type": "string",
+            "description": "Time range",
+            "default": "week"
+          },
+          {
+            "name": "limit",
+            "type": "integer",
+            "description": "Limit of results",
+            "default": "10"
+          }
+        ],
+        "method": "GET",
+        "template_response": {
+          "data": [
+          
+          ]
+        },
+        "api_url": "/v1/playlists/trending"
+      },
+      {
+        "id": "24",
+        "category_name": "Tips",
+        "tool_name": "Audius API",
+        "api_name": "Get Tips",
+        "api_description": "Get tips for a user",
+        "required_parameters": [
+          {
+            "name": "user_id",
+            "type": "string",
+            "description": "A User ID",
+            "default": ""
+          }
+        ],
+        "optional_parameters": [
+          {
+            "name": "limit",
+            "type": "integer",
+            "description": "Limit of results",
+            "default": "10"
+          },
+          {
+            "name": "offset",
+            "type": "integer",
+            "description": "Offset for pagination",
+            "default": "0"
+          }
+        ],
+        "method": "GET",
+        "template_response": {
+          "data": [
+    
+          ]
+        },
+        "api_url": "/v1/tips"
       }
     ]
   }
