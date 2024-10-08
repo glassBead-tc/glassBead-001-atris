@@ -4,29 +4,25 @@ Atris is a research agent for Audius designed to provide artists, labels, and te
 
 ## Functionality
 
-Currently, Atris takes in a query, chooses an appropriate API endpoint, and then makes the request to the endpoint. It then takes the result and returns a response. This is the basic functionality that's currently implemented via test queries: I am updating this repo frequently as I add more functionality.
+Currently, Atris can:
+1. Interpret user queries about Audius data.
+2. Select the appropriate API endpoint based on the query.
+3. Make requests to the Audius API.
+4. Retrieve and format data from the API, specifically for trending tracks.
 
-The UI for the chatbot will be implemented in Next.js.
-
-- trimmed_corpus.json (dataset, a large collection of API's)
-- langtool_diagram.png (diagram of the agent's logical and expected workflow)
-- langtool.ts (interfaces for the data in trimmed_corpus.json)
-
-These files are from the repo for Brace Sproul's LangGraph.js demo on YouTube for "Langtool," a
-multi-tool agent that can intelligently choose which API's to choose for a given query. The
-setup of his project is very similar to the initial one we will be using here. (thanks, Brace! )* 🫡
-
-[Github repo for Brace's demo](https://github.com/bracesproul/langtool-template/tree/main)
-
-[Link to YouTube lecture](https://www.youtube.com/watch?v=xbZzJjBm6t4)
-
+The agent now provides a formatted list of the top trending tracks on Audius, including track title, artist name, and play count.
 
 ## Running Atris
 
 To run the project locally, follow these steps:
 
 1. Clone the repository
-2. From the audius-langtool directory, run yarn install.
-3. From the command line, run cd backend && yarn start
+2. From the audius-langtool directory, run `yarn install`
+3. From the command line, run `cd backend && yarn start`
 
+## Next Steps
+
+- Implement more API endpoints to expand the agent's capabilities.
+- Add user input handling for dynamic queries.
+- Develop the Next.js UI for a user-friendly interface.
 
