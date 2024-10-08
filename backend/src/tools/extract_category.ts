@@ -80,7 +80,7 @@ Here are all the high level categories, and every tool name that falls under the
   const allApis: DatasetSchema[] = allApisData.endpoints;
 
   const categoriesAndTools = Object.entries(HIGH_LEVEL_CATEGORY_MAPPING)
-    .map(([high, low]) => {
+    .map(([high]) => {
       const allTools = allApis.filter((api) => 
         api.category_name.toLowerCase() === high.toLowerCase()
       );

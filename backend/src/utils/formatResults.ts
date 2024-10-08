@@ -156,3 +156,13 @@ export function formatSearchTracks(tracks: any[], query: string): string {
     const trackList = tracks.map((track: any) => `"${track.title}" by ${track.user.name}`).join(', ');
     return `The top trending tracks on Audius right now are: ${trackList}`;
   }
+
+  export function formatTrendingPlaylists(data: any[]): string {
+    const playlists = data.slice(0, 5);
+    const playlistList = playlists.map((playlist: any) => `"${playlist.playlist_name}" by ${playlist.user.name}`).join(', ');
+    const playlistTracklist = playlists.map((playlist: any) => {
+      const trackCount = Math.min(playlist.track_count, 3);
+      return `"${playlist.playlist_name}" by ${playlist.user.name} with ${trackCount} tracks`;
+    }).join(', ');
+    return `The top trending playlists on Audius right now are: ${playlistList}. Here are the tracks on each: ${playlistTracklist}`;
+  }
