@@ -1,7 +1,17 @@
-import { GraphState } from "index.js";
+import { GraphState } from "../index.js";
+import { sdk } from '@audius/sdk';
 
 // Add this constant at the top of the file
 const APP_NAME = "Atris"; // Replace with your actual app name
+const AUDIUS_API_KEY = process.env.AUDIUS_API_KEY;
+const AUDIUS_API_SECRET = process.env.AUDIUS_API_SECRET;
+
+// Initialize the SDK with proper authentication
+const audiusSdk = sdk({
+  appName: APP_NAME,
+  apiKey: AUDIUS_API_KEY,
+  apiSecret: AUDIUS_API_SECRET
+});
 
 // User-friendly input mapping
 const userGenreMapping: { [key: string]: string } = {
@@ -19,6 +29,8 @@ const apiGenreMapping: { [key: string]: string } = {
   "DRUM_AND_BASS": "Drum & Bass",
   // Add more mappings for other genres
 };
+
+const FETCH_TIMEOUT = 30000; // 30 seconds timeout
 
 async function getDiscoveryNodes(): Promise<string[]> {
   try {
@@ -93,54 +105,63 @@ export const createFetchRequest = async (
 ): Promise<Partial<GraphState>> => {
   const { bestApi, params } = state;
   if (!bestApi) {
+    console.log("No best API found");
     return { bestApi: null, response: null };
   }
 
-  let url = bestApi.api_url;
-  
-  // Replace path parameters
-  Object.entries(params || {}).forEach(([key, value]) => {
-    url = url.replace(`{${key}}`, value);
-  });
-
-  // Add query parameters
-  const queryParams = new URLSearchParams(params || {}).toString();
-  if (queryParams) {
-    url += `?${queryParams}`;
-  }
-
-  console.log(`Attempting to fetch from URL: ${url}`);
-  console.log(`With params:`, params);
-
-  const discoveryNodes = await getDiscoveryNodes();
-  if (discoveryNodes.length === 0) {
-    return { bestApi, response: null };
-  }
+  console.log(`Attempting to fetch data for API: ${bestApi.api_name}`);
 
   try {
-    const response = await retryFetchWithNodes(url, {
-      method: bestApi.method,
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-        "App-Name": APP_NAME,
-        "User-Agent": "Atris/1.0"
-      },
-    }, discoveryNodes);
+    let response;
+    const fetchPromise = (async () => {
+      switch (bestApi.api_url) {
+        case "/v1/tracks/trending":
+          console.log("Fetching trending tracks...");
+          response = await audiusSdk.tracks.getTrendingTracks({
+            time: 'week'
+          });
+          break;
+        case "/v1/tracks/search":
+          console.log("Searching tracks...");
+          response = await audiusSdk.tracks.searchTracks({
+            query: params?.query || ''
+          });
+          break;
+        case "/v1/tracks/{track_id}":
+          if (params?.track_id) {
+            console.log(`Fetching track with ID: ${params.track_id}`);
+            response = await audiusSdk.tracks.getTrack({ trackId: params.track_id });
+          } else {
+            console.log("No track ID provided");
+            return { bestApi, response: null };
+          }
+          break;
+        default:
+          console.log("Unhandled API URL:", bestApi.api_url);
+          return { bestApi, response: null };
+      }
+      return response;
+    })();
 
-    const data = await response.json();
-    console.log("Response data:", JSON.stringify(data, null, 2));
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timed out')), FETCH_TIMEOUT);
+    });
+
+    response = await Promise.race([fetchPromise, timeoutPromise]);
+
+    console.log("API call successful");
+    console.log("Response data:", JSON.stringify(response, null, 2));
     
-    if (data && data.data) {
-      return { 
-        response: data,
-        bestApi: bestApi
-      };
-    } else {
-      return { bestApi, response: null };
-    }
+    return { 
+      response: { data: response },
+      bestApi: bestApi
+    };
   } catch (error) {
-    console.error(`Error fetching from ${url}:`, error);
-    return { bestApi, response: null };
+    console.error(`Error fetching data for ${bestApi.api_name}:`, error);
+    if (error instanceof Error) {
+      return { bestApi, response: null, error: error.message };
+    } else {
+      return { bestApi, response: null, error: String(error) };
+    }
   }
 };

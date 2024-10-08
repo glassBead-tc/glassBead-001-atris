@@ -268,45 +268,6 @@
         "api_url": "/v1/playlists/search"
       },
       {
-        "id": "8",
-        "category_name": "Metrics",
-        "tool_name": "Audius API",
-        "api_name": "Get Track Listen History",
-        "api_description": "Fetch track listen history",
-        "required_parameters": [
-          {
-            "name": "track_id",
-            "type": "string",
-            "description": "A Track ID",
-            "default": ""
-          }
-        ],
-        "optional_parameters": [
-          {
-            "name": "start_time",
-            "type": "string",
-            "description": "Start time of listen history (ISO 8601 format)",
-            "default": ""
-          },
-          {
-            "name": "end_time",
-            "type": "string",
-            "description": "End time of listen history (ISO 8601 format)",
-            "default": ""
-          }
-        ],
-        "method": "GET",
-        "template_response": {
-          "data": [
-            {
-              "date": "string",
-              "listen_count": "number"
-            }
-          ]
-        },
-        "api_url": "/v1/metrics/tracks/{track_id}/listen_history"
-      },
-      {
         "id": "9",
         "category_name": "General",
         "tool_name": "Audius API",
@@ -469,7 +430,7 @@
         "template_response": {
        
         },
-        "api_url": "AUDIUS_API_HOST/v1/tracks/{track_id}/stream"
+        "api_url": "/v1/tracks/{track_id}/stream"
       },
       {
         "id": "15",

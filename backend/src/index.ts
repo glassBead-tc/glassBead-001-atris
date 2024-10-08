@@ -60,19 +60,19 @@ type ApiValidator = {
 
 const apiValidators: Record<string, ApiValidator> = {
   "Get Trending Tracks": {
-    validate: (response) => response && Array.isArray(response.data) && response.data.length > 0,
-    successMessage: (response) => `Retrieved ${response.data.length} trending tracks`,
+    validate: (response) => response && response.data && Array.isArray(response.data.data) && response.data.data.length > 0,
+    successMessage: (response) => `Retrieved ${response.data.data.length} trending tracks`,
     failureMessage: "Failed to retrieve trending tracks or the response was empty",
+  },
+  "Search Tracks": {
+    validate: (response) => response && response.data && Array.isArray(response.data.data) && response.data.data.length > 0,
+    successMessage: (response) => `Found ${response.data.data.length} tracks matching the search query`,
+    failureMessage: "No tracks found matching the search query or the response was empty",
   },
   "Get Track": {
     validate: (response) => response && response.data && response.data.id,
     successMessage: (response) => `Retrieved track with ID: ${response.data.id}`,
     failureMessage: "Failed to retrieve track information",
-  },
-  "Search Tracks": {
-    validate: (response) => response && Array.isArray(response.data) && response.data.length > 0,
-    successMessage: (response) => `Found ${response.data.length} tracks matching the search criteria`,
-    failureMessage: "Failed to search for tracks or no results found",
   },
   "Get User": {
     validate: (response) => response && response.data && response.data.id,
@@ -93,11 +93,6 @@ const apiValidators: Record<string, ApiValidator> = {
     validate: (response) => response && Array.isArray(response.data) && response.data.length > 0,
     successMessage: (response) => `Found ${response.data.length} playlists matching the search criteria`,
     failureMessage: "Failed to search for playlists or no results found",
-  },
-  "Get Track Listen History": {
-    validate: (response) => response && Array.isArray(response.data) && response.data.length > 0,
-    successMessage: (response) => `Retrieved listen history with ${response.data.length} entries`,
-    failureMessage: "Failed to retrieve track listen history or no data available",
   },
 };
 
@@ -145,23 +140,24 @@ function createGraph() {
 }
 
 // Add this new function to format the trending tracks
-function formatTrendingTracks(response: any): string {
-  if (!response || !response.data || !Array.isArray(response.data)) {
-    return "Unable to format trending tracks data.";
+function formatTrackResults(response: any, originalQuery: string): string {
+  if (!response || !response.data || !response.data.data || !Array.isArray(response.data.data)) {
+    return "Unable to find information about the requested track.";
   }
 
-  const tracks = response.data.slice(0, 10); // Get top 10 tracks
-  let formattedOutput = "Top Trending Tracks on Audius:\n";
+  const trackNameMatch = originalQuery.match(/'([^']+)'/);
+  const searchedTrackName = trackNameMatch ? trackNameMatch[1].toLowerCase() : '';
 
-  tracks.forEach((track: any, index: number) => {
-    const title = track.title || "Unknown Title";
-    const artist = track.user?.name || track.user?.handle || "Unknown Artist";
-    const plays = track.play_count !== undefined ? `${track.play_count} plays` : "play count not available";
+  const exactMatch = response.data.data.find((track: any) => 
+    track.title.toLowerCase() === searchedTrackName
+  );
 
-    formattedOutput += `${index + 1}. "${title}" by ${artist} - ${plays}\n`;
-  });
-
-  return formattedOutput;
+  if (exactMatch) {
+    const artist = exactMatch.user.name || exactMatch.user.handle || "Unknown Artist";
+    return `The artist who performed the track '${searchedTrackName}' is ${artist}.`;
+  } else {
+    return `Unable to find an exact match for the track '${searchedTrackName}'.`;
+  }
 }
 
 // Modify the main function
@@ -173,73 +169,85 @@ async function main() {
     temperature: 0,
   });
 
-  const testCase = {
-    query: "I'm looking into what music is popular on Audius right now. Can you find the top trending tracks?",
-    expectedEndpoint: "/v1/tracks/trending"
-  };
-
-  console.log(`\n\nProcessing query: "${testCase.query}"\n`);
-
-  const stream = await app.stream({
-    llm,
-    query: testCase.query,
-  });
-
-  let finalResult: GraphState | null = null;
-  for await (const event of stream) {
-    console.log("\n------\n");
-    if (Object.keys(event)[0] === "execute_request_node") {
-      console.log("---FINISHED---");
-      finalResult = event.execute_request_node;
-    } else {
-      console.log("Stream event: ", Object.keys(event)[0]);
-      console.log("Value(s): ", Object.values(event)[0]);
+  const testCases = [
+    {
+      query: "I'm looking into what music is popular on Audius right now. Can you find the top trending tracks?",
+      expectedEndpoint: "/v1/tracks/trending"
+    },
+    {
+      query: "What genre is REFLECTIONS by ENOCH?",
+      expectedEndpoint: "/v1/tracks/search"
+    },
+    {
+      query: "How many plays does 'Craig Connelly & Lasada - Found You' have?",
+      expectedEndpoint: "/v1/tracks/search"
+    },
+    {
+      query: "Who is the artist that performed the track 'Pokemon & Chill'?",
+      expectedEndpoint: "/v1/tracks/search"
     }
-  }
+  ];
 
-  if (!finalResult) {
-    console.log("❌❌❌ No final result obtained ❌❌❌");
-    return;
-  }
-  if (!finalResult.bestApi) {
-    console.log("❌❌❌ No best API found ❌❌❌");
-    return;
-  }
+  for (const testCase of testCases) {
+    console.log(`\n\nProcessing query: "${testCase.query}"\n`);
 
-  // Validate the selected endpoint
-  if (finalResult.bestApi.api_url === testCase.expectedEndpoint) {
-    console.log("✅✅✅ Selected API endpoint is valid ✅✅✅");
-  } else {
-    console.log("❌❌❌ Selected API endpoint is not valid ❌❌❌");
-    console.log(`Expected: ${testCase.expectedEndpoint}, Got: ${finalResult.bestApi.api_url}`);
-  }
+    const stream = await app.stream({
+      llm,
+      query: testCase.query,
+    });
 
-  // Log the selected API
-  console.log("Selected API:", finalResult.bestApi);
-
-  if (finalResult.response) {
-    console.log("---FETCH RESULT---");
-    
-    // Format and display the trending tracks
-    if (finalResult.bestApi.api_name === "Get Trending Tracks") {
-      const formattedTracks = formatTrendingTracks(finalResult.response);
-      console.log(formattedTracks);
-    } else {
-      // For other API responses, just log the raw JSON
-      console.log(JSON.stringify(finalResult.response, null, 2));
-    }
-
-    // Validate the response using the appropriate validator
-    const validator = apiValidators[finalResult.bestApi.api_name];
-    if (validator) {
-      if (validator.validate(finalResult.response)) {
-        console.log("✅✅✅ " + validator.successMessage(finalResult.response));
+    let finalResult: GraphState | null = null;
+    for await (const event of stream) {
+      console.log("\n------\n");
+      if (Object.keys(event)[0] === "execute_request_node") {
+        console.log("---FINISHED---");
+        finalResult = event.execute_request_node;
       } else {
-        console.log("❌❌❌ " + validator.failureMessage);
+        console.log("Stream event: ", Object.keys(event)[0]);
+        console.log("Value(s): ", Object.values(event)[0]);
       }
     }
-  } else {
-    console.log("❌❌❌ API call failed ❌❌❌");
+
+    if (!finalResult) {
+      console.log("❌❌❌ No final result obtained ❌❌❌");
+      return;
+    }
+    if (!finalResult.bestApi) {
+      console.log("❌❌❌ No best API found ❌❌❌");
+      return;
+    }
+
+    // Validate the selected endpoint
+    if (finalResult.bestApi.api_url === testCase.expectedEndpoint) {
+      console.log("✅✅✅ Selected API endpoint is valid ✅✅✅");
+    } else {
+      console.log("❌❌ Selected API endpoint is not valid ❌❌❌");
+      console.log(`Expected: ${testCase.expectedEndpoint}, Got: ${finalResult.bestApi.api_url}`);
+    }
+
+    // Log the selected API
+    console.log("Selected API:", finalResult.bestApi);
+
+    if (finalResult.response) {
+      console.log("---FETCH RESULT---");
+      
+      const formattedResult = formatTrackResults(finalResult.response, testCase.query);
+      console.log(formattedResult);
+
+      // Validate the response using the appropriate validator
+      const validator = apiValidators[finalResult.bestApi.api_name];
+      if (validator) {
+        if (validator.validate(finalResult.response)) {
+          console.log("✅✅✅ " + validator.successMessage(finalResult.response));
+        } else {
+          console.log("❌❌❌ " + validator.failureMessage);
+        }
+      } else {
+        console.log("⚠️⚠️⚠️ No validator found for this API");
+      }
+    } else {
+      console.log("❌❌❌ API call failed ❌❌❌");
+    }
   }
 }
 

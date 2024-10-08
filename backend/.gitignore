@@ -5,3 +5,4 @@ dist
 pdfs/**
 src/generated/**
 .env
+backend/testoutput.txt

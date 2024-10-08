@@ -20,10 +20,12 @@
   "author": "Brace Sproul",
   "license": "MIT",
   "dependencies": {
+    "@audius/sdk": "^6.0.1",
     "@langchain/community": "^0.2.9",
     "@langchain/core": "^0.2.6",
     "@langchain/langgraph": "^0.0.22",
     "@langchain/openai": "^0.1.2",
+    "audius": "^1.1.1",
     "langchain": "^0.2.5",
     "readline": "^1.3.0",
     "zod": "^3.22.4"
