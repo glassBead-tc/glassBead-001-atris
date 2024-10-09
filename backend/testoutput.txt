@@ -1384,7 +1384,7 @@ API response: {
         "480x480": "https://cn0.mainnet.audiusindex.org/content/01J9B8KGS1H4DZ4RPXHS333C31/480x480.jpg",
         "1000x1000": "https://cn0.mainnet.audiusindex.org/content/01J9B8KGS1H4DZ4RPXHS333C31/1000x1000.jpg"
       },
-      "description": "It starts with a lullaby,—gentle, coaxing, as if the night itself is singing you to sleep. \"NIGHTMARE\" whispers you into a false sense of calm, with each soft note a thread pulling you deeper into sleep. But as the music weaves its way through the silence, something shifts. The air grows heavy, and the sweetness of the lullaby unravels, twisting into something much more sinister. Will you get through this nightmare?   \n\n“NIGHTMARE” is available on all your favorite music streaming platforms. \n\nMix and Mastered by Seth Munson at OmniAudio\nhttps://omniaud.io/ ",
+      "description": "It starts with a lullaby,—gentle, coaxing, as if the night itself is singing you to sleep. \"NIGHTMARE\" whispers you into a false sense of calm, with each soft note a thread pulling you deeper into sleep. But as the music weaves its way through the silence, something shifts. The air grows heavy, and the sweetness of the lullaby unravels, twisting into something much more sinister. Will you get through this nightmare? \n\n“NIGHTMARE” is available on all your favorite music streaming platforms.\n\nMix and Mastered by Seth Munson at OmniAudio\nhttps://omniaud.io/",
       "genre": "Electronic",
       "id": "5j2JN2M",
       "track_cid": "baeaaaiqsecbyt2pujdjf6lqssksgzvbpfl2nnl4oldlubsmafs63m2w56fywg",

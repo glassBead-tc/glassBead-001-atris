@@ -129,7 +129,7 @@ export async function selectApi(state: GraphState): Promise<Partial<GraphState>>
     return { error: "No APIs available for selection" };
   }
 
-  console.log("Available APIs:", apis.map(api => api.api_name));
+  console.log("Available APIs count:", apis.length);
 
   if (!llm) {
     console.error("Language model (llm) is not initialized.");
@@ -173,7 +173,6 @@ export async function selectApi(state: GraphState): Promise<Partial<GraphState>>
       query,
       apis: apisWithScores.map(api => `${api.api_name}: ${api.api_description}`).join("\n"),
     });
-    console.log("Chain response:", response);
     const bestApi: DatasetSchema = JSON.parse(response);
 
     console.log("Selected API:", bestApi.api_name);

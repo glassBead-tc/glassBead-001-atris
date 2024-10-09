@@ -4,9 +4,9 @@ import { DatasetSchema, GraphState } from "../types.js";
 import { HIGH_LEVEL_CATEGORY_MAPPING, TRIMMED_CORPUS_PATH } from "../constants.js";
 
 export const getApis = async (state: GraphState): Promise<Partial<GraphState>> => {
-    console.log("getApis function called with state:", JSON.stringify(state, null, 2));
+    console.log("getApis function called with state.");
     const { categories } = state;
-    console.log("Input categories:", categories);
+    console.log("Input categories count:", categories!.length);
 
     if (!categories || categories.length === 0) {
         console.log("No categories provided, returning empty APIs array");
@@ -32,10 +32,10 @@ export const getApis = async (state: GraphState): Promise<Partial<GraphState>> =
         const apis = allData.endpoints
             .filter(api => highLevelCategories.has(api.category_name.toLowerCase()));
         console.log("Filtered APIs count:", apis.length);
-        console.log("Filtered APIs:", apis.map(api => ({ name: api.api_name, category: api.category_name })));
-
-        if (apis.length === 0) {
-            console.log("Warning: No APIs matched the given categories");
+        if (apis.length > 0) {
+            console.log("Filtered APIs found.");
+        } else {
+            console.log("No APIs matched the given categories.");
         }
 
         return { apis };

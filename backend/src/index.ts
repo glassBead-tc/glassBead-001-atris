@@ -99,7 +99,7 @@ async function main() {
   for (const testCase of testCases) {
     console.log(`Query: ${testCase.query}`);
     const answer = await generateAnswer(graph, testCase.query);
-    console.log(`Answer: ${answer}`);
+    console.log(`Generated answer for query: "${testCase.query}"`);
     console.log(`Expected Answer: ${testCase.expectedAnswer}`);
     console.log(`Expected Endpoint: ${testCase.expectedEndpoint}`);
     console.log("---");
@@ -108,9 +108,7 @@ async function main() {
 
 async function generateAnswer(app: ReturnType<typeof createGraph>, query: string): Promise<string> {
   try {
-    console.log("Generating answer for query:", query);
     const result = await app.invoke({ query });
-    console.log("App invoke result:", JSON.stringify(result, null, 2));
 
     if (!result) {
       console.log("No result returned from app.invoke");
@@ -122,7 +120,7 @@ async function generateAnswer(app: ReturnType<typeof createGraph>, query: string
       return `Unable to process the query: "${query}". No suitable APIs found. Categories: ${result.categories?.join(', ') || 'None'}`;
     }
 
-    console.log("Selected API:", result.bestApi?.api_name);
+    console.log("Selected API:", result.bestApi?.api_name || "None");
 
     // Here you would typically call createFetchRequest with the result
     // and then format the response into a human-readable answer

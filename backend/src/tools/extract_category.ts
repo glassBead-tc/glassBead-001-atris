@@ -48,7 +48,6 @@ export async function extractCategory(
   state: GraphState
 ): Promise<Partial<GraphState>> {
   console.log("Entering extractCategory function");
-  console.log("Initial state:", JSON.stringify(state, null, 2));
 
   const { llm, query } = state;
 
@@ -62,7 +61,6 @@ export async function extractCategory(
 
   console.log("Query:", query);
   console.log("LLM type:", typeof llm);
-  console.log("LLM methods:", Object.keys(llm));
 
   const prompt = ChatPromptTemplate.fromMessages([
     [
@@ -126,9 +124,7 @@ Here are all the high level categories, and every tool name that falls under the
     // The result should already be an array of categories
     const categories = JSON.parse(result);
 
-    console.log("LLM chain raw result:", result);
-
-    console.log("Extracted categories:", categories);
+    console.log("Extracted categories count:", categories.length);
     console.log("Returning categories:", categories);
     return {
       categories: categories,

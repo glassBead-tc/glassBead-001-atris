@@ -9,11 +9,9 @@ class AudiusApi {
     try {
       const url = `${BASE_URL}${endpoint}`;
       console.log('Request URL:', url);
-      console.log('Request Headers:', {
-        Accept: 'application/json',
-        'X-API-KEY': API_KEY,
-        'User-Agent': 'Atris'
-      });
+      // Remove request headers logging
+      console.log('API request initiated.');
+
       const response = await axios({
         method,
         url,
@@ -27,7 +25,7 @@ class AudiusApi {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error('API Error:', error.response?.data);
+        console.error('API Error occurred.');
         throw new Error(`API Error: ${error.response?.data?.message || error.message}`);
       }
       throw error;
@@ -38,7 +36,7 @@ class AudiusApi {
     try {
       console.log('Testing API connection...');
       const response = await this.request('GET', '/tracks/trending', { limit: 1 });
-      console.log('API response:', JSON.stringify(response, null, 2));
+      console.log('API request successful.');
       return response && response.data && response.data.length > 0;
     } catch (error) {
       console.error('Error testing API connection:', error);
@@ -80,14 +78,27 @@ class AudiusApi {
   }
 
   async getTopTrendingPlaylistTracks(limit: number = 5) {
-    const playlists = await this.getTopTrendingPlaylist(1);
-    if (playlists.data && playlists.data.length > 0) {
+    try {
+      const playlists = await this.getTopTrendingPlaylist(1);
+      if (!playlists.data || playlists.data.length === 0) {
+        console.error('No trending playlists found');
+        return null;
+      }
+
       const playlistId = playlists.data[0].id;
       const playlist = await this.getPlaylist(playlistId);
+
+      if (!playlist.data || !playlist.data.tracks) {
+        console.error('Playlist data or tracks not found');
+        return null;
+      }
+
       const tracks = playlist.data.tracks.slice(0, limit);
       return { playlist: playlist.data, tracks };
+    } catch (error) {
+      console.error('Error in getTopTrendingPlaylistTracks:', error);
+      return null;
     }
-    return null;
   }
 
   async getUser(userId: string) {

@@ -15,10 +15,7 @@ function checkCorpus() {
         const data = JSON.parse(fileContent);
         console.log("Data structure:", Object.keys(data));
         console.log("Number of endpoints:", data.endpoints?.length || 0);
-
-        if (data.endpoints && data.endpoints.length > 0) {
-            console.log("Sample endpoint:", JSON.stringify(data.endpoints[0], null, 2));
-        }
+        // Remove the sample endpoint log
     } catch (error) {
         console.error("Error checking corpus:", error);
     }
