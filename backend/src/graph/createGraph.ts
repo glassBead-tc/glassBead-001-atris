@@ -13,31 +13,39 @@ export function createGraph(llm: ChatOpenAI<ChatOpenAICallOptions>) {
     channels: {
       llm: { 
         default: () => llm,
-        reducer: (_current: ChatOpenAI<ChatOpenAICallOptions> | null, newVal: ChatOpenAI<ChatOpenAICallOptions> | null) => newVal ?? null
+        reducer: (current: ChatOpenAI<ChatOpenAICallOptions>, newVal: ChatOpenAI<ChatOpenAICallOptions>) => newVal || current
       },
       query: { 
-        default: () => null,
-        reducer: (_current: string | null, newVal: string | null) => newVal ?? null
+        default: () => "",
+        reducer: (current: string, newVal: string) => newVal || current
       },
       categories: { 
-        default: () => null,
-        reducer: (_current: string[] | null, newVal: string[] | null) => newVal ?? null
+        default: () => [],
+        reducer: (current: string[], newVal: string[]) => newVal.length > 0 ? newVal : current
       },
       apis: { 
-        default: () => null,
-        reducer: (_current: DatasetSchema[] | null, newVal: DatasetSchema[] | null) => newVal ?? null
+        default: () => [],
+        reducer: (current: DatasetSchema[], newVal: DatasetSchema[]) => newVal.length > 0 ? newVal : current
       },
       bestApi: { 
-        default: () => null,
-        reducer: (_current: DatasetSchema | null, newVal: DatasetSchema | null) => newVal ?? null
+        default: () => ({ parameters: {} } as DatasetSchema & { parameters: Record<string, any> }),
+        reducer: (
+          current: (DatasetSchema & { parameters: Record<string, any> }) | undefined, 
+          newVal: (DatasetSchema & { parameters: Record<string, any> }) | undefined
+        ): DatasetSchema & { parameters: Record<string, any> } | undefined => {
+          if (newVal?.api_name) {
+            return newVal;
+          }
+          return current ?? ({ parameters: {} } as DatasetSchema & { parameters: Record<string, any> });
+        }
       },
       params: { 
-        default: () => null,
-        reducer: (_current: Record<string, string> | null, newVal: Record<string, string> | null) => newVal ?? null
+        default: () => ({}),
+        reducer: (current: Record<string, string>, newVal: Record<string, string>) => Object.keys(newVal).length > 0 ? newVal : current
       },
       response: { 
-        default: () => null,
-        reducer: (_current: any | null, newVal: any | null) => newVal ?? null
+        default: () => ({}),
+        reducer: (current: any, newVal: any) => newVal !== null && newVal !== undefined ? newVal : current
       },
     },
   });

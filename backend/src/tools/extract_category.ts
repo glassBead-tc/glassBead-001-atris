@@ -1,6 +1,7 @@
 import { StructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { RunnableFunc } from "@langchain/core/runnables";
 import { GraphState, DatasetSchema } from "../types.js";
 import { HIGH_LEVEL_CATEGORY_MAPPING, TRIMMED_CORPUS_PATH } from "../constants.js";
 
@@ -55,7 +56,7 @@ export async function extractCategory(
     console.error("LLM is not initialized in the GraphState");
     return {
       error: "LLM is not initialized in the GraphState",
-      categories: null,
+      // categories: null,
     };
   }
 
@@ -133,7 +134,7 @@ Here are all the high level categories, and every tool name that falls under the
   } else {
     return {
       error: "LLM is not properly initialized or doesn't have the expected methods",
-      categories: null,
+      // categories: null,
     };
   }
 }

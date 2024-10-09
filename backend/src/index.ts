@@ -2,6 +2,8 @@ import { ChatOpenAI } from "@langchain/openai";
 import { createGraph } from "./graph/createGraph.js";
 import { globalAudiusApi } from "./tools/create_fetch_request.js";
 import { GraphState } from "./types.js";
+import { selectApi } from "./tools/select_api.js";
+import { CompiledStateGraph } from "@langchain/langgraph";
 
 // Define interfaces for the API response structures
 interface Track {
@@ -17,6 +19,14 @@ interface Playlist {
     name: string;
   };
 }
+
+// Function to extract user handle from the query
+function extractUserHandle(query: string): string | null {
+    const match = query.match(/(?:how many followers does )(\w+)(?: have on audius\?)/i);
+    return match ? match[1] : null; // Return the user handle if found
+}
+
+const userHandle = "deadmau5"; // Ensure this is defined correctly
 
 async function setupTestCases() {
   let trendingTracksAnswer = "Unable to fetch trending tracks";
@@ -39,7 +49,8 @@ async function setupTestCases() {
       trendingPlaylistsAnswer = `"${trendingPlaylists.playlist.playlist_name}" by ${trendingPlaylists.playlist.user.name}. Tracks: ${trackList}`;
     }
 
-    const targetFollowersByHandle = await globalAudiusApi.getUserByHandle("deadmau5");
+    // When making the API call, ensure the userHandle is included in the endpoint
+    const targetFollowersByHandle = await globalAudiusApi.getUserByHandle(userHandle);
     if (targetFollowersByHandle.data && targetFollowersByHandle.data.follower_count) {
       followersAnswer = targetFollowersByHandle.data.follower_count.toString();
     }
@@ -56,7 +67,7 @@ async function setupTestCases() {
     {
       query: "How many followers does Deadmau5 have on Audius?",
       expectedAnswer: `Deadmau5 has ${followersAnswer} followers on Audius.`,
-      expectedEndpoint: "/users/handle"
+      expectedEndpoint: `/users/handle/${userHandle}` // Now this works
     },
     {
       query: "What's the top trending playlist on Audius this week?",
@@ -72,7 +83,7 @@ async function main() {
     temperature: 0,
   });
 
-  const graph = createGraph(llm);
+  const graph: CompiledStateGraph<GraphState, Partial<GraphState>, "__start__"> = createGraph(llm);
 
   try {
     const isConnected = await globalAudiusApi.testConnection();
@@ -106,31 +117,82 @@ async function main() {
   }
 }
 
-async function generateAnswer(app: ReturnType<typeof createGraph>, query: string): Promise<string> {
-  try {
-    const result = await app.invoke({ query });
+async function generateAnswer(app: CompiledStateGraph<GraphState, Partial<GraphState>, "__start__">, query: string): Promise<string> {
+    try {
+        // Create a GraphState object
+        const state: GraphState = {
+            query,
+            apis: [], // We'll populate this later
+            llm: getLlmValue(app), // Use a helper function to safely get 'llm'
+            categories: [],
+            params: {},
+            response: undefined,
+            error: undefined
+        };
 
-    if (!result) {
-      console.log("No result returned from app.invoke");
-      return `Unable to process the query: "${query}". No result returned.`;
+        // Populate the APIs
+        const apisChannel = getApisValue(app); // Use a helper function to safely get 'apis' channel
+        if (apisChannel && 'value' in apisChannel) {
+            state.apis = apisChannel.value;
+        } else {
+            console.error("Unable to find APIs in the graph structure");
+            return `Unable to process the query: "${query}". APIs not found.`;
+        }
+
+        // Call selectApi with the GraphState
+        const result = await selectApi(state);
+
+        console.log("Raw API selection result:", JSON.stringify(result));
+
+        if (result.error) {
+            console.error("Error selecting API:", result.error);
+            return `Unable to process the query: "${query}". ${result.error}`;
+        }
+
+        if (!result.bestApi) {
+            console.log("No suitable API found");
+            return `Unable to process the query: "${query}". No suitable API found.`;
+        }
+
+        const selectedApi = result.bestApi;
+        console.log("Selected API:", selectedApi.api_name);
+
+        // Here you would typically call the selected API with the provided parameters
+        // and then format the response into a human-readable answer
+        // For now, we'll just return a placeholder response
+        return `Processed query: "${query}" using API: "${selectedApi.api_name}". ${selectedApi.api_description}`;
+
+    } catch (error) {
+        console.error("Error in generateAnswer:", error);
+        return `An error occurred while processing your query: "${query}". Please try again.`;
     }
+}
 
-    if (!result.apis || result.apis.length === 0) {
-      console.log("No APIs found. Categories:", result.categories);
-      return `Unable to process the query: "${query}". No suitable APIs found. Categories: ${result.categories?.join(', ') || 'None'}`;
+// Helper function to safely get the 'llm' value
+function getLlmValue(graph: CompiledStateGraph<GraphState, Partial<GraphState>, "__start__">): any {
+    if (graph.builder && graph.builder.channels && 'llm' in graph.builder.channels) {
+        return graph.builder.channels.llm;
     }
+    throw new Error("Llm channel not found in the graph structure");
+}
 
-    console.log("Selected API:", result.bestApi?.api_name || "None");
+// Helper function to safely get the 'apis' channel
+function getApisValue(graph: CompiledStateGraph<GraphState, Partial<GraphState>, "__start__">): any {
+    if (graph.builder && graph.builder.channels && 'apis' in graph.builder.channels) {
+        return graph.builder.channels.apis;
+    }
+    throw new Error("Apis channel not found in the graph structure");
 
-    // Here you would typically call createFetchRequest with the result
-    // and then format the response into a human-readable answer
-    // For now, we'll return a placeholder
-    return `Processed query: "${query}" using API: ${result.bestApi?.api_name}. (Implement actual answer generation here)`;
+}
 
-  } catch (error) {
-    console.error("Error in generateAnswer:", error);
-    return `An error occurred while processing your query: "${query}". Please try again or rephrase your question. Error details: ${error instanceof Error ? error.message : String(error)}`;
-  }
+// Example validation function
+function isValidApiOutput(output: any): boolean {
+    return (
+        output &&
+        typeof output.api === 'string' &&
+        typeof output.parameters === 'object' &&
+        typeof output.description === 'string'
+    );
 }
 
 main().catch(console.error);

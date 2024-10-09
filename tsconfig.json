@@ -15,6 +15,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUnusedParameters": true,
     "useDefineForClassFields": true,
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "strict": true
   },
 }

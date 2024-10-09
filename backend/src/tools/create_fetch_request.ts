@@ -58,7 +58,8 @@ class AudiusApi {
   }
 
   async getUserByHandle(handle: string) {
-    return this.request('GET', '/users/handle', { handle });
+    const response = await this.request('GET', `/users/handle/${handle}`, { handle });
+    return response;
   }
 
   async searchTracks(query: string, limit: number = 10) {

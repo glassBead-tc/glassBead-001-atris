@@ -1,4 +1,5 @@
 import { ChatOpenAI } from "@langchain/openai";
+import { ChatOpenAICallOptions } from "@langchain/openai";
 
 export type DatasetParameters = {
   name: string;
@@ -34,14 +35,14 @@ export interface ApiEndpoint {
 }
 
 export interface GraphState {
-  llm: ChatOpenAI | null;
-  query: string | null;
-  categories: string[] | null;
-  apis: any[] | null;
-  bestApi: any | null;
-  params: any | null;
-  response: any | null;
-  error?: string; // Added error property
+  query: string;
+  apis: DatasetSchema[];
+  llm: ChatOpenAI<ChatOpenAICallOptions>;
+  categories: string[];
+  bestApi?: DatasetSchema & { parameters: Record<string, any> };
+  params: Record<string, any>;
+  response?: any;
+  error?: string; // Make 'error' optional
 }
 
 export type FetchResult = {
