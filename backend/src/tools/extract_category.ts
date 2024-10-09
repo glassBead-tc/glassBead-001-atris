@@ -51,6 +51,13 @@ export async function extractCategory(
 ): Promise<Partial<GraphState>> {
   const { llm, query } = state;
 
+  if (!llm) {
+    return {
+      error: "LLM is not initialized in the GraphState",
+      categories: null,
+    };
+  }
+
   const prompt = ChatPromptTemplate.fromMessages([
     [
       "system",
@@ -66,50 +73,58 @@ Here are all the high level categories, and every tool name that falls under the
   ]);
 
   const tool = new ExtractHighLevelCategories();
-  const modelWithTools = llm.withStructuredOutput(tool);
-  const chain = prompt.pipe(modelWithTools).pipe(tool);
-
-  const allApisData: { endpoints: DatasetSchema[] } = JSON.parse(
-    fs.readFileSync(TRIMMED_CORPUS_PATH, "utf-8")
-  );
   
-  if (!allApisData || !Array.isArray(allApisData.endpoints)) {
-    throw new Error("Expected an object with an 'endpoints' array");
+  if (llm && typeof llm.withStructuredOutput === 'function') {
+    const modelWithTools = llm.withStructuredOutput(tool);
+    const chain = prompt.pipe(modelWithTools).pipe(tool);
+
+    const allApisData: { endpoints: DatasetSchema[] } = JSON.parse(
+      fs.readFileSync(TRIMMED_CORPUS_PATH, "utf-8")
+    );
+    
+    if (!allApisData || !Array.isArray(allApisData.endpoints)) {
+      throw new Error("Expected an object with an 'endpoints' array");
+    }
+
+    const allApis: DatasetSchema[] = allApisData.endpoints;
+
+    const categoriesAndTools = Object.entries(HIGH_LEVEL_CATEGORY_MAPPING)
+      .map(([high]) => {
+        const allTools = allApis.filter((api) => 
+          api.category_name.toLowerCase() === high.toLowerCase()
+        );
+        return `High Level Category: ${high}\nTools:\n${allTools
+          .map((item) => `Name: ${item.tool_name}`)
+          .join("\n")}`;
+      })
+      .join("\n\n");
+
+    // Format the prompt with the necessary input
+    const formattedPrompt = await prompt.format({
+      categoriesAndTools,
+      query
+    });
+
+    // Use the chain instead of directly invoking the LLM
+    const result = await chain.invoke({
+      query,
+      categoriesAndTools
+    });
+
+    // The result should already be an array of categories
+    const categories = JSON.parse(result);
+
+    // Return the categories as part of the state update
+    return {
+      categories: categories,
+      // Make sure to include any other state properties that this function might modify
+    };
+  } else {
+    return {
+      error: "LLM is not properly initialized or doesn't have the expected methods",
+      categories: null,
+    };
   }
-
-  const allApis: DatasetSchema[] = allApisData.endpoints;
-
-  const categoriesAndTools = Object.entries(HIGH_LEVEL_CATEGORY_MAPPING)
-    .map(([high]) => {
-      const allTools = allApis.filter((api) => 
-        api.category_name.toLowerCase() === high.toLowerCase()
-      );
-      return `High Level Category: ${high}\nTools:\n${allTools
-        .map((item) => `Name: ${item.tool_name}`)
-        .join("\n")}`;
-    })
-    .join("\n\n");
-
-  // Format the prompt with the necessary input
-  const formattedPrompt = await prompt.format({
-    categoriesAndTools,
-    query
-  });
-
-  // Use the chain instead of directly invoking the LLM
-  const result = await chain.invoke({
-    query,
-    categoriesAndTools
-  });
-
-  // The result should already be an array of categories
-  const categories = JSON.parse(result);
-
-  // Return the categories as part of the state update
-  return {
-    categories: categories,
-    // Make sure to include any other state properties that this function might modify
-  };
 }
 
 function parseCategories(content: string): string[] {

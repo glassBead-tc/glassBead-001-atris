@@ -1,8 +1,6 @@
 import { logger } from '../logger.js';
 import { GraphState } from '../types.js';
-import { AudiusApi } from '../tools/create_fetch_request.js';  
-
-const audiusApi = new AudiusApi(); // Create an instance of AudiusApi
+import { globalAudiusApi } from '../tools/create_fetch_request.js';
 
 export const extractParameters = async (state: GraphState): Promise<Partial<GraphState>> => {
   const { query, bestApi } = state;
@@ -22,13 +20,13 @@ export const extractParameters = async (state: GraphState): Promise<Partial<Grap
       if (userNameMatch) {
         const userName = userNameMatch[1];
         
-        const searchResult = await audiusApi.searchUsers({ query: userName });
+        const searchResult = await globalAudiusApi.searchUsers(userName);
         if (searchResult && searchResult.data && searchResult.data.length > 0) {
           const userId = searchResult.data[0].id;
           params.user_id = userId;
           
           // Fetch full user details
-          const userDetails = await audiusApi.getUser(userId);
+          const userDetails = await globalAudiusApi.getUser(userId);
           if (userDetails && userDetails.data) {
             fullUserDetails = userDetails.data;
           }
@@ -43,7 +41,7 @@ export const extractParameters = async (state: GraphState): Promise<Partial<Grap
       if (trackNameMatch) {
         const trackName = trackNameMatch[1];
         
-        const searchResult = await audiusApi.searchTracks(trackName);
+        const searchResult = await globalAudiusApi.searchTracks(trackName);
         if (searchResult && searchResult.data && searchResult.data.length > 0) {
           const exactMatch = searchResult.data.find((track: any) => 
             track.title.toLowerCase() === trackName.toLowerCase()

@@ -37,7 +37,7 @@ export type GraphState = {
   /**
    * The LLM to use for the graph
    */
-  llm: ChatOpenAI; 
+  llm: ChatOpenAI | null; 
   /**
    * The query to extract an API for
    */

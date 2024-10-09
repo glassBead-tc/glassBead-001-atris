@@ -10,7 +10,8 @@ export const HIGH_LEVEL_CATEGORY_MAPPING = {
   ],
   Users: [
     "Get User",
-    "Search Users"
+    "Search Users",
+    "Get User By Handle"
   ],
   Playlists: [
     "Get Playlist",

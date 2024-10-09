@@ -3,7 +3,6 @@ import { z } from "zod";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { ApiEndpoint, GraphState, DatasetSchema, DatasetParameters } from "../types.js";
 import { KeywordAwareness } from "./keyword_awareness.js";
-import { logger, redactSensitiveInfo } from '../logger.js';
 
 // New interface to bridge DatasetSchema and ApiEndpoint
 interface BridgeApiEndpoint extends Omit<ApiEndpoint, 'required_parameters' | 'optional_parameters'> {
@@ -67,9 +66,9 @@ export class SelectAPITool extends StructuredTool {
 }
 
 export async function selectApi(state: GraphState): Promise<Partial<GraphState>> {
-  const { llm, query, apis } = state;
+  const { query, apis, llm } = state;
   if (apis === null || apis.length === 0) {
-    logger.error("No APIs passed to select_api_node");
+    // logger.error("No APIs passed to select_api_node");
     throw new Error("No APIs passed to select_api_node");
   }
 
@@ -107,7 +106,7 @@ Additionally, consider the keyword relevance scores provided for each API.`,
     api_description: `${api.api_description} (Relevance Score: ${api.relevanceScore})`
   }));
 
-  const modelWithTools = llm.withStructuredOutput(tool);
+  const modelWithTools = llm!.withStructuredOutput(tool);
 
   const chain = prompt.pipe(modelWithTools).pipe(tool);
 

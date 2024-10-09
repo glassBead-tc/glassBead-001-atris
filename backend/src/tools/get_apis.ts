@@ -1,22 +1,39 @@
+import fs from "fs";
+import path from "path";
 import { DatasetSchema, GraphState } from "../types.js";
 import { HIGH_LEVEL_CATEGORY_MAPPING, TRIMMED_CORPUS_PATH } from "../constants.js";
-import { logger } from "../logger.js";
-import fs from "fs";
 
 export const getApis = async (state: GraphState): Promise<Partial<GraphState>> => {
     const { categories } = state;
-    const allData: { endpoints: DatasetSchema[] } = JSON.parse(fs.readFileSync(TRIMMED_CORPUS_PATH, "utf-8"));
-    
-    const apis = Array.from(new Set(allData.endpoints.filter((api) => 
-      categories!.some((category) => 
-        Object.entries(HIGH_LEVEL_CATEGORY_MAPPING).some(([high, low]) => 
-          low.includes(category) && api.category_name.toLowerCase() === high.toLowerCase()
-        )
-      )
-    ).map(api => api.api_name))).map(apiName => 
-      allData.endpoints.find(api => api.api_name === apiName)!
-    );
-  
-    logger.debug(`Found ${apis.length} unique APIs for categories: ${categories!.join(', ')}`);
-    return { apis };
-  };
+    console.log("Input categories:", categories);
+
+    if (!categories || categories.length === 0) {
+        console.log("No categories provided");
+        return { apis: [] };
+    }
+
+    try {
+        const allData: { endpoints: DatasetSchema[] } = JSON.parse(fs.readFileSync(TRIMMED_CORPUS_PATH, "utf-8"));
+        console.log("Loaded data endpoints count:", allData.endpoints.length);
+        
+        const categorySet = new Set(categories);
+        console.log("Category set:", Array.from(categorySet));
+
+        const highLevelCategories = new Set(
+            Object.entries(HIGH_LEVEL_CATEGORY_MAPPING)
+                .filter(([_, low]) => low.some(cat => categorySet.has(cat)))
+                .map(([high, _]) => high.toLowerCase())
+        );
+        console.log("High level categories:", Array.from(highLevelCategories));
+
+        const apis = allData.endpoints
+            .filter(api => highLevelCategories.has(api.category_name.toLowerCase()));
+        console.log("Filtered APIs count:", apis.length);
+        console.log("Filtered APIs:", apis.map(api => api.api_name));
+
+        return { apis };
+    } catch (error) {
+        console.error("Error in getApis:", error);
+        return { apis: [], error: "Failed to fetch APIs" };
+    }
+};

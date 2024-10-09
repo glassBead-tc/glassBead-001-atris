@@ -1,6 +1,6 @@
-import { audiusApi, AudiusApi } from '../tools/create_fetch_request.js';
+import { globalAudiusApi } from '../tools/create_fetch_request.js';
 import { Track, User } from '../types.js'; // Adjust this import based on your actual types file location
-import stringSimilarity from 'string-similarity';
+
 
 export function parseQuery(query: string): { title: string | null, artist: string | null } {
   const genrePattern = /What genre is "(.*?)" by (.*?)\?/i;
@@ -20,11 +20,10 @@ export function parseQuery(query: string): { title: string | null, artist: strin
 }
 
 export async function searchTracks(query: string) {
-  const audiusApi = new AudiusApi();
   console.log(`Searching for tracks with query: "${query}"`);
 
   try {
-    const searchResults = await audiusApi.searchTracks(query);
+    const searchResults = await globalAudiusApi.searchTracks(query);
     console.log(`Raw API response:`, JSON.stringify(searchResults, null, 2));
 
     if (searchResults && Array.isArray(searchResults.data) && searchResults.data.length > 0) {
@@ -47,7 +46,7 @@ export function scoreTrackMatch(track: Track, title: string, artist: string | nu
   }
 
 export async function searchUsers(query: string): Promise<User[]> {
-    const response = await audiusApi.searchUsers({ query });
+    const response = await globalAudiusApi.searchUsers(query);
     return response.data.sort((a: User, b: User) => {
       const aScore = scoreUserMatch(a, query);
       const bScore = scoreUserMatch(b, query);

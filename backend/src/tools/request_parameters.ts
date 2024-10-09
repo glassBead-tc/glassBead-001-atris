@@ -23,7 +23,7 @@ export function readUserInput(
     .join("\n----\n");
   const question = `LangTool couldn't find all the required params for the API.\nMissing params:\n${missingParamsString}\nPlease provide the missing params in the following format:\n${paramsFormat}\n`;
 
-  logger.debug("Requesting user input for missing params:", missingParams);
+  // logger.debug("Requesting user input for missing params:", missingParams);
   return new Promise((resolve) => {
     rl.question(question, (answer) => {
       rl.close();

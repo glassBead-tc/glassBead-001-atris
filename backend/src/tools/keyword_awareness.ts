@@ -1,5 +1,4 @@
 import { ApiEndpoint } from '../types.js';
-import { logger } from '../logger.js';
 
 interface KeywordPattern {
   pattern: RegExp;
@@ -68,7 +67,7 @@ export class KeywordAwareness {
       }
     }
 
-    logger.debug(`Relevance score for ${api.api_name}: ${relevance}`);
+    // logger.debug(`Relevance score for ${api.api_name}: ${relevance}`);
     return relevance;
   }
 

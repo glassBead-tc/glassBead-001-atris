@@ -436,13 +436,13 @@
         "id": "15",
         "category_name": "Users",
         "tool_name": "Audius API",
-        "api_name": "Get User",
-        "api_description": "Get a user",
+        "api_name": "Get User By Handle",
+        "api_description": "Get a user by their artist handle.",
         "required_parameters": [
           {
-            "name": "user_id",
+            "name": "handle",
             "type": "string",
-            "description": "A User ID",
+            "description": "A user handle",
             "default": ""
           }
         ],

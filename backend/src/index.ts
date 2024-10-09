@@ -1,68 +1,100 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { createGraph } from "./graph/createGraph.js";
-import { formatSearchTracks, formatUserInfo, formatPlaylistInfo, formatTrendingTracks, formatTrackResults, formatTrendingPlaylists } from "./utils/formatResults.js";
-import { searchTracks } from "./utils/searchUtils.js";
-import { extractSearchQuery } from "./extractionUtils.js";
-import { audiusApi } from "./tools/create_fetch_request.js";
-import { Track } from "./types.js"
+import { globalAudiusApi } from "./tools/create_fetch_request.js";
+
+// Define interfaces for the API response structures
+interface Track {
+  title: string;
+  user: {
+    name: string;
+  };
+}
+
+interface Playlist {
+  playlist_name: string;
+  user: {
+    name: string;
+  };
+}
 
 async function setupTestCases() {
-  interface TrendingTrack {
-    title: string;
-    artist: string;
-  }
-
-  const trendingTracks = await audiusApi.getTopTrendingTracks(3);
-  const trendingTracksAnswer = trendingTracks.map((track: TrendingTrack, index: number) => 
-    `${index + 1}. "${track.title}" by ${track.artist}`
-  ).join('\n');
-
-  const trendingPlaylists = await audiusApi.getTopTrendingPlaylistTracks(1, 3);
+  let trendingTracksAnswer = "Unable to fetch trending tracks";
   let trendingPlaylistsAnswer = "No playlist information available";
+  let followersAnswer = "Unable to fetch follower count";
 
-  if (trendingPlaylists && trendingPlaylists.playlist && trendingPlaylists.tracks) {
-    const trackList = trendingPlaylists.tracks.map((track: { title: string; artist: string }) => 
-      `${track.title} by ${track.artist}`
-    ).join(', ');
-    trendingPlaylistsAnswer = `"${trendingPlaylists.playlist.name}" by ${trendingPlaylists.playlist.user}. Tracks: ${trackList}`;
+  try {
+    const trendingTracks = await globalAudiusApi.getTrendingTracks(3);
+    if (trendingTracks.data && Array.isArray(trendingTracks.data)) {
+      trendingTracksAnswer = trendingTracks.data.map((track: Track, index: number) => 
+        `${index + 1}. "${track.title}" by ${track.user.name}`
+      ).join('\n');
+    }
+
+    const trendingPlaylists = await globalAudiusApi.getTopTrendingPlaylistTracks(3);
+    if (trendingPlaylists && trendingPlaylists.playlist && trendingPlaylists.tracks) {
+      const trackList = trendingPlaylists.tracks.map((track: Track) => 
+        `${track.title} by ${track.user.name}`
+      ).join(', ');
+      trendingPlaylistsAnswer = `"${trendingPlaylists.playlist.playlist_name}" by ${trendingPlaylists.playlist.user.name}. Tracks: ${trackList}`;
+    }
+
+    const targetFollowersByHandle = await globalAudiusApi.getUserByHandle("deadmau5");
+    if (targetFollowersByHandle.data && targetFollowersByHandle.data.follower_count) {
+      followersAnswer = targetFollowersByHandle.data.follower_count.toString();
+    }
+  } catch (error) {
+    console.error("Error setting up test cases:", error);
   }
 
   return [
     {
-      query: "What is the genre of What You Want (instrumental) by TRICK CHENEY?",
-      expectedEndpoint: "/v1/tracks/search",
-      expectedAnswer: "The genre of 'What You Want (instrumental)' by TRICK CHENEY is Downtempo."
+      query: "What are the top 3 trending tracks on Audius right now?",
+      expectedAnswer: `The top 3 trending tracks on Audius right now are:\n${trendingTracksAnswer}`,
+      expectedEndpoint: "/tracks/trending"
     },
     {
-      query: "Who are the top 3 trending tracks this week?",
-      expectedEndpoint: "/v1/tracks/trending",
-      expectedAnswer: `The top 3 trending tracks this week are:\n${trendingTracksAnswer}`
+      query: "How many followers does Deadmau5 have on Audius?",
+      expectedAnswer: `Deadmau5 has ${followersAnswer} followers on Audius.`,
+      expectedEndpoint: "/users/handle"
     },
     {
-      query: "What's the most played track by Skrillex?",
-      expectedEndpoint: "/v1/tracks/search",
-      expectedAnswer: "The most-played track by Skrillex is Kliptown Empyrean."
-    },
-    {
-      query: "What is the top trending playlist this week?",
-      expectedEndpoint: "/v1/playlists/trending",
-      expectedAnswer: `The top trending playlist on Audius this week is:
-1. "${trendingPlaylists!.playlist.name}" by ${trendingPlaylists!.playlist.user}. Here are some tracks on it:
-   ${trendingPlaylists!.tracks.map((track: { title: string; artist: string }) => `${track.title} by ${track.artist}`).join(', ')}`
+      query: "What's the top trending playlist on Audius this week?",
+      expectedAnswer: trendingPlaylistsAnswer,
+      expectedEndpoint: "/playlists/trending"
     }
   ];
 }
 
-async function main() {
+export async function main() {
+  try {
+    const isConnected = await globalAudiusApi.testConnection();
+    if (isConnected) {
+      console.log('API connection successful. Proceeding with the application.');
+    } else {
+      console.error('Failed to connect to the Audius API. Please check your API key and network connection.');
+      return;
+    }
+  } catch (error) {
+    console.error('Error while testing API connection:', error);
+    console.error('Please check your API key and network connection.');
+    return;
+  }
+
   const app = createGraph();
   const llm = new ChatOpenAI({
     modelName: "gpt-4-turbo-preview",
     temperature: 0,
   });
 
-  const testQueries = await setupTestCases();
+  let testCases;
+  try {
+    testCases = await setupTestCases();
+  } catch (error) {
+    console.error("Error setting up test cases:", error);
+    return;
+  }
 
-  for (const testCase of testQueries) {
+  for (const testCase of testCases) {
     console.log(`Query: ${testCase.query}`);
     const answer = await generateAnswer(app, llm, testCase.query);
     console.log(`Answer: ${answer}`);
@@ -72,57 +104,29 @@ async function main() {
   }
 }
 
-async function generateAnswer(app: any, llm: ChatOpenAI, query: string): Promise<string> {
+async function generateAnswer(app: any, llm: any, query: string): Promise<string> {
   try {
-    const result = await app.invoke({
-      llm,
-      query: query,
-    });
+    console.log("Generating answer for query:", query);
+    const result = await app.invoke({ query });
+    console.log("App invoke result:", JSON.stringify(result, null, 2));
 
-    console.log("API Response:", JSON.stringify(result, null, 2));
-
-    const apiName = result.bestApi?.api_name;
-    console.log("Selected API:", apiName);
-
-    if (apiName === 'Search Tracks' || apiName === 'Get Track') {
-      const { track, artist } = extractSearchQuery(query);
-      console.log(`Extracted track: "${track}", artist: "${artist}"`);
-      
-      let tracks = await searchTracks(artist);
-      
-      if (tracks.length === 0) {
-        return `I couldn't find any tracks by ${artist} on Audius.`;
-      }
-
-      // Sort tracks by play count in descending order
-      tracks.sort((a: Track, b: Track) => (b.play_count || 0) - (a.play_count || 0));
-
-      if (query.toLowerCase().includes("most played")) {
-        const mostPlayedTrack = tracks[0];
-        return `The most-played track by ${artist} is "${mostPlayedTrack.title}" with ${mostPlayedTrack.play_count} plays.`;
-      }
-      
-      return formatSearchTracks(tracks, `${track} by ${artist}`);
+    if (!result) {
+      console.log("No result returned from app.invoke");
+      return `Unable to process the query: "${query}". No result returned.`;
     }
 
-    if (apiName === 'Get Trending Tracks') {
-      const trendingTracks = await audiusApi.getTrendingTracks({ limit: 3 });
-      return formatTrendingTracks(trendingTracks.data);
+    if (!result.apis || result.apis.length === 0) {
+      console.log("No APIs found. Categories:", result.categories);
+      return `Unable to process the query: "${query}". No suitable APIs found. Categories: ${result.categories?.join(', ') || 'None'}`;
     }
 
-    if (apiName === 'Get Trending Playlists' || apiName === 'Get Trending Playlist Tracks') {
-      if (result.response && result.response.name) {
-        return `The top trending playlist on Audius this week is:
-1. "${result.response.name}" by ${result.response.user}. Here are some tracks on it:
-   ${result.response.tracks}`;
-      } else {
-        return "Unable to fetch trending playlists at the moment.";
-      }
-    }
+    console.log("Selected API:", result.bestApi?.api_name);
 
-    // Handle other API cases here...
+    // Here you would typically call createFetchRequest with the result
+    // and then format the response into a human-readable answer
+    // For now, we'll return a placeholder
+    return `Processed query: "${query}" using API: ${result.bestApi?.api_name}. (Implement actual answer generation here)`;
 
-    return `Unable to process the response for your query: "${query}"`;
   } catch (error) {
     console.error("Error in generateAnswer:", error);
     return `An error occurred while processing your query: "${query}". Please try again or rephrase your question. Error details: ${error instanceof Error ? error.message : String(error)}`;

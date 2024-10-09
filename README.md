@@ -30,3 +30,4 @@ To run the project locally, follow these steps:
 - Implement caching mechanisms for frequently requested data.
 - Address the deprecation warning for the `punycode` module.
 - Expand the test suite to cover more edge cases and ensure consistent output.
+
