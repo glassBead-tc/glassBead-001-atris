@@ -28,7 +28,7 @@ API response: {
       "remix_of": {
         "tracks": null
       },
-      "repost_count": 20,
+      "repost_count": 22,
       "favorite_count": 36,
       "comment_count": 0,
       "tags": "",
@@ -42,7 +42,7 @@ API response: {
           "2000x": "https://audius-content-16.cultur3stake.com/content/QmVfZxDKG6uG8J5m6hnaD81dypL3tbDMEyLg4X8o9DbB8G/2000x.jpg"
         },
         "followee_count": 51,
-        "follower_count": 60300,
+        "follower_count": 60301,
         "handle": "bitbird",
         "id": "4W2ay",
         "is_verified": true,
@@ -76,7 +76,7 @@ API response: {
       },
       "duration": 129,
       "is_downloadable": false,
-      "play_count": 5159,
+      "play_count": 5371,
       "permalink": "/bitbird/molly-otto-these-things-sam-day-remix",
       "is_streamable": true,
       "ddex_app": null,
@@ -84,9 +84,11 @@ API response: {
         210031428,
         2034646341,
         142792,
+        1862614030,
         612184592,
         1752372531,
         2093152436,
+        68239411,
         1453590774,
         4281
       ]
@@ -123,7 +125,7 @@ API response: {
           "640x": "https://cn1.mainnet.audiusindex.org/content/01J95QCSF61PGP3ANJNC84MCYJ/640x.jpg",
           "2000x": "https://cn1.mainnet.audiusindex.org/content/01J95QCSF61PGP3ANJNC84MCYJ/2000x.jpg"
         },
-        "followee_count": 169,
+        "followee_count": 175,
         "follower_count": 10434,
         "handle": "snoozegod",
         "id": "0EoAm",
@@ -144,21 +146,21 @@ API response: {
           "480x480": "https://audius-content-3.figment.io/content/01J2ZG0VZ2342HZ0SKQ4Z4H92B/480x480.jpg",
           "1000x1000": "https://audius-content-3.figment.io/content/01J2ZG0VZ2342HZ0SKQ4Z4H92B/1000x1000.jpg"
         },
-        "repost_count": 26,
-        "track_count": 122,
+        "repost_count": 27,
+        "track_count": 124,
         "is_deactivated": false,
         "is_available": true,
         "erc_wallet": "0x022d34b7f1f268288002327732f99fae19a47d89",
         "spl_wallet": "8DtCkvqWj8uid88asNWQustVQ12g7KLTXJ8wXSVEqQCK",
         "spl_usdc_payout_wallet": "HckeuB3mZMm7AfcEg3hVtGRr6DPjr7EeAxGyMRMSVova",
         "supporter_count": 18,
-        "supporting_count": 28,
-        "total_audio_balance": 103,
+        "supporting_count": 29,
+        "total_audio_balance": 101,
         "wallet": "0x022d34b7f1f268288002327732f99fae19a47d89"
       },
       "duration": 230,
       "is_downloadable": true,
-      "play_count": 5396,
+      "play_count": 5556,
       "permalink": "/snoozegod/dimone-story-to-tell",
       "is_streamable": true,
       "ddex_app": null,
@@ -242,7 +244,7 @@ API response: {
       },
       "duration": 162,
       "is_downloadable": false,
-      "play_count": 3742,
+      "play_count": 3942,
       "permalink": "/connorprice_/let-me-cook",
       "is_streamable": true,
       "ddex_app": null,
@@ -319,7 +321,7 @@ API response: {
       },
       "duration": 178,
       "is_downloadable": true,
-      "play_count": 4297,
+      "play_count": 4484,
       "permalink": "/Pokemonlofi/pokemon-chill",
       "is_streamable": true,
       "ddex_app": null,
@@ -398,7 +400,7 @@ API response: {
       },
       "duration": 156,
       "is_downloadable": false,
-      "play_count": 3250,
+      "play_count": 3400,
       "permalink": "/djxquizit/tocas-miracle",
       "is_streamable": true,
       "ddex_app": null,
@@ -430,7 +432,7 @@ API response: {
         "tracks": null
       },
       "repost_count": 15,
-      "favorite_count": 27,
+      "favorite_count": 28,
       "comment_count": 0,
       "tags": "",
       "title": "Raar - Huh?! (feat. Gehena)",
@@ -443,7 +445,7 @@ API response: {
           "2000x": "https://audius-content-16.cultur3stake.com/content/QmVfZxDKG6uG8J5m6hnaD81dypL3tbDMEyLg4X8o9DbB8G/2000x.jpg"
         },
         "followee_count": 51,
-        "follower_count": 60300,
+        "follower_count": 60301,
         "handle": "bitbird",
         "id": "4W2ay",
         "is_verified": true,
@@ -477,7 +479,7 @@ API response: {
       },
       "duration": 192,
       "is_downloadable": false,
-      "play_count": 3073,
+      "play_count": 3192,
       "permalink": "/bitbird/raar-huh-feat-gehena",
       "is_streamable": true,
       "ddex_app": null,
@@ -559,7 +561,7 @@ API response: {
       },
       "duration": 240,
       "is_downloadable": false,
-      "play_count": 2904,
+      "play_count": 3020,
       "permalink": "/youthincircles/trivecta-ft-casey-cook-alaska-youth-in-circles-remix-1",
       "is_streamable": true,
       "ddex_app": null,
@@ -634,7 +636,7 @@ API response: {
       },
       "duration": 155,
       "is_downloadable": false,
-      "play_count": 2633,
+      "play_count": 2749,
       "permalink": "/headroom_records/swimming-paul-thals-all-my-fault",
       "is_streamable": true,
       "ddex_app": null,
@@ -709,7 +711,7 @@ API response: {
       },
       "duration": 270,
       "is_downloadable": false,
-      "play_count": 2097,
+      "play_count": 2200,
       "permalink": "/iamattican/close-your-eyes-radio-edit",
       "is_streamable": true,
       "ddex_app": null,
@@ -793,7 +795,7 @@ API response: {
       },
       "duration": 184,
       "is_downloadable": false,
-      "play_count": 2390,
+      "play_count": 2471,
       "permalink": "/plsandtybased/plsty-breakaway-ft-david-frank",
       "is_streamable": true,
       "ddex_app": null,
@@ -868,7 +870,7 @@ API response: {
       },
       "duration": 335,
       "is_downloadable": false,
-      "play_count": 2321,
+      "play_count": 2414,
       "permalink": "/chakrarecords/sharake-theirland-|-ديرتهم-mario-op-frank-eg-remix",
       "is_streamable": true,
       "ddex_app": null,
@@ -895,7 +897,7 @@ API response: {
       "remix_of": {
         "tracks": null
       },
-      "repost_count": 10,
+      "repost_count": 11,
       "favorite_count": 15,
       "comment_count": 0,
       "tags": "",
@@ -943,7 +945,7 @@ API response: {
       },
       "duration": 424,
       "is_downloadable": false,
-      "play_count": 1717,
+      "play_count": 1799,
       "permalink": "/Linearmusic/linear-al-qarah-cafe-de-anatolia",
       "is_streamable": true,
       "ddex_app": null,
@@ -973,8 +975,8 @@ API response: {
       "remix_of": {
         "tracks": null
       },
-      "repost_count": 11,
-      "favorite_count": 16,
+      "repost_count": 12,
+      "favorite_count": 17,
       "comment_count": 0,
       "tags": "",
       "title": "Suckerpunch",
@@ -1021,7 +1023,7 @@ API response: {
       },
       "duration": 185,
       "is_downloadable": false,
-      "play_count": 1589,
+      "play_count": 1677,
       "permalink": "/unlikepluto/suckerpunch",
       "is_streamable": true,
       "ddex_app": null,
@@ -1058,8 +1060,8 @@ API response: {
       "remix_of": {
         "tracks": null
       },
-      "repost_count": 25,
-      "favorite_count": 28,
+      "repost_count": 27,
+      "favorite_count": 30,
       "comment_count": 0,
       "tags": "",
       "title": "Y U QT - STUCK ON U",
@@ -1072,7 +1074,7 @@ API response: {
           "2000x": "https://audius-content-11.cultur3stake.com/content/01J3R0PVR5SPNV07ACE1K03XYZ/2000x.jpg"
         },
         "followee_count": 5,
-        "follower_count": 1782,
+        "follower_count": 1800,
         "handle": "cooprecsmusic",
         "id": "PWY7x2X",
         "is_verified": true,
@@ -1106,13 +1108,14 @@ API response: {
       },
       "duration": 252,
       "is_downloadable": false,
-      "play_count": 593,
+      "play_count": 676,
       "permalink": "/cooprecsmusic/y-u-qt-stuck-on-u",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": [
         129401858,
         1968276611,
+        314505219,
         2044579990,
         1110562970,
         460733980,
@@ -1157,8 +1160,8 @@ API response: {
           }
         ]
       },
-      "repost_count": 19,
-      "favorite_count": 27,
+      "repost_count": 20,
+      "favorite_count": 28,
       "comment_count": 0,
       "tags": "remixcontest,trivecta,caseycook,ophelia",
       "title": "Trivecta - Alaska (ft. Casey Cook) (Ambroz x A-PAR Remix)",
@@ -1205,7 +1208,7 @@ API response: {
       },
       "duration": 232,
       "is_downloadable": false,
-      "play_count": 653,
+      "play_count": 725,
       "permalink": "/ambrozmusic/trivecta-alaska-ft-casey-cook-ambroz-x-a-par-remix",
       "is_streamable": true,
       "ddex_app": null,
@@ -1235,8 +1238,8 @@ API response: {
       "remix_of": {
         "tracks": null
       },
-      "repost_count": 11,
-      "favorite_count": 15,
+      "repost_count": 12,
+      "favorite_count": 16,
       "comment_count": 0,
       "tags": "goofy,dnb,edm,electronic,dance",
       "title": "Puddlz",
@@ -1283,7 +1286,7 @@ API response: {
       },
       "duration": 131,
       "is_downloadable": false,
-      "play_count": 799,
+      "play_count": 860,
       "permalink": "/ethanplus_/puddlz",
       "is_streamable": true,
       "ddex_app": null,
@@ -1311,7 +1314,7 @@ API response: {
         "tracks": null
       },
       "repost_count": 13,
-      "favorite_count": 16,
+      "favorite_count": 17,
       "comment_count": 0,
       "tags": "psalmtrees,alexander,fromscratch,cr476",
       "title": "Psalm Trees - Seu Trio, ft. ALEXANDER",
@@ -1324,7 +1327,7 @@ API response: {
           "2000x": "https://audius-content-13.cultur3stake.com/content/01J0NDJ2RX6MWETKHSQ8WK47FF/2000x.jpg"
         },
         "followee_count": 41,
-        "follower_count": 14668,
+        "follower_count": 14669,
         "handle": "chillhopmusic",
         "id": "eAE0q",
         "is_verified": true,
@@ -1358,7 +1361,7 @@ API response: {
       },
       "duration": 213,
       "is_downloadable": false,
-      "play_count": 432,
+      "play_count": 501,
       "permalink": "/chillhopmusic/psalm-trees-seu-trio-ft-alexander",
       "is_streamable": true,
       "ddex_app": null,
@@ -1377,83 +1380,77 @@ API response: {
     },
     {
       "artwork": {
-        "150x150": "https://audius-creator-3.theblueprint.xyz/content/01J90YBNWPP25RJ9KBD2TYXTWP/150x150.jpg",
-        "480x480": "https://audius-creator-3.theblueprint.xyz/content/01J90YBNWPP25RJ9KBD2TYXTWP/480x480.jpg",
-        "1000x1000": "https://audius-creator-3.theblueprint.xyz/content/01J90YBNWPP25RJ9KBD2TYXTWP/1000x1000.jpg"
+        "150x150": "https://cn0.mainnet.audiusindex.org/content/01J9B8KGS1H4DZ4RPXHS333C31/150x150.jpg",
+        "480x480": "https://cn0.mainnet.audiusindex.org/content/01J9B8KGS1H4DZ4RPXHS333C31/480x480.jpg",
+        "1000x1000": "https://cn0.mainnet.audiusindex.org/content/01J9B8KGS1H4DZ4RPXHS333C31/1000x1000.jpg"
       },
-      "description": "Feel the rush of discovery with \"Found You\" by Craig Connelly & Lasada, dropping soon on Black Hole Recordings!",
-      "genre": "Trance",
-      "id": "Y5NOAjq",
-      "track_cid": "baeaaaiqsebwnjtz2hv33sqdq54ixgw46t7fqflrm2kxxfr2b7howvo3qkbnqk",
+      "description": "It starts with a lullaby,—gentle, coaxing, as if the night itself is singing you to sleep. \"NIGHTMARE\" whispers you into a false sense of calm, with each soft note a thread pulling you deeper into sleep. But as the music weaves its way through the silence, something shifts. The air grows heavy, and the sweetness of the lullaby unravels, twisting into something much more sinister. Will you get through this nightmare?   \n\n“NIGHTMARE” is available on all your favorite music streaming platforms. \n\nMix and Mastered by Seth Munson at OmniAudio\nhttps://omniaud.io/ ",
+      "genre": "Electronic",
+      "id": "5j2JN2M",
+      "track_cid": "baeaaaiqsecbyt2pujdjf6lqssksgzvbpfl2nnl4oldlubsmafs63m2w56fywg",
       "preview_cid": null,
-      "orig_file_cid": "baeaaaiqsebeyumenyly3pzz3i7vragqgl5tbbzr4rlkncbhkxjxajhsel3mru",
-      "orig_filename": "Craig Connelly & Lasada - Found You (Original Mix).wav",
+      "orig_file_cid": "baeaaaiqsea6hkt24ciprqztksynsyyb474wtkivrwm64wdlf3jfhwcbfjdwge",
+      "orig_filename": "VARIANT - NIGHTMARE.wav",
       "is_original_available": false,
-      "mood": null,
-      "release_date": "2024-09-30 07:48:09",
+      "mood": "Defiant",
+      "release_date": "2024-10-04 18:00:00",
       "remix_of": {
         "tracks": null
       },
-      "repost_count": 8,
-      "favorite_count": 20,
+      "repost_count": 6,
+      "favorite_count": 8,
       "comment_count": 0,
-      "tags": "craigconnelly,lasada,foundyou,electronic,trance,mainfloor,blackhole,blackholerecordings",
-      "title": "Craig Connelly & Lasada - Found You",
+      "tags": "edm,variant,nightmare,midtempo,rocktronic,cinematic",
+      "title": "NIGHTMARE",
       "user": {
         "album_count": 0,
-        "artist_pick_track_id": null,
-        "bio": "Your source for dance music since 1997.",
+        "artist_pick_track_id": "5j2JN2M",
+        "bio": "NIGHTMARE - OUT NOW",
         "cover_photo": {
-          "640x": "https://audius-creator-5.theblueprint.xyz/content/QmXKqCBuhTw27hyX4mxkmVetRYTwsCEh9ZRSSgzLnuBdVz/640x.jpg",
-          "2000x": "https://audius-creator-5.theblueprint.xyz/content/QmXKqCBuhTw27hyX4mxkmVetRYTwsCEh9ZRSSgzLnuBdVz/2000x.jpg"
+          "640x": "https://audius-creator-3.theblueprint.xyz/content/01J9B9VVS4AYTCAQJQVB5GC2X2/640x.jpg",
+          "2000x": "https://audius-creator-3.theblueprint.xyz/content/01J9B9VVS4AYTCAQJQVB5GC2X2/2000x.jpg"
         },
-        "followee_count": 5,
-        "follower_count": 26582,
-        "handle": "BlackHoleRec",
-        "id": "JE8Q7",
-        "is_verified": true,
-        "twitter_handle": "BlackHoleRec",
-        "instagram_handle": "blackholerecordings",
-        "tiktok_handle": null,
-        "verified_with_twitter": true,
+        "followee_count": 12,
+        "follower_count": 13,
+        "handle": "musicbyvariant",
+        "id": "wxdGkj",
+        "is_verified": false,
+        "twitter_handle": "musicbyvariant",
+        "instagram_handle": "musicbyvariant",
+        "tiktok_handle": "musicbyvariant",
+        "verified_with_twitter": false,
         "verified_with_instagram": false,
         "verified_with_tiktok": false,
-        "website": "https://www.blackholerecordings.com/",
+        "website": "solo.to/musicbyvariant",
         "donation": null,
-        "location": null,
-        "name": "Black Hole Recordings",
-        "playlist_count": 0,
+        "location": "Albuquerque, NM",
+        "name": "VARIANT",
+        "playlist_count": 2,
         "profile_picture": {
-          "150x150": "https://audius-creator-4.theblueprint.xyz/content/QmaYH8t6tT5LGoHKixXywXFBCkDYetLaVpCavv56q3MaLt/150x150.jpg",
-          "480x480": "https://audius-creator-4.theblueprint.xyz/content/QmaYH8t6tT5LGoHKixXywXFBCkDYetLaVpCavv56q3MaLt/480x480.jpg",
-          "1000x1000": "https://audius-creator-4.theblueprint.xyz/content/QmaYH8t6tT5LGoHKixXywXFBCkDYetLaVpCavv56q3MaLt/1000x1000.jpg"
+          "150x150": "https://creatornode3.audius.co/content/01J9B9VSSTYKF59CD75H8KA73A/150x150.jpg",
+          "480x480": "https://creatornode3.audius.co/content/01J9B9VSSTYKF59CD75H8KA73A/480x480.jpg",
+          "1000x1000": "https://creatornode3.audius.co/content/01J9B9VSSTYKF59CD75H8KA73A/1000x1000.jpg"
         },
-        "repost_count": 1,
-        "track_count": 596,
+        "repost_count": 0,
+        "track_count": 2,
         "is_deactivated": false,
         "is_available": true,
-        "erc_wallet": "0x2c9dbe8dcc99c25ace61a08d9cf8a6e2e1807fd9",
-        "spl_wallet": "9LxtHcgbNcVouy1peDpnbF48i6eLkQsuGbGzzwWquhg",
+        "erc_wallet": "0x4970681b5d2ed5d05e203371fe1c7e5bba64c280",
+        "spl_wallet": "KLaodUdc8UdDAKEq2v3Lnega58rtGjk7pL96PPRu66k",
         "spl_usdc_payout_wallet": null,
-        "supporter_count": 15,
-        "supporting_count": 0,
-        "total_audio_balance": 337,
-        "wallet": "0x2c9dbe8dcc99c25ace61a08d9cf8a6e2e1807fd9"
+        "supporter_count": 1,
+        "supporting_count": 1,
+        "total_audio_balance": 204,
+        "wallet": "0x4970681b5d2ed5d05e203371fe1c7e5bba64c280"
       },
-      "duration": 276,
+      "duration": 312,
       "is_downloadable": false,
-      "play_count": 5517,
-      "permalink": "/BlackHoleRec/craig-connelly-lasada-found-you",
+      "play_count": 732,
+      "permalink": "/musicbyvariant/nightmare",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": [
-        2034646341,
-        1217020273,
-        89844401,
-        2093152436,
-        456224340,
-        1333089307,
-        124489948
+        4281
       ]
     },
     {
@@ -1527,7 +1524,7 @@ API response: {
       },
       "duration": 238,
       "is_downloadable": false,
-      "play_count": 4964,
+      "play_count": 5029,
       "permalink": "/vlpdubs/trivecta-alaska-ft-casey-cook-vlp-remix",
       "is_streamable": true,
       "ddex_app": null,
@@ -1535,81 +1532,6 @@ API response: {
         1422307929,
         2093152436,
         833875015
-      ]
-    },
-    {
-      "artwork": {
-        "150x150": "https://cn0.mainnet.audiusindex.org/content/01J9B8KGS1H4DZ4RPXHS333C31/150x150.jpg",
-        "480x480": "https://cn0.mainnet.audiusindex.org/content/01J9B8KGS1H4DZ4RPXHS333C31/480x480.jpg",
-        "1000x1000": "https://cn0.mainnet.audiusindex.org/content/01J9B8KGS1H4DZ4RPXHS333C31/1000x1000.jpg"
-      },
-      "description": "It starts with a lullaby,—gentle, coaxing, as if the night itself is singing you to sleep. \"NIGHTMARE\" whispers you into a false sense of calm, with each soft note a thread pulling you deeper into sleep. But as the music weaves its way through the silence, something shifts. The air grows heavy, and the sweetness of the lullaby unravels, twisting into something much more sinister. Will you get through this nightmare?   \n\n“NIGHTMARE” is available on all your favorite music streaming platforms. \n\nMix and Mastered by Seth Munson at OmniAudio\nhttps://omniaud.io/ ",
-      "genre": "Electronic",
-      "id": "5j2JN2M",
-      "track_cid": "baeaaaiqsecbyt2pujdjf6lqssksgzvbpfl2nnl4oldlubsmafs63m2w56fywg",
-      "preview_cid": null,
-      "orig_file_cid": "baeaaaiqsea6hkt24ciprqztksynsyyb474wtkivrwm64wdlf3jfhwcbfjdwge",
-      "orig_filename": "VARIANT - NIGHTMARE.wav",
-      "is_original_available": false,
-      "mood": "Defiant",
-      "release_date": "2024-10-04 18:00:00",
-      "remix_of": {
-        "tracks": null
-      },
-      "repost_count": 6,
-      "favorite_count": 8,
-      "comment_count": 0,
-      "tags": "edm,variant,nightmare,midtempo,rocktronic,cinematic",
-      "title": "NIGHTMARE",
-      "user": {
-        "album_count": 0,
-        "artist_pick_track_id": "5j2JN2M",
-        "bio": "NIGHTMARE - OUT NOW",
-        "cover_photo": {
-          "640x": "https://audius-creator-3.theblueprint.xyz/content/01J9B9VVS4AYTCAQJQVB5GC2X2/640x.jpg",
-          "2000x": "https://audius-creator-3.theblueprint.xyz/content/01J9B9VVS4AYTCAQJQVB5GC2X2/2000x.jpg"
-        },
-        "followee_count": 12,
-        "follower_count": 13,
-        "handle": "musicbyvariant",
-        "id": "wxdGkj",
-        "is_verified": false,
-        "twitter_handle": "musicbyvariant",
-        "instagram_handle": "musicbyvariant",
-        "tiktok_handle": "musicbyvariant",
-        "verified_with_twitter": false,
-        "verified_with_instagram": false,
-        "verified_with_tiktok": false,
-        "website": "solo.to/musicbyvariant",
-        "donation": null,
-        "location": "Albuquerque, NM",
-        "name": "VARIANT",
-        "playlist_count": 2,
-        "profile_picture": {
-          "150x150": "https://creatornode3.audius.co/content/01J9B9VSSTYKF59CD75H8KA73A/150x150.jpg",
-          "480x480": "https://creatornode3.audius.co/content/01J9B9VSSTYKF59CD75H8KA73A/480x480.jpg",
-          "1000x1000": "https://creatornode3.audius.co/content/01J9B9VSSTYKF59CD75H8KA73A/1000x1000.jpg"
-        },
-        "repost_count": 0,
-        "track_count": 2,
-        "is_deactivated": false,
-        "is_available": true,
-        "erc_wallet": "0x4970681b5d2ed5d05e203371fe1c7e5bba64c280",
-        "spl_wallet": "KLaodUdc8UdDAKEq2v3Lnega58rtGjk7pL96PPRu66k",
-        "spl_usdc_payout_wallet": null,
-        "supporter_count": 1,
-        "supporting_count": 1,
-        "total_audio_balance": 204,
-        "wallet": "0x4970681b5d2ed5d05e203371fe1c7e5bba64c280"
-      },
-      "duration": 312,
-      "is_downloadable": false,
-      "play_count": 677,
-      "permalink": "/musicbyvariant/nightmare",
-      "is_streamable": true,
-      "ddex_app": null,
-      "playlists_containing_track": [
-        4281
       ]
     },
     {
@@ -1679,7 +1601,7 @@ API response: {
       },
       "duration": 285,
       "is_downloadable": false,
-      "play_count": 621,
+      "play_count": 685,
       "permalink": "/ellipsethemusic/poison-extended-edit-audius-xclusive",
       "is_streamable": true,
       "ddex_app": null,
@@ -1707,7 +1629,7 @@ API response: {
         "tracks": null
       },
       "repost_count": 5,
-      "favorite_count": 6,
+      "favorite_count": 7,
       "comment_count": 0,
       "tags": "",
       "title": "Nothing Real",
@@ -1754,7 +1676,7 @@ API response: {
       },
       "duration": 133,
       "is_downloadable": false,
-      "play_count": 513,
+      "play_count": 570,
       "permalink": "/BigPaulThomas/nothing-real",
       "is_streamable": true,
       "ddex_app": null,
@@ -1791,10 +1713,10 @@ API response: {
         "tracks": null
       },
       "repost_count": 8,
-      "favorite_count": 10,
+      "favorite_count": 12,
       "comment_count": 0,
       "tags": "newmusic,pop,dnb,drumnbass",
-      "title": "What you need ",
+      "title": "What you need by bb.saur",
       "user": {
         "album_count": 3,
         "artist_pick_track_id": "o6NxkRd",
@@ -1803,7 +1725,7 @@ API response: {
           "640x": "https://cn1.mainnet.audiusindex.org/content/01J95QCSF61PGP3ANJNC84MCYJ/640x.jpg",
           "2000x": "https://cn1.mainnet.audiusindex.org/content/01J95QCSF61PGP3ANJNC84MCYJ/2000x.jpg"
         },
-        "followee_count": 169,
+        "followee_count": 175,
         "follower_count": 10434,
         "handle": "snoozegod",
         "id": "0EoAm",
@@ -1824,22 +1746,22 @@ API response: {
           "480x480": "https://audius-content-3.figment.io/content/01J2ZG0VZ2342HZ0SKQ4Z4H92B/480x480.jpg",
           "1000x1000": "https://audius-content-3.figment.io/content/01J2ZG0VZ2342HZ0SKQ4Z4H92B/1000x1000.jpg"
         },
-        "repost_count": 26,
-        "track_count": 122,
+        "repost_count": 27,
+        "track_count": 124,
         "is_deactivated": false,
         "is_available": true,
         "erc_wallet": "0x022d34b7f1f268288002327732f99fae19a47d89",
         "spl_wallet": "8DtCkvqWj8uid88asNWQustVQ12g7KLTXJ8wXSVEqQCK",
         "spl_usdc_payout_wallet": "HckeuB3mZMm7AfcEg3hVtGRr6DPjr7EeAxGyMRMSVova",
         "supporter_count": 18,
-        "supporting_count": 28,
-        "total_audio_balance": 103,
+        "supporting_count": 29,
+        "total_audio_balance": 101,
         "wallet": "0x022d34b7f1f268288002327732f99fae19a47d89"
       },
       "duration": 163,
       "is_downloadable": false,
-      "play_count": 187,
-      "permalink": "/snoozegod/what-you-need",
+      "play_count": 247,
+      "permalink": "/snoozegod/what-you-need-by-bbsaur-1",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": [
@@ -1868,8 +1790,8 @@ API response: {
       "remix_of": {
         "tracks": null
       },
-      "repost_count": 6,
-      "favorite_count": 6,
+      "repost_count": 10,
+      "favorite_count": 13,
       "comment_count": 0,
       "tags": "beats,cypher",
       "title": "TeamSupreme ReCharged - Vol. 6 feat. SoulfulxNature",
@@ -1882,7 +1804,7 @@ API response: {
           "2000x": "https://blockdaemon-audius-content-08.bdnodes.net/content/01J7EN3HJY221FMWNSMDTWG302/2000x.jpg"
         },
         "followee_count": 5,
-        "follower_count": 2192,
+        "follower_count": 2209,
         "handle": "TeamSupreme",
         "id": "8P6bz8a",
         "is_verified": false,
@@ -1916,15 +1838,16 @@ API response: {
       },
       "duration": 1061,
       "is_downloadable": false,
-      "play_count": 179,
+      "play_count": 244,
       "permalink": "/TeamSupreme/teamsupreme-recharged-vol-6-feat-soulfulxnature",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": [
-        1633693106,
-        191542794,
         632174470,
-        1393608551
+        1393608551,
+        191542794,
+        517042253,
+        1633693106
       ]
     },
     {
@@ -1947,7 +1870,7 @@ API response: {
         "tracks": null
       },
       "repost_count": 14,
-      "favorite_count": 27,
+      "favorite_count": 28,
       "comment_count": 0,
       "tags": "deephouse",
       "title": "Teddy Swims - Bad Dreams (Geo Raphael Remix)",
@@ -1994,7 +1917,7 @@ API response: {
       },
       "duration": 179,
       "is_downloadable": false,
-      "play_count": 6388,
+      "play_count": 6434,
       "permalink": "/georaphael/teddy-swims-bad-dreams-geo-raphael-remix",
       "is_streamable": true,
       "ddex_app": null,
@@ -2006,6 +1929,87 @@ API response: {
         89844401,
         456224340,
         1165924857
+      ]
+    },
+    {
+      "artwork": {
+        "150x150": "https://audius-creator-3.theblueprint.xyz/content/01J90YBNWPP25RJ9KBD2TYXTWP/150x150.jpg",
+        "480x480": "https://audius-creator-3.theblueprint.xyz/content/01J90YBNWPP25RJ9KBD2TYXTWP/480x480.jpg",
+        "1000x1000": "https://audius-creator-3.theblueprint.xyz/content/01J90YBNWPP25RJ9KBD2TYXTWP/1000x1000.jpg"
+      },
+      "description": "Feel the rush of discovery with \"Found You\" by Craig Connelly & Lasada, dropping soon on Black Hole Recordings!",
+      "genre": "Trance",
+      "id": "Y5NOAjq",
+      "track_cid": "baeaaaiqsebwnjtz2hv33sqdq54ixgw46t7fqflrm2kxxfr2b7howvo3qkbnqk",
+      "preview_cid": null,
+      "orig_file_cid": "baeaaaiqsebeyumenyly3pzz3i7vragqgl5tbbzr4rlkncbhkxjxajhsel3mru",
+      "orig_filename": "Craig Connelly & Lasada - Found You (Original Mix).wav",
+      "is_original_available": false,
+      "mood": null,
+      "release_date": "2024-09-30 07:48:09",
+      "remix_of": {
+        "tracks": null
+      },
+      "repost_count": 8,
+      "favorite_count": 20,
+      "comment_count": 0,
+      "tags": "craigconnelly,lasada,foundyou,electronic,trance,mainfloor,blackhole,blackholerecordings",
+      "title": "Craig Connelly & Lasada - Found You",
+      "user": {
+        "album_count": 0,
+        "artist_pick_track_id": null,
+        "bio": "Your source for dance music since 1997.",
+        "cover_photo": {
+          "640x": "https://audius-creator-5.theblueprint.xyz/content/QmXKqCBuhTw27hyX4mxkmVetRYTwsCEh9ZRSSgzLnuBdVz/640x.jpg",
+          "2000x": "https://audius-creator-5.theblueprint.xyz/content/QmXKqCBuhTw27hyX4mxkmVetRYTwsCEh9ZRSSgzLnuBdVz/2000x.jpg"
+        },
+        "followee_count": 5,
+        "follower_count": 26582,
+        "handle": "BlackHoleRec",
+        "id": "JE8Q7",
+        "is_verified": true,
+        "twitter_handle": "BlackHoleRec",
+        "instagram_handle": "blackholerecordings",
+        "tiktok_handle": null,
+        "verified_with_twitter": true,
+        "verified_with_instagram": false,
+        "verified_with_tiktok": false,
+        "website": "https://www.blackholerecordings.com/",
+        "donation": null,
+        "location": null,
+        "name": "Black Hole Recordings",
+        "playlist_count": 0,
+        "profile_picture": {
+          "150x150": "https://audius-creator-4.theblueprint.xyz/content/QmaYH8t6tT5LGoHKixXywXFBCkDYetLaVpCavv56q3MaLt/150x150.jpg",
+          "480x480": "https://audius-creator-4.theblueprint.xyz/content/QmaYH8t6tT5LGoHKixXywXFBCkDYetLaVpCavv56q3MaLt/480x480.jpg",
+          "1000x1000": "https://audius-creator-4.theblueprint.xyz/content/QmaYH8t6tT5LGoHKixXywXFBCkDYetLaVpCavv56q3MaLt/1000x1000.jpg"
+        },
+        "repost_count": 1,
+        "track_count": 596,
+        "is_deactivated": false,
+        "is_available": true,
+        "erc_wallet": "0x2c9dbe8dcc99c25ace61a08d9cf8a6e2e1807fd9",
+        "spl_wallet": "9LxtHcgbNcVouy1peDpnbF48i6eLkQsuGbGzzwWquhg",
+        "spl_usdc_payout_wallet": null,
+        "supporter_count": 15,
+        "supporting_count": 0,
+        "total_audio_balance": 337,
+        "wallet": "0x2c9dbe8dcc99c25ace61a08d9cf8a6e2e1807fd9"
+      },
+      "duration": 276,
+      "is_downloadable": false,
+      "play_count": 5569,
+      "permalink": "/BlackHoleRec/craig-connelly-lasada-found-you",
+      "is_streamable": true,
+      "ddex_app": null,
+      "playlists_containing_track": [
+        2034646341,
+        1217020273,
+        89844401,
+        2093152436,
+        456224340,
+        1333089307,
+        124489948
       ]
     },
     {
@@ -2028,7 +2032,7 @@ API response: {
         "tracks": null
       },
       "repost_count": 5,
-      "favorite_count": 4,
+      "favorite_count": 5,
       "comment_count": 0,
       "tags": "donkody,love,luv,romantic,soulful",
       "title": "Luv Inna Meteor Shower (Instrumental)",
@@ -2075,7 +2079,7 @@ API response: {
       },
       "duration": 172,
       "is_downloadable": false,
-      "play_count": 515,
+      "play_count": 563,
       "permalink": "/donkodygotslapz/luv-inna-meteor-shower-instrumental",
       "is_streamable": true,
       "ddex_app": null,
@@ -2150,7 +2154,7 @@ API response: {
       },
       "duration": 177,
       "is_downloadable": true,
-      "play_count": 1728,
+      "play_count": 1779,
       "permalink": "/6eve9/heart-smart-by-racerx",
       "is_streamable": true,
       "ddex_app": null,
@@ -2211,7 +2215,7 @@ API response: {
           "480x480": "https://creatornode.audius1.prod-eks-ap-northeast-1.staked.cloud/content/Qmf9JbnkGLMSz6Ym4PXnT91Xs9DxztWHYWQi1wWo98FVS9/480x480.jpg",
           "1000x1000": "https://creatornode.audius1.prod-eks-ap-northeast-1.staked.cloud/content/Qmf9JbnkGLMSz6Ym4PXnT91Xs9DxztWHYWQi1wWo98FVS9/1000x1000.jpg"
         },
-        "repost_count": 43864,
+        "repost_count": 43871,
         "track_count": 65,
         "is_deactivated": false,
         "is_available": true,
@@ -2225,7 +2229,7 @@ API response: {
       },
       "duration": 291,
       "is_downloadable": true,
-      "play_count": 448,
+      "play_count": 490,
       "permalink": "/EIME/play-1",
       "is_streamable": true,
       "ddex_app": null,
@@ -2301,90 +2305,12 @@ API response: {
       },
       "duration": 193,
       "is_downloadable": false,
-      "play_count": 818,
+      "play_count": 854,
       "permalink": "/Ljazz_beats/soul-in-train",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": [
         1769285203
-      ]
-    },
-    {
-      "artwork": {
-        "150x150": "https://audius-content-2.figment.io/content/01J94YD5H5F23K2KC5R0WCQ1QR/150x150.jpg",
-        "480x480": "https://audius-content-2.figment.io/content/01J94YD5H5F23K2KC5R0WCQ1QR/480x480.jpg",
-        "1000x1000": "https://audius-content-2.figment.io/content/01J94YD5H5F23K2KC5R0WCQ1QR/1000x1000.jpg"
-      },
-      "description": "Back once again with another exclusive here to educate the world on what’s going on keep your peace, finances, calm, and all shapes and sizes",
-      "genre": "Hip-Hop/Rap",
-      "id": "bdQV0dX",
-      "track_cid": "baeaaaiqsed6gwsj3ocohe6strplul2qol4jcs5pzzai57xxvez5b5chxjxolm",
-      "preview_cid": null,
-      "orig_file_cid": "baeaaaiqsebresjaknfvobotbj2v4u2lsbn5wabackksdhoaas6ba5zh5rahl2",
-      "orig_filename": "SacklessTesticle.m4a",
-      "is_original_available": false,
-      "mood": "Serious",
-      "release_date": "2024-10-01 21:05:16",
-      "remix_of": {
-        "tracks": null
-      },
-      "repost_count": 17,
-      "favorite_count": 28,
-      "comment_count": 0,
-      "tags": "Skit,Hiphop,Sexyredd,Moneybaggyo,Drake,Drill,Trap,Rnb,Lofi,Lildurk",
-      "title": "Professional Loiters",
-      "user": {
-        "album_count": 71,
-        "artist_pick_track_id": "6xbMXx9",
-        "bio": "Scan-N-Kutt are a NYC On a quest to mend the gap between Beats & crypto 1 bull market at a time. \nDM Us For Beats.\nEmail: scan1kutt@gmail.com",
-        "cover_photo": {
-          "640x": "https://blockdaemon-audius-content-06.bdnodes.net/content/QmS1Gnsr6ezzrDb5hrpxSyjTsNZoMEPhaDkK2jHEPmJM59/640x.jpg",
-          "2000x": "https://blockdaemon-audius-content-06.bdnodes.net/content/QmS1Gnsr6ezzrDb5hrpxSyjTsNZoMEPhaDkK2jHEPmJM59/2000x.jpg"
-        },
-        "followee_count": 479,
-        "follower_count": 3202,
-        "handle": "Kutt4life",
-        "id": "OgrZQ",
-        "is_verified": false,
-        "twitter_handle": "Kutt4life ",
-        "instagram_handle": "Kuttfever",
-        "tiktok_handle": "Aquativa",
-        "verified_with_twitter": false,
-        "verified_with_instagram": false,
-        "verified_with_tiktok": false,
-        "website": null,
-        "donation": "coindrop.to/scan-n-kutt",
-        "location": "New York, NY",
-        "name": "Scan-N-Kutt",
-        "playlist_count": 17,
-        "profile_picture": {
-          "150x150": "https://audius-content-3.cultur3stake.com/content/01H62HV67PGGY0NZ5ERVMVMJEY/150x150.jpg",
-          "480x480": "https://audius-content-3.cultur3stake.com/content/01H62HV67PGGY0NZ5ERVMVMJEY/480x480.jpg",
-          "1000x1000": "https://audius-content-3.cultur3stake.com/content/01H62HV67PGGY0NZ5ERVMVMJEY/1000x1000.jpg"
-        },
-        "repost_count": 15264,
-        "track_count": 575,
-        "is_deactivated": false,
-        "is_available": true,
-        "erc_wallet": "0xd7c3dc9eef2d94568c0e1a9c88b58696850c7c22",
-        "spl_wallet": "6ASkDc7U9585pVPiG9MoF6AkAqnFyvvjYLQAgxsjfw7S",
-        "spl_usdc_payout_wallet": null,
-        "supporter_count": 30,
-        "supporting_count": 28,
-        "total_audio_balance": 1047,
-        "wallet": "0xd7c3dc9eef2d94568c0e1a9c88b58696850c7c22"
-      },
-      "duration": 76,
-      "is_downloadable": false,
-      "play_count": 756,
-      "permalink": "/Kutt4life/professional-loiters",
-      "is_streamable": true,
-      "ddex_app": null,
-      "playlists_containing_track": [
-        241337585,
-        1769285203,
-        83069,
-        1760552887
       ]
     },
     {
@@ -2454,7 +2380,7 @@ API response: {
       },
       "duration": 204,
       "is_downloadable": false,
-      "play_count": 8676,
+      "play_count": 8714,
       "permalink": "/akthesavior/crystal-child",
       "is_streamable": true,
       "ddex_app": null,
@@ -2491,169 +2417,80 @@ API response: {
     },
     {
       "artwork": {
-        "150x150": "https://creatornode3.audius.co/content/01J95TZRPB43E3VQKTQYVJ6XG4/150x150.jpg",
-        "480x480": "https://creatornode3.audius.co/content/01J95TZRPB43E3VQKTQYVJ6XG4/480x480.jpg",
-        "1000x1000": "https://creatornode3.audius.co/content/01J95TZRPB43E3VQKTQYVJ6XG4/1000x1000.jpg"
+        "150x150": "https://audius-content-2.figment.io/content/01J94YD5H5F23K2KC5R0WCQ1QR/150x150.jpg",
+        "480x480": "https://audius-content-2.figment.io/content/01J94YD5H5F23K2KC5R0WCQ1QR/480x480.jpg",
+        "1000x1000": "https://audius-content-2.figment.io/content/01J94YD5H5F23K2KC5R0WCQ1QR/1000x1000.jpg"
       },
-      "description": "Earn COOP when you collect on Coop Records - https://www.cooprecords.xyz/mph/show-me",
-      "genre": "Electronic",
-      "id": "zyXvONj",
-      "track_cid": "baeaaaiqsea3lgbolxxz7b43ypgwwwm3vvtaybloqunuapvqtmhd7ftlx5efou",
+      "description": "Back once again with another exclusive here to educate the world on what’s going on keep your peace, finances, calm, and all shapes and sizes",
+      "genre": "Hip-Hop/Rap",
+      "id": "bdQV0dX",
+      "track_cid": "baeaaaiqsed6gwsj3ocohe6strplul2qol4jcs5pzzai57xxvez5b5chxjxolm",
       "preview_cid": null,
-      "orig_file_cid": "baeaaaiqseaid6hmcg2p55cbonuj4maaqtd7qtjytwb6rttcdxygp34x244qrs",
-      "orig_filename": "MPH - Show Me.wav",
+      "orig_file_cid": "baeaaaiqsebresjaknfvobotbj2v4u2lsbn5wabackksdhoaas6ba5zh5rahl2",
+      "orig_filename": "SacklessTesticle.m4a",
       "is_original_available": false,
-      "mood": null,
-      "release_date": "2024-10-02 05:26:30",
+      "mood": "Serious",
+      "release_date": "2024-10-01 21:05:16",
       "remix_of": {
         "tracks": null
       },
-      "repost_count": 28,
-      "favorite_count": 31,
+      "repost_count": 17,
+      "favorite_count": 28,
       "comment_count": 0,
-      "tags": "",
-      "title": "MPH - Show Me",
+      "tags": "Skit,Hiphop,Sexyredd,Moneybaggyo,Drake,Drill,Trap,Rnb,Lofi,Lildurk",
+      "title": "Professional Loiters",
       "user": {
-        "album_count": 0,
-        "artist_pick_track_id": null,
-        "bio": "Onchain Record Label",
+        "album_count": 71,
+        "artist_pick_track_id": "6xbMXx9",
+        "bio": "Scan-N-Kutt are a NYC On a quest to mend the gap between Beats & crypto 1 bull market at a time. \nDM Us For Beats.\nEmail: scan1kutt@gmail.com",
         "cover_photo": {
-          "640x": "https://audius-content-11.cultur3stake.com/content/01J3R0PVR5SPNV07ACE1K03XYZ/640x.jpg",
-          "2000x": "https://audius-content-11.cultur3stake.com/content/01J3R0PVR5SPNV07ACE1K03XYZ/2000x.jpg"
+          "640x": "https://blockdaemon-audius-content-06.bdnodes.net/content/QmS1Gnsr6ezzrDb5hrpxSyjTsNZoMEPhaDkK2jHEPmJM59/640x.jpg",
+          "2000x": "https://blockdaemon-audius-content-06.bdnodes.net/content/QmS1Gnsr6ezzrDb5hrpxSyjTsNZoMEPhaDkK2jHEPmJM59/2000x.jpg"
         },
-        "followee_count": 5,
-        "follower_count": 1782,
-        "handle": "cooprecsmusic",
-        "id": "PWY7x2X",
-        "is_verified": true,
-        "twitter_handle": "cooprecsmusic",
-        "instagram_handle": "cooprecs",
-        "tiktok_handle": null,
-        "verified_with_twitter": true,
-        "verified_with_instagram": false,
-        "verified_with_tiktok": false,
-        "website": "music.cooprecords.xyz",
-        "donation": null,
-        "location": "Los Angeles, CA",
-        "name": "Coop Records",
-        "playlist_count": 1,
-        "profile_picture": {
-          "150x150": "https://audius-content-11.cultur3stake.com/content/01H58FHE6N8QVFDYVCPP834WRB/150x150.jpg",
-          "480x480": "https://audius-content-11.cultur3stake.com/content/01H58FHE6N8QVFDYVCPP834WRB/480x480.jpg",
-          "1000x1000": "https://audius-content-11.cultur3stake.com/content/01H58FHE6N8QVFDYVCPP834WRB/1000x1000.jpg"
-        },
-        "repost_count": 50,
-        "track_count": 77,
-        "is_deactivated": false,
-        "is_available": true,
-        "erc_wallet": "0x2c07e332cbd85a6bd286805342a3a2aa20669cf8",
-        "spl_wallet": "J6phQrmEo9DR5HU9BpifX6xNrZU5mZy3pbsxZ5yDGtcX",
-        "spl_usdc_payout_wallet": null,
-        "supporter_count": 7,
-        "supporting_count": 0,
-        "total_audio_balance": 10777,
-        "wallet": "0x2c07e332cbd85a6bd286805342a3a2aa20669cf8"
-      },
-      "duration": 208,
-      "is_downloadable": false,
-      "play_count": 391,
-      "permalink": "/cooprecsmusic/mph-show-me",
-      "is_streamable": true,
-      "ddex_app": null,
-      "playlists_containing_track": [
-        1665340836,
-        351472838,
-        106563529,
-        1092601263,
-        706143855,
-        38934257,
-        1174217903,
-        261895856,
-        590028308,
-        648577334,
-        1323312631,
-        1761773334,
-        526633143,
-        1524474810,
-        1302349723,
-        923702653,
-        875599487
-      ]
-    },
-    {
-      "artwork": {
-        "150x150": "https://blockdaemon-audius-content-06.bdnodes.net/content/01J94AJMY7XR0AH2CGZ2VXPZ20/150x150.jpg",
-        "480x480": "https://blockdaemon-audius-content-06.bdnodes.net/content/01J94AJMY7XR0AH2CGZ2VXPZ20/480x480.jpg",
-        "1000x1000": "https://blockdaemon-audius-content-06.bdnodes.net/content/01J94AJMY7XR0AH2CGZ2VXPZ20/1000x1000.jpg"
-      },
-      "description": "",
-      "genre": "Pop",
-      "id": "NQZYaK4",
-      "track_cid": "baeaaaiqsedfh2t7b22ymtnxxnk7ij4tvscnwxdu4bno34wpdotdy3cs3m3rpw",
-      "preview_cid": null,
-      "orig_file_cid": "baeaaaiqseahbgy64vmhchp6omdoo2wm46pechn5vfi35awbygib3dk2kdwnvc",
-      "orig_filename": "the art of waiting.wav",
-      "is_original_available": false,
-      "mood": "Upbeat",
-      "release_date": "2024-10-01 15:19:57",
-      "remix_of": {
-        "tracks": null
-      },
-      "repost_count": 15,
-      "favorite_count": 20,
-      "comment_count": 0,
-      "tags": "pop,electropop,edm,electronica,electronicpop,vocals",
-      "title": "The Art of Waiting",
-      "user": {
-        "album_count": 0,
-        "artist_pick_track_id": "NQZYaK4",
-        "bio": "singer songwriter , music producer , collaborator and truth seeker.",
-        "cover_photo": {
-          "640x": "https://creatornode.audius.co/content/QmSD7X1PJJg9YWq39FQdaUx5wFVungwgkfjPkwB1sYxvy1/640x.jpg",
-          "2000x": "https://creatornode.audius.co/content/QmSD7X1PJJg9YWq39FQdaUx5wFVungwgkfjPkwB1sYxvy1/2000x.jpg"
-        },
-        "followee_count": 105,
-        "follower_count": 618,
-        "handle": "WINKANDW00",
-        "id": "ndRzm",
+        "followee_count": 479,
+        "follower_count": 3202,
+        "handle": "Kutt4life",
+        "id": "OgrZQ",
         "is_verified": false,
-        "twitter_handle": "WINKANDW00",
-        "instagram_handle": null,
-        "tiktok_handle": null,
+        "twitter_handle": "Kutt4life ",
+        "instagram_handle": "Kuttfever",
+        "tiktok_handle": "Aquativa",
         "verified_with_twitter": false,
         "verified_with_instagram": false,
         "verified_with_tiktok": false,
         "website": null,
-        "donation": null,
-        "location": "LONDON UK",
-        "name": "winkandwoo",
-        "playlist_count": 6,
+        "donation": "coindrop.to/scan-n-kutt",
+        "location": "New York, NY",
+        "name": "Scan-N-Kutt",
+        "playlist_count": 17,
         "profile_picture": {
-          "150x150": "https://creatornode2.audius.co/content/QmeALnXTDSaDjC3FiwgnCs7BesHZ3tJUvk26WtuL4X13k5/150x150.jpg",
-          "480x480": "https://creatornode2.audius.co/content/QmeALnXTDSaDjC3FiwgnCs7BesHZ3tJUvk26WtuL4X13k5/480x480.jpg",
-          "1000x1000": "https://creatornode2.audius.co/content/QmeALnXTDSaDjC3FiwgnCs7BesHZ3tJUvk26WtuL4X13k5/1000x1000.jpg"
+          "150x150": "https://audius-content-3.cultur3stake.com/content/01H62HV67PGGY0NZ5ERVMVMJEY/150x150.jpg",
+          "480x480": "https://audius-content-3.cultur3stake.com/content/01H62HV67PGGY0NZ5ERVMVMJEY/480x480.jpg",
+          "1000x1000": "https://audius-content-3.cultur3stake.com/content/01H62HV67PGGY0NZ5ERVMVMJEY/1000x1000.jpg"
         },
-        "repost_count": 2086,
-        "track_count": 78,
+        "repost_count": 15264,
+        "track_count": 575,
         "is_deactivated": false,
         "is_available": true,
-        "erc_wallet": "0x0b565477f9adfd25e2b7e448e3d8a1d0a782a5cc",
-        "spl_wallet": "7D2kxWTGZwBbVRsGxDSsUXjTQUpNEifMmgNNRVy8hPHu",
+        "erc_wallet": "0xd7c3dc9eef2d94568c0e1a9c88b58696850c7c22",
+        "spl_wallet": "6ASkDc7U9585pVPiG9MoF6AkAqnFyvvjYLQAgxsjfw7S",
         "spl_usdc_payout_wallet": null,
-        "supporter_count": 12,
-        "supporting_count": 26,
-        "total_audio_balance": 2303,
-        "wallet": "0x0b565477f9adfd25e2b7e448e3d8a1d0a782a5cc"
+        "supporter_count": 30,
+        "supporting_count": 28,
+        "total_audio_balance": 1047,
+        "wallet": "0xd7c3dc9eef2d94568c0e1a9c88b58696850c7c22"
       },
-      "duration": 275,
+      "duration": 76,
       "is_downloadable": false,
-      "play_count": 590,
-      "permalink": "/WINKANDW00/the-art-of-waiting",
+      "play_count": 798,
+      "permalink": "/Kutt4life/professional-loiters",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": [
+        241337585,
         1769285203,
-        2093152436
+        83069,
+        1760552887
       ]
     },
     {
@@ -2723,13 +2560,89 @@ API response: {
       },
       "duration": 288,
       "is_downloadable": false,
-      "play_count": 218,
+      "play_count": 234,
       "permalink": "/roycemusic/augmented-reality",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": [
         1691622395,
         1354572750
+      ]
+    },
+    {
+      "artwork": {
+        "150x150": "https://blockdaemon-audius-content-06.bdnodes.net/content/01J94AJMY7XR0AH2CGZ2VXPZ20/150x150.jpg",
+        "480x480": "https://blockdaemon-audius-content-06.bdnodes.net/content/01J94AJMY7XR0AH2CGZ2VXPZ20/480x480.jpg",
+        "1000x1000": "https://blockdaemon-audius-content-06.bdnodes.net/content/01J94AJMY7XR0AH2CGZ2VXPZ20/1000x1000.jpg"
+      },
+      "description": "",
+      "genre": "Pop",
+      "id": "NQZYaK4",
+      "track_cid": "baeaaaiqsedfh2t7b22ymtnxxnk7ij4tvscnwxdu4bno34wpdotdy3cs3m3rpw",
+      "preview_cid": null,
+      "orig_file_cid": "baeaaaiqseahbgy64vmhchp6omdoo2wm46pechn5vfi35awbygib3dk2kdwnvc",
+      "orig_filename": "the art of waiting.wav",
+      "is_original_available": false,
+      "mood": "Upbeat",
+      "release_date": "2024-10-01 15:19:57",
+      "remix_of": {
+        "tracks": null
+      },
+      "repost_count": 15,
+      "favorite_count": 20,
+      "comment_count": 0,
+      "tags": "pop,electropop,edm,electronica,electronicpop,vocals",
+      "title": "The Art of Waiting",
+      "user": {
+        "album_count": 0,
+        "artist_pick_track_id": "NQZYaK4",
+        "bio": "singer songwriter , music producer , collaborator and truth seeker.",
+        "cover_photo": {
+          "640x": "https://creatornode.audius.co/content/QmSD7X1PJJg9YWq39FQdaUx5wFVungwgkfjPkwB1sYxvy1/640x.jpg",
+          "2000x": "https://creatornode.audius.co/content/QmSD7X1PJJg9YWq39FQdaUx5wFVungwgkfjPkwB1sYxvy1/2000x.jpg"
+        },
+        "followee_count": 106,
+        "follower_count": 618,
+        "handle": "WINKANDW00",
+        "id": "ndRzm",
+        "is_verified": false,
+        "twitter_handle": "WINKANDW00",
+        "instagram_handle": null,
+        "tiktok_handle": null,
+        "verified_with_twitter": false,
+        "verified_with_instagram": false,
+        "verified_with_tiktok": false,
+        "website": null,
+        "donation": null,
+        "location": "LONDON UK",
+        "name": "winkandwoo",
+        "playlist_count": 6,
+        "profile_picture": {
+          "150x150": "https://creatornode2.audius.co/content/QmeALnXTDSaDjC3FiwgnCs7BesHZ3tJUvk26WtuL4X13k5/150x150.jpg",
+          "480x480": "https://creatornode2.audius.co/content/QmeALnXTDSaDjC3FiwgnCs7BesHZ3tJUvk26WtuL4X13k5/480x480.jpg",
+          "1000x1000": "https://creatornode2.audius.co/content/QmeALnXTDSaDjC3FiwgnCs7BesHZ3tJUvk26WtuL4X13k5/1000x1000.jpg"
+        },
+        "repost_count": 2088,
+        "track_count": 78,
+        "is_deactivated": false,
+        "is_available": true,
+        "erc_wallet": "0x0b565477f9adfd25e2b7e448e3d8a1d0a782a5cc",
+        "spl_wallet": "7D2kxWTGZwBbVRsGxDSsUXjTQUpNEifMmgNNRVy8hPHu",
+        "spl_usdc_payout_wallet": null,
+        "supporter_count": 12,
+        "supporting_count": 26,
+        "total_audio_balance": 2303,
+        "wallet": "0x0b565477f9adfd25e2b7e448e3d8a1d0a782a5cc"
+      },
+      "duration": 275,
+      "is_downloadable": false,
+      "play_count": 614,
+      "permalink": "/WINKANDW00/the-art-of-waiting",
+      "is_streamable": true,
+      "ddex_app": null,
+      "playlists_containing_track": [
+        1769285203,
+        2093152436
       ]
     },
     {
@@ -2799,7 +2712,7 @@ API response: {
       },
       "duration": 215,
       "is_downloadable": false,
-      "play_count": 6138,
+      "play_count": 6150,
       "permalink": "/electricwave/venal-genesis",
       "is_streamable": true,
       "ddex_app": null,
@@ -2872,11 +2785,102 @@ API response: {
       },
       "duration": 136,
       "is_downloadable": true,
-      "play_count": 5865,
+      "play_count": 5874,
       "permalink": "/trapical_music/badtune-moosa-saleem-echoes",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": []
+    },
+    {
+      "artwork": {
+        "150x150": "https://creatornode3.audius.co/content/01J95TZRPB43E3VQKTQYVJ6XG4/150x150.jpg",
+        "480x480": "https://creatornode3.audius.co/content/01J95TZRPB43E3VQKTQYVJ6XG4/480x480.jpg",
+        "1000x1000": "https://creatornode3.audius.co/content/01J95TZRPB43E3VQKTQYVJ6XG4/1000x1000.jpg"
+      },
+      "description": "Earn COOP when you collect on Coop Records - https://www.cooprecords.xyz/mph/show-me",
+      "genre": "Electronic",
+      "id": "zyXvONj",
+      "track_cid": "baeaaaiqsea3lgbolxxz7b43ypgwwwm3vvtaybloqunuapvqtmhd7ftlx5efou",
+      "preview_cid": null,
+      "orig_file_cid": "baeaaaiqseaid6hmcg2p55cbonuj4maaqtd7qtjytwb6rttcdxygp34x244qrs",
+      "orig_filename": "MPH - Show Me.wav",
+      "is_original_available": false,
+      "mood": null,
+      "release_date": "2024-10-02 05:26:30",
+      "remix_of": {
+        "tracks": null
+      },
+      "repost_count": 28,
+      "favorite_count": 31,
+      "comment_count": 0,
+      "tags": "",
+      "title": "MPH - Show Me",
+      "user": {
+        "album_count": 0,
+        "artist_pick_track_id": null,
+        "bio": "Onchain Record Label",
+        "cover_photo": {
+          "640x": "https://audius-content-11.cultur3stake.com/content/01J3R0PVR5SPNV07ACE1K03XYZ/640x.jpg",
+          "2000x": "https://audius-content-11.cultur3stake.com/content/01J3R0PVR5SPNV07ACE1K03XYZ/2000x.jpg"
+        },
+        "followee_count": 5,
+        "follower_count": 1800,
+        "handle": "cooprecsmusic",
+        "id": "PWY7x2X",
+        "is_verified": true,
+        "twitter_handle": "cooprecsmusic",
+        "instagram_handle": "cooprecs",
+        "tiktok_handle": null,
+        "verified_with_twitter": true,
+        "verified_with_instagram": false,
+        "verified_with_tiktok": false,
+        "website": "music.cooprecords.xyz",
+        "donation": null,
+        "location": "Los Angeles, CA",
+        "name": "Coop Records",
+        "playlist_count": 1,
+        "profile_picture": {
+          "150x150": "https://audius-content-11.cultur3stake.com/content/01H58FHE6N8QVFDYVCPP834WRB/150x150.jpg",
+          "480x480": "https://audius-content-11.cultur3stake.com/content/01H58FHE6N8QVFDYVCPP834WRB/480x480.jpg",
+          "1000x1000": "https://audius-content-11.cultur3stake.com/content/01H58FHE6N8QVFDYVCPP834WRB/1000x1000.jpg"
+        },
+        "repost_count": 50,
+        "track_count": 77,
+        "is_deactivated": false,
+        "is_available": true,
+        "erc_wallet": "0x2c07e332cbd85a6bd286805342a3a2aa20669cf8",
+        "spl_wallet": "J6phQrmEo9DR5HU9BpifX6xNrZU5mZy3pbsxZ5yDGtcX",
+        "spl_usdc_payout_wallet": null,
+        "supporter_count": 7,
+        "supporting_count": 0,
+        "total_audio_balance": 10777,
+        "wallet": "0x2c07e332cbd85a6bd286805342a3a2aa20669cf8"
+      },
+      "duration": 208,
+      "is_downloadable": false,
+      "play_count": 420,
+      "permalink": "/cooprecsmusic/mph-show-me",
+      "is_streamable": true,
+      "ddex_app": null,
+      "playlists_containing_track": [
+        1665340836,
+        351472838,
+        106563529,
+        1092601263,
+        706143855,
+        38934257,
+        1174217903,
+        261895856,
+        590028308,
+        648577334,
+        1323312631,
+        1761773334,
+        526633143,
+        1524474810,
+        1302349723,
+        923702653,
+        875599487
+      ]
     },
     {
       "artwork": {
@@ -2945,7 +2949,7 @@ API response: {
       },
       "duration": 151,
       "is_downloadable": false,
-      "play_count": 256,
+      "play_count": 271,
       "permalink": "/Brozrdz/cnvs-batallas-broz-rodriguez-remix",
       "is_streamable": true,
       "ddex_app": null,
@@ -2953,81 +2957,6 @@ API response: {
         4281,
         480667851,
         1936117932
-      ]
-    },
-    {
-      "artwork": {
-        "150x150": "https://audius-content-11.cultur3stake.com/content/01J93KC3Q7VHQYYGA8E5CHAZYF/150x150.jpg",
-        "480x480": "https://audius-content-11.cultur3stake.com/content/01J93KC3Q7VHQYYGA8E5CHAZYF/480x480.jpg",
-        "1000x1000": "https://audius-content-11.cultur3stake.com/content/01J93KC3Q7VHQYYGA8E5CHAZYF/1000x1000.jpg"
-      },
-      "description": "Its ok to be different💯💥🔥🔥🔥",
-      "genre": "Electronic",
-      "id": "Nl4ryR0",
-      "track_cid": "baeaaaiqsecdwk7kgiigb3ebsdtfpk2gstk63tcfhjy6prs2ynz76w77ekpf2m",
-      "preview_cid": null,
-      "orig_file_cid": "baeaaaiqsedn3pol3zcwfw7qp62oxeu3a4qsnaz5plxfd6wf5xqfqu7fjyhxqi",
-      "orig_filename": "Project_9.wav",
-      "is_original_available": false,
-      "mood": "Defiant",
-      "release_date": "2024-10-01 08:34:50",
-      "remix_of": {
-        "tracks": null
-      },
-      "repost_count": 15,
-      "favorite_count": 22,
-      "comment_count": 0,
-      "tags": "Truth,Love,Respect,New,Hot,Typebeat,Unique",
-      "title": "Tidal Waves",
-      "user": {
-        "album_count": 0,
-        "artist_pick_track_id": "P7VXRd7",
-        "bio": "Triptrap-\nEperimental-\nTriphop-\nOther-\n\n Do your chores with enthusiasm. Set your goals high and your expectations. Accept failure, learn, move on... love with all your strength-Chess",
-        "cover_photo": {
-          "640x": "https://cn1.mainnet.audiusindex.org/content/Qmf2LiHNvXZjJd49X4xeUWCAP4PMzTJ1qAmggasA2vAP8y/640x.jpg",
-          "2000x": "https://cn1.mainnet.audiusindex.org/content/Qmf2LiHNvXZjJd49X4xeUWCAP4PMzTJ1qAmggasA2vAP8y/2000x.jpg"
-        },
-        "followee_count": 272,
-        "follower_count": 201,
-        "handle": "chessmusicbeats",
-        "id": "b9m5J",
-        "is_verified": false,
-        "twitter_handle": "ChessMusicBeats",
-        "instagram_handle": "Chessmusicbeats",
-        "tiktok_handle": null,
-        "verified_with_twitter": false,
-        "verified_with_instagram": false,
-        "verified_with_tiktok": false,
-        "website": "https://soundcloud.com/chess_music_beats",
-        "donation": null,
-        "location": "Portland, OR",
-        "name": "Chess",
-        "playlist_count": 5,
-        "profile_picture": {
-          "150x150": "https://blockdaemon-audius-content-02.bdnodes.net/content/QmcM1nRNEcT1vE5ZYZsc1XXbTzxz4XiXpNZX2KRuQJkEAL/150x150.jpg",
-          "480x480": "https://blockdaemon-audius-content-02.bdnodes.net/content/QmcM1nRNEcT1vE5ZYZsc1XXbTzxz4XiXpNZX2KRuQJkEAL/480x480.jpg",
-          "1000x1000": "https://blockdaemon-audius-content-02.bdnodes.net/content/QmcM1nRNEcT1vE5ZYZsc1XXbTzxz4XiXpNZX2KRuQJkEAL/1000x1000.jpg"
-        },
-        "repost_count": 798,
-        "track_count": 159,
-        "is_deactivated": false,
-        "is_available": true,
-        "erc_wallet": "0xc8af9b676e09a1e7b8bcc1b53851112dc0f0b5f1",
-        "spl_wallet": "3ANe5hokik3SFUv7r69TXar5VRwKTezxUPABuEcTHqbK",
-        "spl_usdc_payout_wallet": null,
-        "supporter_count": 5,
-        "supporting_count": 4,
-        "total_audio_balance": 15,
-        "wallet": "0xc8af9b676e09a1e7b8bcc1b53851112dc0f0b5f1"
-      },
-      "duration": 284,
-      "is_downloadable": false,
-      "play_count": 553,
-      "permalink": "/chessmusicbeats/tidal-waves",
-      "is_streamable": true,
-      "ddex_app": null,
-      "playlists_containing_track": [
-        807819983
       ]
     },
     {
@@ -3097,8 +3026,83 @@ API response: {
       },
       "duration": 209,
       "is_downloadable": false,
-      "play_count": 295,
+      "play_count": 306,
       "permalink": "/vale412/compulsions-ftsteelyvibe",
+      "is_streamable": true,
+      "ddex_app": null,
+      "playlists_containing_track": [
+        807819983
+      ]
+    },
+    {
+      "artwork": {
+        "150x150": "https://audius-content-11.cultur3stake.com/content/01J93KC3Q7VHQYYGA8E5CHAZYF/150x150.jpg",
+        "480x480": "https://audius-content-11.cultur3stake.com/content/01J93KC3Q7VHQYYGA8E5CHAZYF/480x480.jpg",
+        "1000x1000": "https://audius-content-11.cultur3stake.com/content/01J93KC3Q7VHQYYGA8E5CHAZYF/1000x1000.jpg"
+      },
+      "description": "Its ok to be different💯💥🔥🔥🔥",
+      "genre": "Electronic",
+      "id": "Nl4ryR0",
+      "track_cid": "baeaaaiqsecdwk7kgiigb3ebsdtfpk2gstk63tcfhjy6prs2ynz76w77ekpf2m",
+      "preview_cid": null,
+      "orig_file_cid": "baeaaaiqsedn3pol3zcwfw7qp62oxeu3a4qsnaz5plxfd6wf5xqfqu7fjyhxqi",
+      "orig_filename": "Project_9.wav",
+      "is_original_available": false,
+      "mood": "Defiant",
+      "release_date": "2024-10-01 08:34:50",
+      "remix_of": {
+        "tracks": null
+      },
+      "repost_count": 15,
+      "favorite_count": 22,
+      "comment_count": 0,
+      "tags": "Truth,Love,Respect,New,Hot,Typebeat,Unique",
+      "title": "Tidal Waves",
+      "user": {
+        "album_count": 0,
+        "artist_pick_track_id": "P7VXRd7",
+        "bio": "Triptrap-\nEperimental-\nTriphop-\nOther-\n\n Do your chores with enthusiasm. Set your goals high and your expectations. Accept failure, learn, move on... love with all your strength-Chess",
+        "cover_photo": {
+          "640x": "https://cn1.mainnet.audiusindex.org/content/Qmf2LiHNvXZjJd49X4xeUWCAP4PMzTJ1qAmggasA2vAP8y/640x.jpg",
+          "2000x": "https://cn1.mainnet.audiusindex.org/content/Qmf2LiHNvXZjJd49X4xeUWCAP4PMzTJ1qAmggasA2vAP8y/2000x.jpg"
+        },
+        "followee_count": 272,
+        "follower_count": 201,
+        "handle": "chessmusicbeats",
+        "id": "b9m5J",
+        "is_verified": false,
+        "twitter_handle": "ChessMusicBeats",
+        "instagram_handle": "Chessmusicbeats",
+        "tiktok_handle": null,
+        "verified_with_twitter": false,
+        "verified_with_instagram": false,
+        "verified_with_tiktok": false,
+        "website": "https://soundcloud.com/chess_music_beats",
+        "donation": null,
+        "location": "Portland, OR",
+        "name": "Chess",
+        "playlist_count": 5,
+        "profile_picture": {
+          "150x150": "https://blockdaemon-audius-content-02.bdnodes.net/content/QmcM1nRNEcT1vE5ZYZsc1XXbTzxz4XiXpNZX2KRuQJkEAL/150x150.jpg",
+          "480x480": "https://blockdaemon-audius-content-02.bdnodes.net/content/QmcM1nRNEcT1vE5ZYZsc1XXbTzxz4XiXpNZX2KRuQJkEAL/480x480.jpg",
+          "1000x1000": "https://blockdaemon-audius-content-02.bdnodes.net/content/QmcM1nRNEcT1vE5ZYZsc1XXbTzxz4XiXpNZX2KRuQJkEAL/1000x1000.jpg"
+        },
+        "repost_count": 798,
+        "track_count": 160,
+        "is_deactivated": false,
+        "is_available": true,
+        "erc_wallet": "0xc8af9b676e09a1e7b8bcc1b53851112dc0f0b5f1",
+        "spl_wallet": "3ANe5hokik3SFUv7r69TXar5VRwKTezxUPABuEcTHqbK",
+        "spl_usdc_payout_wallet": null,
+        "supporter_count": 5,
+        "supporting_count": 4,
+        "total_audio_balance": 15,
+        "wallet": "0xc8af9b676e09a1e7b8bcc1b53851112dc0f0b5f1"
+      },
+      "duration": 284,
+      "is_downloadable": false,
+      "play_count": 565,
+      "permalink": "/chessmusicbeats/tidal-waves",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": [
@@ -3138,7 +3142,7 @@ API response: {
           "2000x": "https://audius-content-2.cultur3stake.com/content/QmPscoohBw1bZSqg1jNT4UbwTekiXhwC9xqHPRfhavJi6d/2000x.jpg"
         },
         "followee_count": 7,
-        "follower_count": 15,
+        "follower_count": 16,
         "handle": "cryjaxx",
         "id": "NaN08",
         "is_verified": true,
@@ -3165,14 +3169,14 @@ API response: {
         "erc_wallet": "0x3d93ec53ea2e00ce4b26eb7669f5738e6edcfd9e",
         "spl_wallet": "D5Zy8YWFWEeyhz6HMKo6Syiw8Nddc5CxboG6yphdpQkm",
         "spl_usdc_payout_wallet": null,
-        "supporter_count": 2,
+        "supporter_count": 3,
         "supporting_count": 0,
-        "total_audio_balance": 1012,
+        "total_audio_balance": 1013,
         "wallet": "0x3d93ec53ea2e00ce4b26eb7669f5738e6edcfd9e"
       },
       "duration": 208,
       "is_downloadable": false,
-      "play_count": 5352,
+      "play_count": 5367,
       "permalink": "/cryjaxx/cryjaxx-dont-look-back",
       "is_streamable": true,
       "ddex_app": null,
@@ -3249,86 +3253,11 @@ API response: {
       },
       "duration": 202,
       "is_downloadable": false,
-      "play_count": 229,
+      "play_count": 236,
       "permalink": "/vale412/broken-by-ftashesanddream",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": []
-    },
-    {
-      "artwork": {
-        "150x150": "https://audius-content-7.figment.io/content/01J9EQZMZ1CZ7FPZVJMESK6W4E/150x150.jpg",
-        "480x480": "https://audius-content-7.figment.io/content/01J9EQZMZ1CZ7FPZVJMESK6W4E/480x480.jpg",
-        "1000x1000": "https://audius-content-7.figment.io/content/01J9EQZMZ1CZ7FPZVJMESK6W4E/1000x1000.jpg"
-      },
-      "description": "I see the world, everything is beautiful .. Picturesque !! ..",
-      "genre": "Experimental",
-      "id": "8OOdYAv",
-      "track_cid": "baeaaaiqsecqfgylbamtn3xdflvbipxvhtgmkzjvopn7mekbgovh2g3uoicsro",
-      "preview_cid": null,
-      "orig_file_cid": "baeaaaiqsebmtu45wmxy2ct77xhr7xfzlldojucyma5welrlhzljz2yuenlo7w",
-      "orig_filename": "Picturesque - Stewart X.wav",
-      "is_original_available": false,
-      "mood": "Sophisticated",
-      "release_date": "2024-10-05 16:26:28",
-      "remix_of": {
-        "tracks": null
-      },
-      "repost_count": 19,
-      "favorite_count": 26,
-      "comment_count": 0,
-      "tags": "chill,moods,vibes,smooth,sax,flow,feel,relax,sway,sense",
-      "title": "Picturesque",
-      "user": {
-        "album_count": 1,
-        "artist_pick_track_id": "kZj43",
-        "bio": "All about Dreams, Smooth Sax, Lofi, Relaxing Grooves and Musical Journeys .. Retro, 80's, Old Skool & Fusion included ..\n\nLove also goes out to tunes of Buddha Bar, Cafe Del Mar & of the Chillout genre !!\n\nChill !! Relax !! Peace !! I'm Out !!",
-        "cover_photo": {
-          "640x": "https://audius-content-13.cultur3stake.com/content/01HDGV2QY01V6HRX0AB73S02HJ/640x.jpg",
-          "2000x": "https://audius-content-13.cultur3stake.com/content/01HDGV2QY01V6HRX0AB73S02HJ/2000x.jpg"
-        },
-        "followee_count": 2551,
-        "follower_count": 3093,
-        "handle": "stewartx",
-        "id": "k4mo3",
-        "is_verified": false,
-        "twitter_handle": null,
-        "instagram_handle": "stewartfoox",
-        "tiktok_handle": null,
-        "verified_with_twitter": false,
-        "verified_with_instagram": false,
-        "verified_with_tiktok": false,
-        "website": null,
-        "donation": null,
-        "location": "Somewhere Out There",
-        "name": "Stewart X",
-        "playlist_count": 1,
-        "profile_picture": {
-          "150x150": "https://audius-content-6.cultur3stake.com/content/01HTQBDT0RHV0TQ5TV8SJNA25B/150x150.jpg",
-          "480x480": "https://audius-content-6.cultur3stake.com/content/01HTQBDT0RHV0TQ5TV8SJNA25B/480x480.jpg",
-          "1000x1000": "https://audius-content-6.cultur3stake.com/content/01HTQBDT0RHV0TQ5TV8SJNA25B/1000x1000.jpg"
-        },
-        "repost_count": 26191,
-        "track_count": 349,
-        "is_deactivated": false,
-        "is_available": true,
-        "erc_wallet": "0xf954e35976c0aaaec2968197f2a371cc99e7c81a",
-        "spl_wallet": "EWVPtKTkh5S1BHuVwXBGEhRRb4nZ6Z4odN3ySEp2hPx4",
-        "spl_usdc_payout_wallet": null,
-        "supporter_count": 57,
-        "supporting_count": 10,
-        "total_audio_balance": 301,
-        "wallet": "0xf954e35976c0aaaec2968197f2a371cc99e7c81a"
-      },
-      "duration": 332,
-      "is_downloadable": false,
-      "play_count": 187,
-      "permalink": "/stewartx/picturesque",
-      "is_streamable": true,
-      "ddex_app": null,
-      "playlists_containing_track": [
-        1634226993
-      ]
     },
     {
       "artwork": {
@@ -3401,11 +3330,86 @@ API response: {
       },
       "duration": 144,
       "is_downloadable": true,
-      "play_count": 299,
+      "play_count": 306,
       "permalink": "/brokenblythe/trivecta-ft-casey-cook-alaska-remix",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": []
+    },
+    {
+      "artwork": {
+        "150x150": "https://audius-content-7.figment.io/content/01J9EQZMZ1CZ7FPZVJMESK6W4E/150x150.jpg",
+        "480x480": "https://audius-content-7.figment.io/content/01J9EQZMZ1CZ7FPZVJMESK6W4E/480x480.jpg",
+        "1000x1000": "https://audius-content-7.figment.io/content/01J9EQZMZ1CZ7FPZVJMESK6W4E/1000x1000.jpg"
+      },
+      "description": "I see the world, everything is beautiful .. Picturesque !! ..",
+      "genre": "Experimental",
+      "id": "8OOdYAv",
+      "track_cid": "baeaaaiqsecqfgylbamtn3xdflvbipxvhtgmkzjvopn7mekbgovh2g3uoicsro",
+      "preview_cid": null,
+      "orig_file_cid": "baeaaaiqsebmtu45wmxy2ct77xhr7xfzlldojucyma5welrlhzljz2yuenlo7w",
+      "orig_filename": "Picturesque - Stewart X.wav",
+      "is_original_available": false,
+      "mood": "Sophisticated",
+      "release_date": "2024-10-05 16:26:28",
+      "remix_of": {
+        "tracks": null
+      },
+      "repost_count": 19,
+      "favorite_count": 26,
+      "comment_count": 0,
+      "tags": "chill,moods,vibes,smooth,sax,flow,feel,relax,sway,sense",
+      "title": "Picturesque",
+      "user": {
+        "album_count": 1,
+        "artist_pick_track_id": "kZj43",
+        "bio": "All about Dreams, Smooth Sax, Lofi, Relaxing Grooves and Musical Journeys .. Retro, 80's, Old Skool & Fusion included ..\n\nLove also goes out to tunes of Buddha Bar, Cafe Del Mar & of the Chillout genre !!\n\nChill !! Relax !! Peace !! I'm Out !!",
+        "cover_photo": {
+          "640x": "https://audius-content-13.cultur3stake.com/content/01HDGV2QY01V6HRX0AB73S02HJ/640x.jpg",
+          "2000x": "https://audius-content-13.cultur3stake.com/content/01HDGV2QY01V6HRX0AB73S02HJ/2000x.jpg"
+        },
+        "followee_count": 2551,
+        "follower_count": 3093,
+        "handle": "stewartx",
+        "id": "k4mo3",
+        "is_verified": false,
+        "twitter_handle": null,
+        "instagram_handle": "stewartfoox",
+        "tiktok_handle": null,
+        "verified_with_twitter": false,
+        "verified_with_instagram": false,
+        "verified_with_tiktok": false,
+        "website": null,
+        "donation": null,
+        "location": "Somewhere Out There",
+        "name": "Stewart X",
+        "playlist_count": 1,
+        "profile_picture": {
+          "150x150": "https://audius-content-6.cultur3stake.com/content/01HTQBDT0RHV0TQ5TV8SJNA25B/150x150.jpg",
+          "480x480": "https://audius-content-6.cultur3stake.com/content/01HTQBDT0RHV0TQ5TV8SJNA25B/480x480.jpg",
+          "1000x1000": "https://audius-content-6.cultur3stake.com/content/01HTQBDT0RHV0TQ5TV8SJNA25B/1000x1000.jpg"
+        },
+        "repost_count": 26191,
+        "track_count": 349,
+        "is_deactivated": false,
+        "is_available": true,
+        "erc_wallet": "0xf954e35976c0aaaec2968197f2a371cc99e7c81a",
+        "spl_wallet": "EWVPtKTkh5S1BHuVwXBGEhRRb4nZ6Z4odN3ySEp2hPx4",
+        "spl_usdc_payout_wallet": null,
+        "supporter_count": 57,
+        "supporting_count": 10,
+        "total_audio_balance": 301,
+        "wallet": "0xf954e35976c0aaaec2968197f2a371cc99e7c81a"
+      },
+      "duration": 332,
+      "is_downloadable": false,
+      "play_count": 191,
+      "permalink": "/stewartx/picturesque",
+      "is_streamable": true,
+      "ddex_app": null,
+      "playlists_containing_track": [
+        1634226993
+      ]
     },
     {
       "artwork": {
@@ -3478,7 +3482,7 @@ API response: {
       },
       "duration": 223,
       "is_downloadable": false,
-      "play_count": 158,
+      "play_count": 169,
       "permalink": "/Ryahu/trivecta-alaska-feat-casey-cook-ryahu-remix",
       "is_streamable": true,
       "ddex_app": null,
@@ -3551,7 +3555,7 @@ API response: {
       },
       "duration": 161,
       "is_downloadable": true,
-      "play_count": 206,
+      "play_count": 214,
       "permalink": "/chiefdijon/the-lover-and-the-dream-distortion",
       "is_streamable": true,
       "ddex_app": null,
@@ -3624,7 +3628,7 @@ API response: {
       },
       "duration": 144,
       "is_downloadable": false,
-      "play_count": 214,
+      "play_count": 217,
       "permalink": "/marcosicco/summertime-gershwin-aristide-sicco-al-sax",
       "is_streamable": true,
       "ddex_app": null,
@@ -3697,13 +3701,86 @@ API response: {
       },
       "duration": 187,
       "is_downloadable": false,
-      "play_count": 140,
+      "play_count": 145,
       "permalink": "/Kutt4life/apocalyptic-charity",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": [
         1034755250
       ]
+    },
+    {
+      "artwork": {
+        "150x150": "https://audius-creator-6.theblueprint.xyz/content/01J9QSXP248ZHCWD1E1BQ8KH4K/150x150.jpg",
+        "480x480": "https://audius-creator-6.theblueprint.xyz/content/01J9QSXP248ZHCWD1E1BQ8KH4K/480x480.jpg",
+        "1000x1000": "https://audius-creator-6.theblueprint.xyz/content/01J9QSXP248ZHCWD1E1BQ8KH4K/1000x1000.jpg"
+      },
+      "description": "Dance Like Salsa !\nDance And Song Like Talk.\n\nTalk To You.\nWith the Passion.\n\nFire or No Fire ?\nCan you capture it in song ?",
+      "genre": "Tech House",
+      "id": "lw29Nbl",
+      "track_cid": "baeaaaiqseazd5zae746vmh5twc5exmgjjs2zbgqthmgvthjmy5yxdxntvy5by",
+      "preview_cid": null,
+      "orig_file_cid": "baeaaaiqsebmocbr5riyjl7f6krg7ybhtn7e2oaqeirhzftukxylebrjtaazme",
+      "orig_filename": "Boom Like Talk To You K. 1.wav",
+      "is_original_available": false,
+      "mood": "Fiery",
+      "release_date": "2024-10-05 16:51:28",
+      "remix_of": {
+        "tracks": null
+      },
+      "repost_count": 12,
+      "favorite_count": 19,
+      "comment_count": 0,
+      "tags": "latintech",
+      "title": "Hablar Contigo K. 1",
+      "user": {
+        "album_count": 1,
+        "artist_pick_track_id": null,
+        "bio": "Thank Your Following❤️\n\nAmature DJ Style 🎹 Composer. \n47 years old.\n\nI don't need a lot number of plays. \nIf I can draw out your inspiration, \nI don't need anything else.\n\nI make ✈️ Music tracks with Hot ❤️ passion.\nSo My inspiration is flowing !",
+        "cover_photo": {
+          "640x": "https://blockdaemon-audius-content-03.bdnodes.net/content/01HX4XV4E66N7BS2Z610Q51AD3/640x.jpg",
+          "2000x": "https://blockdaemon-audius-content-03.bdnodes.net/content/01HX4XV4E66N7BS2Z610Q51AD3/2000x.jpg"
+        },
+        "followee_count": 1080,
+        "follower_count": 1029,
+        "handle": "SyntheKSizer",
+        "id": "ogy5R",
+        "is_verified": false,
+        "twitter_handle": "shinsukeohashi",
+        "instagram_handle": null,
+        "tiktok_handle": null,
+        "verified_with_twitter": false,
+        "verified_with_instagram": false,
+        "verified_with_tiktok": false,
+        "website": "https://www.beatport.com/label/light-works/120854",
+        "donation": null,
+        "location": "Japan, Sapporo",
+        "name": "DJ Shinsuke !",
+        "playlist_count": 9,
+        "profile_picture": {
+          "150x150": "https://creatornode2.audius.co/content/01HS7Q5CF063ATSRT3ZP9EC7GB/150x150.jpg",
+          "480x480": "https://creatornode2.audius.co/content/01HS7Q5CF063ATSRT3ZP9EC7GB/480x480.jpg",
+          "1000x1000": "https://creatornode2.audius.co/content/01HS7Q5CF063ATSRT3ZP9EC7GB/1000x1000.jpg"
+        },
+        "repost_count": 1931,
+        "track_count": 463,
+        "is_deactivated": false,
+        "is_available": true,
+        "erc_wallet": "0xbe465aa25655a6e6b63480fc80284d554ecb33ea",
+        "spl_wallet": "JB6HEM2tdYSUD3yzryLgkrWELDtLCH6m1xvfM3pyijP6",
+        "spl_usdc_payout_wallet": null,
+        "supporter_count": 18,
+        "supporting_count": 55,
+        "total_audio_balance": 1532,
+        "wallet": "0xbe465aa25655a6e6b63480fc80284d554ecb33ea"
+      },
+      "duration": 182,
+      "is_downloadable": false,
+      "play_count": 158,
+      "permalink": "/SyntheKSizer/hablar-contigo-k-1",
+      "is_streamable": true,
+      "ddex_app": null,
+      "playlists_containing_track": []
     },
     {
       "artwork": {
@@ -3738,7 +3815,7 @@ API response: {
           "2000x": "https://audius-content-11.cultur3stake.com/content/01J3R0PVR5SPNV07ACE1K03XYZ/2000x.jpg"
         },
         "followee_count": 5,
-        "follower_count": 1782,
+        "follower_count": 1800,
         "handle": "cooprecsmusic",
         "id": "PWY7x2X",
         "is_verified": true,
@@ -3772,7 +3849,7 @@ API response: {
       },
       "duration": 244,
       "is_downloadable": false,
-      "play_count": 194,
+      "play_count": 202,
       "permalink": "/cooprecsmusic/kasbo-vårsång",
       "is_streamable": true,
       "ddex_app": null,
@@ -3796,6 +3873,81 @@ API response: {
         103255130,
         1573777656,
         802665983
+      ]
+    },
+    {
+      "artwork": {
+        "150x150": "https://creatornode.audius1.prod-eks-ap-northeast-1.staked.cloud/content/01J9FEDH5V762VHJEQGRGM9VWK/150x150.jpg",
+        "480x480": "https://creatornode.audius1.prod-eks-ap-northeast-1.staked.cloud/content/01J9FEDH5V762VHJEQGRGM9VWK/480x480.jpg",
+        "1000x1000": "https://creatornode.audius1.prod-eks-ap-northeast-1.staked.cloud/content/01J9FEDH5V762VHJEQGRGM9VWK/1000x1000.jpg"
+      },
+      "description": "",
+      "genre": "Hip-Hop/Rap",
+      "id": "dV2gk5",
+      "track_cid": "baeaaaiqseaqr3mldziw423253o3alfaeqozsvhxxevmqcvnhkenxqnvydnyww",
+      "preview_cid": null,
+      "orig_file_cid": "baeaaaiqseaou7oacxyqmxsiwawsynzgxbzowcxq7t2sqfh364422iphrn4r4q",
+      "orig_filename": "LOWCOST V2 - GMLX.mp3",
+      "is_original_available": false,
+      "mood": null,
+      "release_date": "2024-10-05 22:57:32",
+      "remix_of": {
+        "tracks": null
+      },
+      "repost_count": 10,
+      "favorite_count": 14,
+      "comment_count": 0,
+      "tags": "",
+      "title": "LOWCOST - GG",
+      "user": {
+        "album_count": 0,
+        "artist_pick_track_id": null,
+        "bio": "",
+        "cover_photo": {
+          "640x": "https://audius-content-1.cultur3stake.com/content/QmZnwiv571REjfRjM6hxsYaJMaQ6UWegkbx27FotywDVZV/640x.jpg",
+          "2000x": "https://audius-content-1.cultur3stake.com/content/QmZnwiv571REjfRjM6hxsYaJMaQ6UWegkbx27FotywDVZV/2000x.jpg"
+        },
+        "followee_count": 1808,
+        "follower_count": 933,
+        "handle": "Guiyeralex",
+        "id": "kKMK1",
+        "is_verified": false,
+        "twitter_handle": null,
+        "instagram_handle": null,
+        "tiktok_handle": null,
+        "verified_with_twitter": false,
+        "verified_with_instagram": false,
+        "verified_with_tiktok": false,
+        "website": null,
+        "donation": null,
+        "location": "Spain - Madrid",
+        "name": "GMLX ",
+        "playlist_count": 3,
+        "profile_picture": {
+          "150x150": "https://audius-content-11.cultur3stake.com/content/QmU4erkqnqjdAdXDSzvnpqRKrHJ9ufbogkG82Tk6paY6py/150x150.jpg",
+          "480x480": "https://audius-content-11.cultur3stake.com/content/QmU4erkqnqjdAdXDSzvnpqRKrHJ9ufbogkG82Tk6paY6py/480x480.jpg",
+          "1000x1000": "https://audius-content-11.cultur3stake.com/content/QmU4erkqnqjdAdXDSzvnpqRKrHJ9ufbogkG82Tk6paY6py/1000x1000.jpg"
+        },
+        "repost_count": 3036,
+        "track_count": 236,
+        "is_deactivated": false,
+        "is_available": true,
+        "erc_wallet": "0x3d472a01cb831ac594835ac6038a4346e2a22b94",
+        "spl_wallet": "7ZKGHraqYr55dUgHi9Ee44XvuoKfpytbn2vHZhcaEAny",
+        "spl_usdc_payout_wallet": null,
+        "supporter_count": 8,
+        "supporting_count": 1,
+        "total_audio_balance": 19,
+        "wallet": "0x3d472a01cb831ac594835ac6038a4346e2a22b94"
+      },
+      "duration": 165,
+      "is_downloadable": false,
+      "play_count": 173,
+      "permalink": "/Guiyeralex/lowcost-gg",
+      "is_streamable": true,
+      "ddex_app": null,
+      "playlists_containing_track": [
+        807819983
       ]
     },
     {
@@ -3865,86 +4017,11 @@ API response: {
       },
       "duration": 174,
       "is_downloadable": false,
-      "play_count": 70,
+      "play_count": 77,
       "permalink": "/marcosicco/sono-tuo-de-gregori-by-amos",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": []
-    },
-    {
-      "artwork": {
-        "150x150": "https://creatornode.audius1.prod-eks-ap-northeast-1.staked.cloud/content/01J9FEDH5V762VHJEQGRGM9VWK/150x150.jpg",
-        "480x480": "https://creatornode.audius1.prod-eks-ap-northeast-1.staked.cloud/content/01J9FEDH5V762VHJEQGRGM9VWK/480x480.jpg",
-        "1000x1000": "https://creatornode.audius1.prod-eks-ap-northeast-1.staked.cloud/content/01J9FEDH5V762VHJEQGRGM9VWK/1000x1000.jpg"
-      },
-      "description": "",
-      "genre": "Hip-Hop/Rap",
-      "id": "dV2gk5",
-      "track_cid": "baeaaaiqseaqr3mldziw423253o3alfaeqozsvhxxevmqcvnhkenxqnvydnyww",
-      "preview_cid": null,
-      "orig_file_cid": "baeaaaiqseaou7oacxyqmxsiwawsynzgxbzowcxq7t2sqfh364422iphrn4r4q",
-      "orig_filename": "LOWCOST V2 - GMLX.mp3",
-      "is_original_available": false,
-      "mood": null,
-      "release_date": "2024-10-05 22:57:32",
-      "remix_of": {
-        "tracks": null
-      },
-      "repost_count": 10,
-      "favorite_count": 14,
-      "comment_count": 0,
-      "tags": "",
-      "title": "LOWCOST - GG",
-      "user": {
-        "album_count": 0,
-        "artist_pick_track_id": null,
-        "bio": "",
-        "cover_photo": {
-          "640x": "https://audius-content-1.cultur3stake.com/content/QmZnwiv571REjfRjM6hxsYaJMaQ6UWegkbx27FotywDVZV/640x.jpg",
-          "2000x": "https://audius-content-1.cultur3stake.com/content/QmZnwiv571REjfRjM6hxsYaJMaQ6UWegkbx27FotywDVZV/2000x.jpg"
-        },
-        "followee_count": 1808,
-        "follower_count": 933,
-        "handle": "Guiyeralex",
-        "id": "kKMK1",
-        "is_verified": false,
-        "twitter_handle": null,
-        "instagram_handle": null,
-        "tiktok_handle": null,
-        "verified_with_twitter": false,
-        "verified_with_instagram": false,
-        "verified_with_tiktok": false,
-        "website": null,
-        "donation": null,
-        "location": "Spain - Madrid",
-        "name": "GMLX ",
-        "playlist_count": 3,
-        "profile_picture": {
-          "150x150": "https://audius-content-11.cultur3stake.com/content/QmU4erkqnqjdAdXDSzvnpqRKrHJ9ufbogkG82Tk6paY6py/150x150.jpg",
-          "480x480": "https://audius-content-11.cultur3stake.com/content/QmU4erkqnqjdAdXDSzvnpqRKrHJ9ufbogkG82Tk6paY6py/480x480.jpg",
-          "1000x1000": "https://audius-content-11.cultur3stake.com/content/QmU4erkqnqjdAdXDSzvnpqRKrHJ9ufbogkG82Tk6paY6py/1000x1000.jpg"
-        },
-        "repost_count": 3036,
-        "track_count": 236,
-        "is_deactivated": false,
-        "is_available": true,
-        "erc_wallet": "0x3d472a01cb831ac594835ac6038a4346e2a22b94",
-        "spl_wallet": "7ZKGHraqYr55dUgHi9Ee44XvuoKfpytbn2vHZhcaEAny",
-        "spl_usdc_payout_wallet": null,
-        "supporter_count": 8,
-        "supporting_count": 1,
-        "total_audio_balance": 19,
-        "wallet": "0x3d472a01cb831ac594835ac6038a4346e2a22b94"
-      },
-      "duration": 165,
-      "is_downloadable": false,
-      "play_count": 162,
-      "permalink": "/Guiyeralex/lowcost-gg",
-      "is_streamable": true,
-      "ddex_app": null,
-      "playlists_containing_track": [
-        807819983
-      ]
     },
     {
       "artwork": {
@@ -4013,81 +4090,8 @@ API response: {
       },
       "duration": 214,
       "is_downloadable": false,
-      "play_count": 199,
+      "play_count": 205,
       "permalink": "/Guiyeralex/hablame-madriz-crudos",
-      "is_streamable": true,
-      "ddex_app": null,
-      "playlists_containing_track": []
-    },
-    {
-      "artwork": {
-        "150x150": "https://audius-content-8.cultur3stake.com/content/01J9ESARNF70E5ZNTEV28KGVBX/150x150.jpg",
-        "480x480": "https://audius-content-8.cultur3stake.com/content/01J9ESARNF70E5ZNTEV28KGVBX/480x480.jpg",
-        "1000x1000": "https://audius-content-8.cultur3stake.com/content/01J9ESARNF70E5ZNTEV28KGVBX/1000x1000.jpg"
-      },
-      "description": "Dance Like Salsa !\n\nTalk To You.\nWith the Passion.\n\nFire or No Fire ?\nCan you capture it in song ?",
-      "genre": "Tech House",
-      "id": "lw29Nbl",
-      "track_cid": "baeaaaiqseazd5zae746vmh5twc5exmgjjs2zbgqthmgvthjmy5yxdxntvy5by",
-      "preview_cid": null,
-      "orig_file_cid": "baeaaaiqsebmocbr5riyjl7f6krg7ybhtn7e2oaqeirhzftukxylebrjtaazme",
-      "orig_filename": "Boom Like Talk To You K. 1.wav",
-      "is_original_available": false,
-      "mood": "Fiery",
-      "release_date": "2024-10-05 16:51:28",
-      "remix_of": {
-        "tracks": null
-      },
-      "repost_count": 11,
-      "favorite_count": 18,
-      "comment_count": 0,
-      "tags": "latintech",
-      "title": "Hablar Contigo K. 1",
-      "user": {
-        "album_count": 1,
-        "artist_pick_track_id": null,
-        "bio": "Thank Your Following❤️\n\nAmature DJ Style 🎹 Composer. \n47 years old.\n\nI don't need a lot number of plays. \nIf I can draw out your inspiration, \nI don't need anything else.\n\nI make ✈️ Music tracks with Hot ❤️ passion.\nSo My inspiration is flowing !",
-        "cover_photo": {
-          "640x": "https://blockdaemon-audius-content-03.bdnodes.net/content/01HX4XV4E66N7BS2Z610Q51AD3/640x.jpg",
-          "2000x": "https://blockdaemon-audius-content-03.bdnodes.net/content/01HX4XV4E66N7BS2Z610Q51AD3/2000x.jpg"
-        },
-        "followee_count": 1080,
-        "follower_count": 1029,
-        "handle": "SyntheKSizer",
-        "id": "ogy5R",
-        "is_verified": false,
-        "twitter_handle": "shinsukeohashi",
-        "instagram_handle": null,
-        "tiktok_handle": null,
-        "verified_with_twitter": false,
-        "verified_with_instagram": false,
-        "verified_with_tiktok": false,
-        "website": "https://www.beatport.com/label/light-works/120854",
-        "donation": null,
-        "location": "Japan, Sapporo",
-        "name": "DJ Shinsuke !",
-        "playlist_count": 9,
-        "profile_picture": {
-          "150x150": "https://creatornode2.audius.co/content/01HS7Q5CF063ATSRT3ZP9EC7GB/150x150.jpg",
-          "480x480": "https://creatornode2.audius.co/content/01HS7Q5CF063ATSRT3ZP9EC7GB/480x480.jpg",
-          "1000x1000": "https://creatornode2.audius.co/content/01HS7Q5CF063ATSRT3ZP9EC7GB/1000x1000.jpg"
-        },
-        "repost_count": 1931,
-        "track_count": 463,
-        "is_deactivated": false,
-        "is_available": true,
-        "erc_wallet": "0xbe465aa25655a6e6b63480fc80284d554ecb33ea",
-        "spl_wallet": "JB6HEM2tdYSUD3yzryLgkrWELDtLCH6m1xvfM3pyijP6",
-        "spl_usdc_payout_wallet": null,
-        "supporter_count": 18,
-        "supporting_count": 55,
-        "total_audio_balance": 1532,
-        "wallet": "0xbe465aa25655a6e6b63480fc80284d554ecb33ea"
-      },
-      "duration": 182,
-      "is_downloadable": false,
-      "play_count": 149,
-      "permalink": "/SyntheKSizer/hablar-contigo-k-1",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": []
@@ -4159,7 +4163,7 @@ API response: {
       },
       "duration": 181,
       "is_downloadable": false,
-      "play_count": 131,
+      "play_count": 135,
       "permalink": "/Aarrkellz/immortal",
       "is_streamable": true,
       "ddex_app": null,
@@ -4232,7 +4236,7 @@ API response: {
       },
       "duration": 216,
       "is_downloadable": false,
-      "play_count": 110,
+      "play_count": 115,
       "permalink": "/Aarrkellz/event-horizon",
       "is_streamable": true,
       "ddex_app": null,
@@ -4308,7 +4312,7 @@ API response: {
       },
       "duration": 214,
       "is_downloadable": false,
-      "play_count": 188,
+      "play_count": 192,
       "permalink": "/SyntheKSizer/ice-breaker-2024-mix-k-2",
       "is_streamable": true,
       "ddex_app": null,
@@ -4384,7 +4388,7 @@ API response: {
       },
       "duration": 35,
       "is_downloadable": false,
-      "play_count": 127,
+      "play_count": 129,
       "permalink": "/BOLQUIO/sketches-by-bolquio-journey-to-egg",
       "is_streamable": true,
       "ddex_app": null,
@@ -4457,86 +4461,11 @@ API response: {
       },
       "duration": 152,
       "is_downloadable": false,
-      "play_count": 258,
+      "play_count": 267,
       "permalink": "/allago_o/clienti-demmerda",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": []
-    },
-    {
-      "artwork": {
-        "150x150": "https://audius-content-3.figment.io/content/01J9F1G1NVM6Q6GDPB8F3FFNKM/150x150.jpg",
-        "480x480": "https://audius-content-3.figment.io/content/01J9F1G1NVM6Q6GDPB8F3FFNKM/480x480.jpg",
-        "1000x1000": "https://audius-content-3.figment.io/content/01J9F1G1NVM6Q6GDPB8F3FFNKM/1000x1000.jpg"
-      },
-      "description": "",
-      "genre": "Jungle",
-      "id": "bp2ojgy",
-      "track_cid": "baeaaaiqseccvy7athofz23roqrdhl3a6nonezc3mvprzgn7qwbttxeussfrb2",
-      "preview_cid": null,
-      "orig_file_cid": "baeaaaiqsed7pjovqtvz6q3nrecdyu3bn43ya4f3i6hwx3ht4gm7lhczk574sw",
-      "orig_filename": "Atmos.wav",
-      "is_original_available": false,
-      "mood": "Easygoing",
-      "release_date": "2024-10-05 19:12:10",
-      "remix_of": {
-        "tracks": null
-      },
-      "repost_count": 11,
-      "favorite_count": 17,
-      "comment_count": 0,
-      "tags": "",
-      "title": "Atmos",
-      "user": {
-        "album_count": 0,
-        "artist_pick_track_id": null,
-        "bio": "$AUDIO",
-        "cover_photo": {
-          "640x": "https://audius-content-9.cultur3stake.com/content/QmUHzCvpxghY8Swh7CJ5fvDYM1MwhVDodkeBYVwBw4u952/640x.jpg",
-          "2000x": "https://audius-content-9.cultur3stake.com/content/QmUHzCvpxghY8Swh7CJ5fvDYM1MwhVDodkeBYVwBw4u952/2000x.jpg"
-        },
-        "followee_count": 985,
-        "follower_count": 1539,
-        "handle": "Sabba",
-        "id": "5Qwj1",
-        "is_verified": false,
-        "twitter_handle": "9Sabba",
-        "instagram_handle": "9.sabba",
-        "tiktok_handle": null,
-        "verified_with_twitter": false,
-        "verified_with_instagram": false,
-        "verified_with_tiktok": false,
-        "website": null,
-        "donation": null,
-        "location": "",
-        "name": "Sabba",
-        "playlist_count": 1,
-        "profile_picture": {
-          "150x150": "https://audius-content-9.figment.io/content/Qme9noE75cNi1C85XRwCrXMKvLcityPcw3TzF8kaDWoDyU/150x150.jpg",
-          "480x480": "https://audius-content-9.figment.io/content/Qme9noE75cNi1C85XRwCrXMKvLcityPcw3TzF8kaDWoDyU/480x480.jpg",
-          "1000x1000": "https://audius-content-9.figment.io/content/Qme9noE75cNi1C85XRwCrXMKvLcityPcw3TzF8kaDWoDyU/1000x1000.jpg"
-        },
-        "repost_count": 3215,
-        "track_count": 114,
-        "is_deactivated": false,
-        "is_available": true,
-        "erc_wallet": "0xae90b21484a70ab481a9557d0f200b0ef6816264",
-        "spl_wallet": "3h4PgiYqKfKQSr1M5ZFrw6aDajRTqdw9ta5GqNsB5LLF",
-        "spl_usdc_payout_wallet": null,
-        "supporter_count": 11,
-        "supporting_count": 12,
-        "total_audio_balance": 519,
-        "wallet": "0xae90b21484a70ab481a9557d0f200b0ef6816264"
-      },
-      "duration": 210,
-      "is_downloadable": false,
-      "play_count": 50,
-      "permalink": "/Sabba/atmos",
-      "is_streamable": true,
-      "ddex_app": null,
-      "playlists_containing_track": [
-        807819983
-      ]
     },
     {
       "artwork": {
@@ -4605,8 +4534,83 @@ API response: {
       },
       "duration": 176,
       "is_downloadable": false,
-      "play_count": 195,
+      "play_count": 198,
       "permalink": "/Guiyeralex/zomvillage-madriz-crudos",
+      "is_streamable": true,
+      "ddex_app": null,
+      "playlists_containing_track": [
+        807819983
+      ]
+    },
+    {
+      "artwork": {
+        "150x150": "https://audius-content-3.figment.io/content/01J9F1G1NVM6Q6GDPB8F3FFNKM/150x150.jpg",
+        "480x480": "https://audius-content-3.figment.io/content/01J9F1G1NVM6Q6GDPB8F3FFNKM/480x480.jpg",
+        "1000x1000": "https://audius-content-3.figment.io/content/01J9F1G1NVM6Q6GDPB8F3FFNKM/1000x1000.jpg"
+      },
+      "description": "",
+      "genre": "Jungle",
+      "id": "bp2ojgy",
+      "track_cid": "baeaaaiqseccvy7athofz23roqrdhl3a6nonezc3mvprzgn7qwbttxeussfrb2",
+      "preview_cid": null,
+      "orig_file_cid": "baeaaaiqsed7pjovqtvz6q3nrecdyu3bn43ya4f3i6hwx3ht4gm7lhczk574sw",
+      "orig_filename": "Atmos.wav",
+      "is_original_available": false,
+      "mood": "Easygoing",
+      "release_date": "2024-10-05 19:12:10",
+      "remix_of": {
+        "tracks": null
+      },
+      "repost_count": 11,
+      "favorite_count": 17,
+      "comment_count": 0,
+      "tags": "",
+      "title": "Atmos",
+      "user": {
+        "album_count": 0,
+        "artist_pick_track_id": null,
+        "bio": "$AUDIO",
+        "cover_photo": {
+          "640x": "https://audius-content-9.cultur3stake.com/content/QmUHzCvpxghY8Swh7CJ5fvDYM1MwhVDodkeBYVwBw4u952/640x.jpg",
+          "2000x": "https://audius-content-9.cultur3stake.com/content/QmUHzCvpxghY8Swh7CJ5fvDYM1MwhVDodkeBYVwBw4u952/2000x.jpg"
+        },
+        "followee_count": 985,
+        "follower_count": 1539,
+        "handle": "Sabba",
+        "id": "5Qwj1",
+        "is_verified": false,
+        "twitter_handle": "9Sabba",
+        "instagram_handle": "9.sabba",
+        "tiktok_handle": null,
+        "verified_with_twitter": false,
+        "verified_with_instagram": false,
+        "verified_with_tiktok": false,
+        "website": null,
+        "donation": null,
+        "location": "",
+        "name": "Sabba",
+        "playlist_count": 1,
+        "profile_picture": {
+          "150x150": "https://audius-content-9.figment.io/content/Qme9noE75cNi1C85XRwCrXMKvLcityPcw3TzF8kaDWoDyU/150x150.jpg",
+          "480x480": "https://audius-content-9.figment.io/content/Qme9noE75cNi1C85XRwCrXMKvLcityPcw3TzF8kaDWoDyU/480x480.jpg",
+          "1000x1000": "https://audius-content-9.figment.io/content/Qme9noE75cNi1C85XRwCrXMKvLcityPcw3TzF8kaDWoDyU/1000x1000.jpg"
+        },
+        "repost_count": 3215,
+        "track_count": 114,
+        "is_deactivated": false,
+        "is_available": true,
+        "erc_wallet": "0xae90b21484a70ab481a9557d0f200b0ef6816264",
+        "spl_wallet": "3h4PgiYqKfKQSr1M5ZFrw6aDajRTqdw9ta5GqNsB5LLF",
+        "spl_usdc_payout_wallet": null,
+        "supporter_count": 11,
+        "supporting_count": 12,
+        "total_audio_balance": 519,
+        "wallet": "0xae90b21484a70ab481a9557d0f200b0ef6816264"
+      },
+      "duration": 210,
+      "is_downloadable": false,
+      "play_count": 51,
+      "permalink": "/Sabba/atmos",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": [
@@ -4680,7 +4684,7 @@ API response: {
       },
       "duration": 117,
       "is_downloadable": false,
-      "play_count": 109,
+      "play_count": 114,
       "permalink": "/Kmir5/witab",
       "is_streamable": true,
       "ddex_app": null,
@@ -4718,7 +4722,7 @@ API response: {
           "640x": "https://cn1.mainnet.audiusindex.org/content/01J95QCSF61PGP3ANJNC84MCYJ/640x.jpg",
           "2000x": "https://cn1.mainnet.audiusindex.org/content/01J95QCSF61PGP3ANJNC84MCYJ/2000x.jpg"
         },
-        "followee_count": 169,
+        "followee_count": 175,
         "follower_count": 10434,
         "handle": "snoozegod",
         "id": "0EoAm",
@@ -4739,21 +4743,21 @@ API response: {
           "480x480": "https://audius-content-3.figment.io/content/01J2ZG0VZ2342HZ0SKQ4Z4H92B/480x480.jpg",
           "1000x1000": "https://audius-content-3.figment.io/content/01J2ZG0VZ2342HZ0SKQ4Z4H92B/1000x1000.jpg"
         },
-        "repost_count": 26,
-        "track_count": 122,
+        "repost_count": 27,
+        "track_count": 124,
         "is_deactivated": false,
         "is_available": true,
         "erc_wallet": "0x022d34b7f1f268288002327732f99fae19a47d89",
         "spl_wallet": "8DtCkvqWj8uid88asNWQustVQ12g7KLTXJ8wXSVEqQCK",
         "spl_usdc_payout_wallet": "HckeuB3mZMm7AfcEg3hVtGRr6DPjr7EeAxGyMRMSVova",
         "supporter_count": 18,
-        "supporting_count": 28,
-        "total_audio_balance": 103,
+        "supporting_count": 29,
+        "total_audio_balance": 101,
         "wallet": "0x022d34b7f1f268288002327732f99fae19a47d89"
       },
       "duration": 150,
       "is_downloadable": false,
-      "play_count": 68,
+      "play_count": 72,
       "permalink": "/snoozegod/screenshot",
       "is_streamable": true,
       "ddex_app": null,
@@ -4828,7 +4832,7 @@ API response: {
       },
       "duration": 89,
       "is_downloadable": false,
-      "play_count": 166,
+      "play_count": 170,
       "permalink": "/BOLQUIO/sketches-by-bolquio-wannabe",
       "is_streamable": true,
       "ddex_app": null,
@@ -4901,7 +4905,7 @@ API response: {
       },
       "duration": 50,
       "is_downloadable": false,
-      "play_count": 187,
+      "play_count": 191,
       "permalink": "/Guiyeralex/fast-live-past-live-remix-preview-track-gg",
       "is_streamable": true,
       "ddex_app": null,
@@ -4976,87 +4980,11 @@ API response: {
       },
       "duration": 232,
       "is_downloadable": false,
-      "play_count": 244,
+      "play_count": 248,
       "permalink": "/Aarrkellz/on-that-dust",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": [
-        807819983
-      ]
-    },
-    {
-      "artwork": {
-        "150x150": "https://audius-creator-5.theblueprint.xyz/content/01J938HZH82K7BA47NJZ123WQH/150x150.jpg",
-        "480x480": "https://audius-creator-5.theblueprint.xyz/content/01J938HZH82K7BA47NJZ123WQH/480x480.jpg",
-        "1000x1000": "https://audius-creator-5.theblueprint.xyz/content/01J938HZH82K7BA47NJZ123WQH/1000x1000.jpg"
-      },
-      "description": "SPLINTERCAT by brokenkites",
-      "genre": "Electronic",
-      "id": "xP67lx",
-      "track_cid": "baeaaaiqsebfan4i4diqsmbdifkmfbz2icnvzghorqu2bgmwfyqwsuuk4nohvg",
-      "preview_cid": null,
-      "orig_file_cid": "baeaaaiqsebq5slid2xucwd5yp2pheg6m7t54wlys5pprlwkz6hjghuc27rj5o",
-      "orig_filename": "11 splintercat.wav",
-      "is_original_available": false,
-      "mood": "Other",
-      "release_date": "2024-10-01 05:25:40",
-      "remix_of": {
-        "tracks": null
-      },
-      "repost_count": 11,
-      "favorite_count": 17,
-      "comment_count": 0,
-      "tags": "timetravel,downtempo,cinematic,soundtrack,idm,electronica,synthwave,chill,chillout,spacemusic",
-      "title": "Splintercat",
-      "user": {
-        "album_count": 7,
-        "artist_pick_track_id": "9dzrQxw",
-        "bio": "For time travelers, space explorers, and rogue agents.",
-        "cover_photo": {
-          "640x": "https://cn2.mainnet.audiusindex.org/content/QmWDiB9gpVeensYajUMJ57L9sKQYz8Udmyp6dzmimGfgzd/640x.jpg",
-          "2000x": "https://cn2.mainnet.audiusindex.org/content/QmWDiB9gpVeensYajUMJ57L9sKQYz8Udmyp6dzmimGfgzd/2000x.jpg"
-        },
-        "followee_count": 5293,
-        "follower_count": 1835,
-        "handle": "brokenkites",
-        "id": "79dBv",
-        "is_verified": false,
-        "twitter_handle": null,
-        "instagram_handle": null,
-        "tiktok_handle": null,
-        "verified_with_twitter": false,
-        "verified_with_instagram": false,
-        "verified_with_tiktok": false,
-        "website": null,
-        "donation": null,
-        "location": "Antarctica",
-        "name": "brokenkites",
-        "playlist_count": 2,
-        "profile_picture": {
-          "150x150": "https://blockdaemon-audius-content-09.bdnodes.net/content/QmRgovJwPc9TKiHXepEVkMFLASRq38hdNi3Q3NKgndEomo/150x150.jpg",
-          "480x480": "https://blockdaemon-audius-content-09.bdnodes.net/content/QmRgovJwPc9TKiHXepEVkMFLASRq38hdNi3Q3NKgndEomo/480x480.jpg",
-          "1000x1000": "https://blockdaemon-audius-content-09.bdnodes.net/content/QmRgovJwPc9TKiHXepEVkMFLASRq38hdNi3Q3NKgndEomo/1000x1000.jpg"
-        },
-        "repost_count": 1,
-        "track_count": 158,
-        "is_deactivated": false,
-        "is_available": true,
-        "erc_wallet": "0x32c98158925fd8b412acd54cd839b1f20fe1e39b",
-        "spl_wallet": "7wPXar7rEqJaY688KdNJwqpkAijM3GedFdvYuDKRUqxH",
-        "spl_usdc_payout_wallet": null,
-        "supporter_count": 6,
-        "supporting_count": 63,
-        "total_audio_balance": 166,
-        "wallet": "0x32c98158925fd8b412acd54cd839b1f20fe1e39b"
-      },
-      "duration": 231,
-      "is_downloadable": false,
-      "play_count": 161,
-      "permalink": "/brokenkites/splintercat",
-      "is_streamable": true,
-      "ddex_app": null,
-      "playlists_containing_track": [
-        145112270,
         807819983
       ]
     },
@@ -5127,7 +5055,7 @@ API response: {
       },
       "duration": 217,
       "is_downloadable": false,
-      "play_count": 94,
+      "play_count": 98,
       "permalink": "/Guiyeralex/castellanos-flamenqueros-madriz-crudos",
       "is_streamable": true,
       "ddex_app": null,
@@ -5200,7 +5128,7 @@ API response: {
       },
       "duration": 147,
       "is_downloadable": false,
-      "play_count": 141,
+      "play_count": 144,
       "permalink": "/Guiyeralex/madriz-horrorcore-gg",
       "is_streamable": true,
       "ddex_app": null,
@@ -5273,7 +5201,7 @@ API response: {
       },
       "duration": 123,
       "is_downloadable": false,
-      "play_count": 141,
+      "play_count": 144,
       "permalink": "/Blade_Freda/new-wave-vibe",
       "is_streamable": true,
       "ddex_app": null,
@@ -5348,7 +5276,7 @@ API response: {
       },
       "duration": 216,
       "is_downloadable": true,
-      "play_count": 42,
+      "play_count": 44,
       "permalink": "/brokenkites/men-and-mules-instrumental",
       "is_streamable": true,
       "ddex_app": null,
@@ -5421,7 +5349,7 @@ API response: {
       },
       "duration": 261,
       "is_downloadable": false,
-      "play_count": 9928,
+      "play_count": 9939,
       "permalink": "/camouflybeats/touch",
       "is_streamable": true,
       "ddex_app": null,
@@ -5501,7 +5429,7 @@ API response: {
       },
       "duration": 141,
       "is_downloadable": false,
-      "play_count": 103,
+      "play_count": 107,
       "permalink": "/Guiyeralex/xtress-gg",
       "is_streamable": true,
       "ddex_app": null,
@@ -5576,7 +5504,7 @@ API response: {
       },
       "duration": 216,
       "is_downloadable": false,
-      "play_count": 137,
+      "play_count": 139,
       "permalink": "/micahofficially/vamanous-slowed",
       "is_streamable": true,
       "ddex_app": null,
@@ -5649,7 +5577,7 @@ API response: {
       },
       "duration": 135,
       "is_downloadable": false,
-      "play_count": 56,
+      "play_count": 58,
       "permalink": "/super_tyte/jiggy-prod-super_tyte",
       "is_streamable": true,
       "ddex_app": null,
@@ -5726,7 +5654,7 @@ API response: {
       },
       "duration": 215,
       "is_downloadable": false,
-      "play_count": 110,
+      "play_count": 112,
       "permalink": "/mAncient_one/twins-ayegbe-royal-mix",
       "is_streamable": true,
       "ddex_app": null,
@@ -5799,7 +5727,7 @@ API response: {
       },
       "duration": 55,
       "is_downloadable": false,
-      "play_count": 146,
+      "play_count": 148,
       "permalink": "/Guiyeralex/madrizcrudos-clique-gg",
       "is_streamable": true,
       "ddex_app": null,
@@ -5872,7 +5800,7 @@ API response: {
       },
       "duration": 257,
       "is_downloadable": false,
-      "play_count": 70,
+      "play_count": 73,
       "permalink": "/Mozatronic/reflections-demo",
       "is_streamable": true,
       "ddex_app": null,
@@ -5945,7 +5873,7 @@ API response: {
       },
       "duration": 48,
       "is_downloadable": false,
-      "play_count": 135,
+      "play_count": 139,
       "permalink": "/Guiyeralex/ssshhh-gg",
       "is_streamable": true,
       "ddex_app": null,
@@ -6020,7 +5948,7 @@ API response: {
       },
       "duration": 144,
       "is_downloadable": false,
-      "play_count": 134,
+      "play_count": 136,
       "permalink": "/micahofficially/its-over-slowed",
       "is_streamable": true,
       "ddex_app": null,
@@ -6095,7 +6023,7 @@ API response: {
       },
       "duration": 147,
       "is_downloadable": true,
-      "play_count": 46,
+      "play_count": 48,
       "permalink": "/Darkstarz/under-the-street-lights-caper",
       "is_streamable": true,
       "ddex_app": null,
@@ -6170,7 +6098,7 @@ API response: {
       },
       "duration": 189,
       "is_downloadable": false,
-      "play_count": 79,
+      "play_count": 83,
       "permalink": "/Guiyeralex/me-da-lo-mismo-madriz-crudos",
       "is_streamable": true,
       "ddex_app": null,
@@ -6245,7 +6173,7 @@ API response: {
       },
       "duration": 119,
       "is_downloadable": false,
-      "play_count": 61,
+      "play_count": 65,
       "permalink": "/lepepo/le-pepó-failing",
       "is_streamable": true,
       "ddex_app": null,
@@ -6318,7 +6246,7 @@ API response: {
       },
       "duration": 43,
       "is_downloadable": false,
-      "play_count": 108,
+      "play_count": 110,
       "permalink": "/usibe/ぴ",
       "is_streamable": true,
       "ddex_app": null,
@@ -6393,7 +6321,7 @@ API response: {
       },
       "duration": 213,
       "is_downloadable": false,
-      "play_count": 153,
+      "play_count": 156,
       "permalink": "/manzobeat/one-night",
       "is_streamable": true,
       "ddex_app": null,
@@ -6475,7 +6403,7 @@ API response: {
       },
       "duration": 218,
       "is_downloadable": false,
-      "play_count": 36,
+      "play_count": 39,
       "permalink": "/2010spopmusic/michael-porter-collide-feat-jilli",
       "is_streamable": true,
       "ddex_app": null,
@@ -6548,7 +6476,7 @@ API response: {
       },
       "duration": 160,
       "is_downloadable": false,
-      "play_count": 168,
+      "play_count": 174,
       "permalink": "/harvey_twyman/name-that-tune-560-by-the-backstreet-boys",
       "is_streamable": true,
       "ddex_app": null,
@@ -6624,7 +6552,7 @@ API response: {
       },
       "duration": 251,
       "is_downloadable": false,
-      "play_count": 132,
+      "play_count": 134,
       "permalink": "/whaskii/remember-me",
       "is_streamable": true,
       "ddex_app": null,
@@ -6699,8 +6627,154 @@ API response: {
       },
       "duration": 55,
       "is_downloadable": false,
-      "play_count": 57,
+      "play_count": 60,
       "permalink": "/Madhar/émeraude-🟢✨✨✨",
+      "is_streamable": true,
+      "ddex_app": null,
+      "playlists_containing_track": []
+    },
+    {
+      "artwork": {
+        "150x150": "https://audius-content-6.cultur3stake.com/content/01J9N16ZHM16A6VAQ6TG4EK67Q/150x150.jpg",
+        "480x480": "https://audius-content-6.cultur3stake.com/content/01J9N16ZHM16A6VAQ6TG4EK67Q/480x480.jpg",
+        "1000x1000": "https://audius-content-6.cultur3stake.com/content/01J9N16ZHM16A6VAQ6TG4EK67Q/1000x1000.jpg"
+      },
+      "description": "Can't Hold Me is one of those songs that need to be heard no matter what people say.",
+      "genre": "Hip-Hop/Rap",
+      "id": "ByEK5WJ",
+      "track_cid": "baeaaaiqseav4td5ovzjwxfqbkrztuacsu3wn6utckyxtn3ndapjrugi4upkw2",
+      "preview_cid": null,
+      "orig_file_cid": "baeaaaiqsedke4v45eqvyowjguapd5wspqfqyqlmabnskgwnshufwdgxg5obhi",
+      "orig_filename": "Can't Hold Me - 10:7:24, 10.49 PM.mp3",
+      "is_original_available": false,
+      "mood": "Gritty",
+      "release_date": "2024-10-08 03:02:09",
+      "remix_of": {
+        "tracks": null
+      },
+      "repost_count": 7,
+      "favorite_count": 13,
+      "comment_count": 0,
+      "tags": "hiphop,lyrics,gritty,serious",
+      "title": "Can't Hold Me ",
+      "user": {
+        "album_count": 0,
+        "artist_pick_track_id": null,
+        "bio": "I'm zo and Im a artist, producer, singer, rapper, looper type of person! Also like, share, and follow!\n\nzo beatz",
+        "cover_photo": {
+          "640x": "https://audius-content-1.cultur3stake.com/content/01J4SR2P67CX4W1T04JXPPYZ86/640x.jpg",
+          "2000x": "https://audius-content-1.cultur3stake.com/content/01J4SR2P67CX4W1T04JXPPYZ86/2000x.jpg"
+        },
+        "followee_count": 898,
+        "follower_count": 668,
+        "handle": "zobeatz",
+        "id": "L52K2",
+        "is_verified": false,
+        "twitter_handle": "zobeatz1",
+        "instagram_handle": null,
+        "tiktok_handle": null,
+        "verified_with_twitter": false,
+        "verified_with_instagram": false,
+        "verified_with_tiktok": false,
+        "website": null,
+        "donation": null,
+        "location": "United States",
+        "name": "zo beatz",
+        "playlist_count": 0,
+        "profile_picture": {
+          "150x150": "https://audius-content-7.cultur3stake.com/content/01HMMG2TGZGF69JPCH0SG5FHGA/150x150.jpg",
+          "480x480": "https://audius-content-7.cultur3stake.com/content/01HMMG2TGZGF69JPCH0SG5FHGA/480x480.jpg",
+          "1000x1000": "https://audius-content-7.cultur3stake.com/content/01HMMG2TGZGF69JPCH0SG5FHGA/1000x1000.jpg"
+        },
+        "repost_count": 20,
+        "track_count": 108,
+        "is_deactivated": false,
+        "is_available": true,
+        "erc_wallet": "0xc844c2b6f160349b8a81b3690b601bc37a51ea07",
+        "spl_wallet": "HukYFz6HtBcdi7AfBJXsjpKVs5x5uJonpPiNFHLk7jzr",
+        "spl_usdc_payout_wallet": null,
+        "supporter_count": 4,
+        "supporting_count": 0,
+        "total_audio_balance": 16,
+        "wallet": "0xc844c2b6f160349b8a81b3690b601bc37a51ea07"
+      },
+      "duration": 110,
+      "is_downloadable": false,
+      "play_count": 38,
+      "permalink": "/zobeatz/cant-hold-me",
+      "is_streamable": true,
+      "ddex_app": null,
+      "playlists_containing_track": []
+    },
+    {
+      "artwork": {
+        "150x150": "https://audius-creator-4.theblueprint.xyz/content/01J98JS73FX0MNW2NW0DN67TR6/150x150.jpg",
+        "480x480": "https://audius-creator-4.theblueprint.xyz/content/01J98JS73FX0MNW2NW0DN67TR6/480x480.jpg",
+        "1000x1000": "https://audius-creator-4.theblueprint.xyz/content/01J98JS73FX0MNW2NW0DN67TR6/1000x1000.jpg"
+      },
+      "description": "",
+      "genre": "R&B/Soul",
+      "id": "7dJkK3q",
+      "track_cid": "baeaaaiqsecd3yxvzqsxvbecq44h5a5twcw4yc7dlws5bg77cdzilzgolthe5y",
+      "preview_cid": null,
+      "orig_file_cid": "baeaaaiqsecqykm6lef36vovgnmpvzqkbieomrjmqap5qnqt5wxielkds4kkr4",
+      "orig_filename": "dim3.wav",
+      "is_original_available": false,
+      "mood": null,
+      "release_date": "2024-10-03 07:00:27",
+      "remix_of": {
+        "tracks": null
+      },
+      "repost_count": 7,
+      "favorite_count": 15,
+      "comment_count": 0,
+      "tags": "rnb,newrnb,atmos,chillout",
+      "title": "dim.finale",
+      "user": {
+        "album_count": 3,
+        "artist_pick_track_id": "o6NxkRd",
+        "bio": "don't sleep\n\nhttps://lnk.dmsmusic.co/snoozegod_universe",
+        "cover_photo": {
+          "640x": "https://cn1.mainnet.audiusindex.org/content/01J95QCSF61PGP3ANJNC84MCYJ/640x.jpg",
+          "2000x": "https://cn1.mainnet.audiusindex.org/content/01J95QCSF61PGP3ANJNC84MCYJ/2000x.jpg"
+        },
+        "followee_count": 175,
+        "follower_count": 10434,
+        "handle": "snoozegod",
+        "id": "0EoAm",
+        "is_verified": true,
+        "twitter_handle": "snoozegod",
+        "instagram_handle": "snoozegod",
+        "tiktok_handle": "snoozegod_",
+        "verified_with_twitter": false,
+        "verified_with_instagram": true,
+        "verified_with_tiktok": false,
+        "website": null,
+        "donation": null,
+        "location": "Fremont, OH",
+        "name": "snooze💤",
+        "playlist_count": 1,
+        "profile_picture": {
+          "150x150": "https://audius-content-3.figment.io/content/01J2ZG0VZ2342HZ0SKQ4Z4H92B/150x150.jpg",
+          "480x480": "https://audius-content-3.figment.io/content/01J2ZG0VZ2342HZ0SKQ4Z4H92B/480x480.jpg",
+          "1000x1000": "https://audius-content-3.figment.io/content/01J2ZG0VZ2342HZ0SKQ4Z4H92B/1000x1000.jpg"
+        },
+        "repost_count": 27,
+        "track_count": 124,
+        "is_deactivated": false,
+        "is_available": true,
+        "erc_wallet": "0x022d34b7f1f268288002327732f99fae19a47d89",
+        "spl_wallet": "8DtCkvqWj8uid88asNWQustVQ12g7KLTXJ8wXSVEqQCK",
+        "spl_usdc_payout_wallet": "HckeuB3mZMm7AfcEg3hVtGRr6DPjr7EeAxGyMRMSVova",
+        "supporter_count": 18,
+        "supporting_count": 29,
+        "total_audio_balance": 101,
+        "wallet": "0x022d34b7f1f268288002327732f99fae19a47d89"
+      },
+      "duration": 448,
+      "is_downloadable": false,
+      "play_count": 100,
+      "permalink": "/snoozegod/dimfinale",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": []
@@ -6772,7 +6846,7 @@ API response: {
       },
       "duration": 284,
       "is_downloadable": false,
-      "play_count": 7070,
+      "play_count": 7073,
       "permalink": "/ELIMINAMusic/frame-imperfect",
       "is_streamable": true,
       "ddex_app": null,
@@ -6783,152 +6857,6 @@ API response: {
         1760552887,
         977148670
       ]
-    },
-    {
-      "artwork": {
-        "150x150": "https://audius-creator-4.theblueprint.xyz/content/01J98JS73FX0MNW2NW0DN67TR6/150x150.jpg",
-        "480x480": "https://audius-creator-4.theblueprint.xyz/content/01J98JS73FX0MNW2NW0DN67TR6/480x480.jpg",
-        "1000x1000": "https://audius-creator-4.theblueprint.xyz/content/01J98JS73FX0MNW2NW0DN67TR6/1000x1000.jpg"
-      },
-      "description": "",
-      "genre": "R&B/Soul",
-      "id": "7dJkK3q",
-      "track_cid": "baeaaaiqsecd3yxvzqsxvbecq44h5a5twcw4yc7dlws5bg77cdzilzgolthe5y",
-      "preview_cid": null,
-      "orig_file_cid": "baeaaaiqsecqykm6lef36vovgnmpvzqkbieomrjmqap5qnqt5wxielkds4kkr4",
-      "orig_filename": "dim3.wav",
-      "is_original_available": false,
-      "mood": null,
-      "release_date": "2024-10-03 07:00:27",
-      "remix_of": {
-        "tracks": null
-      },
-      "repost_count": 7,
-      "favorite_count": 15,
-      "comment_count": 0,
-      "tags": "rnb,newrnb,atmos,chillout",
-      "title": "dim.finale",
-      "user": {
-        "album_count": 3,
-        "artist_pick_track_id": "o6NxkRd",
-        "bio": "don't sleep\n\nhttps://lnk.dmsmusic.co/snoozegod_universe",
-        "cover_photo": {
-          "640x": "https://cn1.mainnet.audiusindex.org/content/01J95QCSF61PGP3ANJNC84MCYJ/640x.jpg",
-          "2000x": "https://cn1.mainnet.audiusindex.org/content/01J95QCSF61PGP3ANJNC84MCYJ/2000x.jpg"
-        },
-        "followee_count": 169,
-        "follower_count": 10434,
-        "handle": "snoozegod",
-        "id": "0EoAm",
-        "is_verified": true,
-        "twitter_handle": "snoozegod",
-        "instagram_handle": "snoozegod",
-        "tiktok_handle": "snoozegod_",
-        "verified_with_twitter": false,
-        "verified_with_instagram": true,
-        "verified_with_tiktok": false,
-        "website": null,
-        "donation": null,
-        "location": "Fremont, OH",
-        "name": "snooze💤",
-        "playlist_count": 1,
-        "profile_picture": {
-          "150x150": "https://audius-content-3.figment.io/content/01J2ZG0VZ2342HZ0SKQ4Z4H92B/150x150.jpg",
-          "480x480": "https://audius-content-3.figment.io/content/01J2ZG0VZ2342HZ0SKQ4Z4H92B/480x480.jpg",
-          "1000x1000": "https://audius-content-3.figment.io/content/01J2ZG0VZ2342HZ0SKQ4Z4H92B/1000x1000.jpg"
-        },
-        "repost_count": 26,
-        "track_count": 122,
-        "is_deactivated": false,
-        "is_available": true,
-        "erc_wallet": "0x022d34b7f1f268288002327732f99fae19a47d89",
-        "spl_wallet": "8DtCkvqWj8uid88asNWQustVQ12g7KLTXJ8wXSVEqQCK",
-        "spl_usdc_payout_wallet": "HckeuB3mZMm7AfcEg3hVtGRr6DPjr7EeAxGyMRMSVova",
-        "supporter_count": 18,
-        "supporting_count": 28,
-        "total_audio_balance": 103,
-        "wallet": "0x022d34b7f1f268288002327732f99fae19a47d89"
-      },
-      "duration": 448,
-      "is_downloadable": false,
-      "play_count": 98,
-      "permalink": "/snoozegod/dimfinale",
-      "is_streamable": true,
-      "ddex_app": null,
-      "playlists_containing_track": []
-    },
-    {
-      "artwork": {
-        "150x150": "https://audius-content-6.cultur3stake.com/content/01J9N16ZHM16A6VAQ6TG4EK67Q/150x150.jpg",
-        "480x480": "https://audius-content-6.cultur3stake.com/content/01J9N16ZHM16A6VAQ6TG4EK67Q/480x480.jpg",
-        "1000x1000": "https://audius-content-6.cultur3stake.com/content/01J9N16ZHM16A6VAQ6TG4EK67Q/1000x1000.jpg"
-      },
-      "description": "Can't Hold Me is one of those songs that need to be heard no matter what people say.",
-      "genre": "Hip-Hop/Rap",
-      "id": "ByEK5WJ",
-      "track_cid": "baeaaaiqseav4td5ovzjwxfqbkrztuacsu3wn6utckyxtn3ndapjrugi4upkw2",
-      "preview_cid": null,
-      "orig_file_cid": "baeaaaiqsedke4v45eqvyowjguapd5wspqfqyqlmabnskgwnshufwdgxg5obhi",
-      "orig_filename": "Can't Hold Me - 10:7:24, 10.49 PM.mp3",
-      "is_original_available": false,
-      "mood": "Gritty",
-      "release_date": "2024-10-08 03:02:09",
-      "remix_of": {
-        "tracks": null
-      },
-      "repost_count": 7,
-      "favorite_count": 13,
-      "comment_count": 0,
-      "tags": "hiphop,lyrics,gritty,serious",
-      "title": "Can't Hold Me ",
-      "user": {
-        "album_count": 0,
-        "artist_pick_track_id": null,
-        "bio": "I'm zo and Im a artist, producer, singer, rapper, looper type of person! Also like, share, and follow!\n\nzo beatz",
-        "cover_photo": {
-          "640x": "https://audius-content-1.cultur3stake.com/content/01J4SR2P67CX4W1T04JXPPYZ86/640x.jpg",
-          "2000x": "https://audius-content-1.cultur3stake.com/content/01J4SR2P67CX4W1T04JXPPYZ86/2000x.jpg"
-        },
-        "followee_count": 898,
-        "follower_count": 668,
-        "handle": "zobeatz",
-        "id": "L52K2",
-        "is_verified": false,
-        "twitter_handle": "zobeatz1",
-        "instagram_handle": null,
-        "tiktok_handle": null,
-        "verified_with_twitter": false,
-        "verified_with_instagram": false,
-        "verified_with_tiktok": false,
-        "website": null,
-        "donation": null,
-        "location": "United States",
-        "name": "zo beatz",
-        "playlist_count": 0,
-        "profile_picture": {
-          "150x150": "https://audius-content-7.cultur3stake.com/content/01HMMG2TGZGF69JPCH0SG5FHGA/150x150.jpg",
-          "480x480": "https://audius-content-7.cultur3stake.com/content/01HMMG2TGZGF69JPCH0SG5FHGA/480x480.jpg",
-          "1000x1000": "https://audius-content-7.cultur3stake.com/content/01HMMG2TGZGF69JPCH0SG5FHGA/1000x1000.jpg"
-        },
-        "repost_count": 20,
-        "track_count": 107,
-        "is_deactivated": false,
-        "is_available": true,
-        "erc_wallet": "0xc844c2b6f160349b8a81b3690b601bc37a51ea07",
-        "spl_wallet": "HukYFz6HtBcdi7AfBJXsjpKVs5x5uJonpPiNFHLk7jzr",
-        "spl_usdc_payout_wallet": null,
-        "supporter_count": 4,
-        "supporting_count": 0,
-        "total_audio_balance": 16,
-        "wallet": "0xc844c2b6f160349b8a81b3690b601bc37a51ea07"
-      },
-      "duration": 110,
-      "is_downloadable": false,
-      "play_count": 32,
-      "permalink": "/zobeatz/cant-hold-me",
-      "is_streamable": true,
-      "ddex_app": null,
-      "playlists_containing_track": []
     },
     {
       "artwork": {
@@ -6997,7 +6925,7 @@ API response: {
       },
       "duration": 104,
       "is_downloadable": false,
-      "play_count": 168,
+      "play_count": 172,
       "permalink": "/enochssalm/black-jag",
       "is_streamable": true,
       "ddex_app": null,
@@ -7072,7 +7000,7 @@ API response: {
       },
       "duration": 105,
       "is_downloadable": false,
-      "play_count": 131,
+      "play_count": 133,
       "permalink": "/buxuselbeatmaker/mi-auto-fantástico",
       "is_streamable": true,
       "ddex_app": null,
@@ -7145,7 +7073,7 @@ API response: {
       },
       "duration": 136,
       "is_downloadable": false,
-      "play_count": 133,
+      "play_count": 138,
       "permalink": "/starkmadethis/playboi-carti-type-beat-2x24-psycho",
       "is_streamable": true,
       "ddex_app": null,
@@ -7184,7 +7112,7 @@ API response: {
           "2000x": "https://audius-content-13.cultur3stake.com/content/01J0NDJ2RX6MWETKHSQ8WK47FF/2000x.jpg"
         },
         "followee_count": 41,
-        "follower_count": 14668,
+        "follower_count": 14669,
         "handle": "chillhopmusic",
         "id": "eAE0q",
         "is_verified": true,
@@ -7291,87 +7219,11 @@ API response: {
       },
       "duration": 117,
       "is_downloadable": false,
-      "play_count": 6130,
+      "play_count": 6135,
       "permalink": "/soundsbymystic/skrillex-hamdi-taichu-offaiah-push-kaito-x-mstic-remix",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": [
-        145112270
-      ]
-    },
-    {
-      "artwork": {
-        "150x150": "https://audius-content-1.jollyworld.xyz/content/01J8T0M6ADN32EJ2W65FZ7B6WS/150x150.jpg",
-        "480x480": "https://audius-content-1.jollyworld.xyz/content/01J8T0M6ADN32EJ2W65FZ7B6WS/480x480.jpg",
-        "1000x1000": "https://audius-content-1.jollyworld.xyz/content/01J8T0M6ADN32EJ2W65FZ7B6WS/1000x1000.jpg"
-      },
-      "description": "Para dedicar",
-      "genre": "Pop",
-      "id": "zVaY9Z",
-      "track_cid": "baeaaaiqsedqi57aiyv4sbxfj6wr56g2bqawszbkrxxgw6xnd7lswo7rcvelqa",
-      "preview_cid": null,
-      "orig_file_cid": "baeaaaiqsebcdnhemq5b6vnoacwfvoxfokc2mimrskgd6kf7c74miazeugl6j6",
-      "orig_filename": "Camahui - FINAL MASTER.wav",
-      "is_original_available": false,
-      "mood": "Romantic",
-      "release_date": "2024-09-27 15:12:45",
-      "remix_of": {
-        "tracks": null
-      },
-      "repost_count": 14,
-      "favorite_count": 21,
-      "comment_count": 0,
-      "tags": "beach,driving,romantic,pop,groovy,romantico,amor,love,guitar",
-      "title": "Camahui",
-      "user": {
-        "album_count": 0,
-        "artist_pick_track_id": null,
-        "bio": "Extranjero & Mercante es una Banda emergente que fusiona géneros musicales para crear propuestas nuevas dentro de la industria.\nEste proyecto nació y reside en Querétaro, y está integrado por 5 amigos que convergen en un proyecto fresco",
-        "cover_photo": {
-          "640x": "https://audius-content-4.cultur3stake.com/content/01J1FK2AX7TSE0PNJQE74FQSP7/640x.jpg",
-          "2000x": "https://audius-content-4.cultur3stake.com/content/01J1FK2AX7TSE0PNJQE74FQSP7/2000x.jpg"
-        },
-        "followee_count": 6,
-        "follower_count": 8,
-        "handle": "extranjeroymercante",
-        "id": "YJMR8gk",
-        "is_verified": false,
-        "twitter_handle": null,
-        "instagram_handle": "extranjeroymercante",
-        "tiktok_handle": "extranjeroymercante",
-        "verified_with_twitter": false,
-        "verified_with_instagram": false,
-        "verified_with_tiktok": false,
-        "website": "https://open.spotify.com/intl-es/artist/2ouDZdw9zBPS11tDaeuNcn?si=ko4QOezxQmiMDXJR0xtUVw",
-        "donation": null,
-        "location": "Santiago de Querétaro, QUE",
-        "name": "Extranjero & Mercante",
-        "playlist_count": 0,
-        "profile_picture": {
-          "150x150": "https://audius-content-9.cultur3stake.com/content/01J1FK0YC26V16N7E3677S0BWH/150x150.jpg",
-          "480x480": "https://audius-content-9.cultur3stake.com/content/01J1FK0YC26V16N7E3677S0BWH/480x480.jpg",
-          "1000x1000": "https://audius-content-9.cultur3stake.com/content/01J1FK0YC26V16N7E3677S0BWH/1000x1000.jpg"
-        },
-        "repost_count": 1,
-        "track_count": 4,
-        "is_deactivated": false,
-        "is_available": true,
-        "erc_wallet": "0x04371fd4ebafda32c7427be573955f5272ee41b1",
-        "spl_wallet": "FuxxYhG4sUvcoURordGSPzyfAxSVCusqCHKyqk4ffSAC",
-        "spl_usdc_payout_wallet": null,
-        "supporter_count": 1,
-        "supporting_count": 0,
-        "total_audio_balance": 8,
-        "wallet": "0x04371fd4ebafda32c7427be573955f5272ee41b1"
-      },
-      "duration": 246,
-      "is_downloadable": false,
-      "play_count": 5907,
-      "permalink": "/extranjeroymercante/camahui",
-      "is_streamable": true,
-      "ddex_app": null,
-      "playlists_containing_track": [
-        1936117932,
         145112270
       ]
     },
@@ -7442,7 +7294,7 @@ API response: {
       },
       "duration": 145,
       "is_downloadable": false,
-      "play_count": 10,
+      "play_count": 13,
       "permalink": "/harvey_twyman/name-that-tune-561-by-george-ezra-1",
       "is_streamable": true,
       "ddex_app": null,
@@ -7450,73 +7302,73 @@ API response: {
     },
     {
       "artwork": {
-        "150x150": "https://cn4.mainnet.audiusindex.org/content/01J8S07AWCSDPN5RFJ5H1YK0SX/150x150.jpg",
-        "480x480": "https://cn4.mainnet.audiusindex.org/content/01J8S07AWCSDPN5RFJ5H1YK0SX/480x480.jpg",
-        "1000x1000": "https://cn4.mainnet.audiusindex.org/content/01J8S07AWCSDPN5RFJ5H1YK0SX/1000x1000.jpg"
+        "150x150": "https://audius-content-1.jollyworld.xyz/content/01J8T0M6ADN32EJ2W65FZ7B6WS/150x150.jpg",
+        "480x480": "https://audius-content-1.jollyworld.xyz/content/01J8T0M6ADN32EJ2W65FZ7B6WS/480x480.jpg",
+        "1000x1000": "https://audius-content-1.jollyworld.xyz/content/01J8T0M6ADN32EJ2W65FZ7B6WS/1000x1000.jpg"
       },
-      "description": "",
-      "genre": "Electronic",
-      "id": "rEbOZNG",
-      "track_cid": "baeaaaiqsecdvvtr27y35ugka44zk6cydrxx2h2e7ublpc4umsilf23ylgje46",
+      "description": "Para dedicar",
+      "genre": "Pop",
+      "id": "zVaY9Z",
+      "track_cid": "baeaaaiqsedqi57aiyv4sbxfj6wr56g2bqawszbkrxxgw6xnd7lswo7rcvelqa",
       "preview_cid": null,
-      "orig_file_cid": "baeaaaiqsebmp3a5znudujnvxrfxljwpsj2qdt5edv72u4xz7uglf4kfmtdy72",
-      "orig_filename": "Believer V4 - ILURO x SAMMY & LESEN (feat. Shawn O'Donnell).mp3",
+      "orig_file_cid": "baeaaaiqsebcdnhemq5b6vnoacwfvoxfokc2mimrskgd6kf7c74miazeugl6j6",
+      "orig_filename": "Camahui - FINAL MASTER.wav",
       "is_original_available": false,
-      "mood": "Empowering",
-      "release_date": "2024-09-27 05:46:10",
+      "mood": "Romantic",
+      "release_date": "2024-09-27 15:12:45",
       "remix_of": {
         "tracks": null
       },
-      "repost_count": 20,
-      "favorite_count": 33,
+      "repost_count": 14,
+      "favorite_count": 21,
       "comment_count": 0,
-      "tags": "edm,techno",
-      "title": "ILURO x SAMMY & LESEN (feat. Shawn O'Donnell) - Believer",
+      "tags": "beach,driving,romantic,pop,groovy,romantico,amor,love,guitar",
+      "title": "Camahui",
       "user": {
         "album_count": 0,
-        "artist_pick_track_id": "2jMx3",
-        "bio": "Brothers who were born with a passion for music, innovate emotions and new ideas through their skills of composition and production.\n\nIn the world of Electronic Dance, SAMMY & LESEN’s music has reached an extensive crowd, creating a broad fan base.",
+        "artist_pick_track_id": null,
+        "bio": "Extranjero & Mercante es una Banda emergente que fusiona géneros musicales para crear propuestas nuevas dentro de la industria.\nEste proyecto nació y reside en Querétaro, y está integrado por 5 amigos que convergen en un proyecto fresco",
         "cover_photo": {
-          "640x": "https://creatornode.audius8.prod-eks-ap-northeast-1.staked.cloud/content/01HRWS7AMM71EY8SS0VK0C2X54/640x.jpg",
-          "2000x": "https://creatornode.audius8.prod-eks-ap-northeast-1.staked.cloud/content/01HRWS7AMM71EY8SS0VK0C2X54/2000x.jpg"
+          "640x": "https://audius-content-4.cultur3stake.com/content/01J1FK2AX7TSE0PNJQE74FQSP7/640x.jpg",
+          "2000x": "https://audius-content-4.cultur3stake.com/content/01J1FK2AX7TSE0PNJQE74FQSP7/2000x.jpg"
         },
-        "followee_count": 9,
-        "follower_count": 8311,
-        "handle": "sammyandlesen",
-        "id": "myAkQ",
-        "is_verified": true,
-        "twitter_handle": "sammyandlesen",
-        "instagram_handle": "sammyandlesen",
-        "tiktok_handle": "sammyandlesen",
+        "followee_count": 6,
+        "follower_count": 8,
+        "handle": "extranjeroymercante",
+        "id": "YJMR8gk",
+        "is_verified": false,
+        "twitter_handle": null,
+        "instagram_handle": "extranjeroymercante",
+        "tiktok_handle": "extranjeroymercante",
         "verified_with_twitter": false,
-        "verified_with_instagram": true,
+        "verified_with_instagram": false,
         "verified_with_tiktok": false,
-        "website": null,
+        "website": "https://open.spotify.com/intl-es/artist/2ouDZdw9zBPS11tDaeuNcn?si=ko4QOezxQmiMDXJR0xtUVw",
         "donation": null,
-        "location": "Zapopan, JAL",
-        "name": "SAMMY & LESEN",
-        "playlist_count": 1,
+        "location": "Santiago de Querétaro, QUE",
+        "name": "Extranjero & Mercante",
+        "playlist_count": 0,
         "profile_picture": {
-          "150x150": "https://audius-content-9.figment.io/content/01HRWS6NHS7P1EJZR8FYHZWWQF/150x150.jpg",
-          "480x480": "https://audius-content-9.figment.io/content/01HRWS6NHS7P1EJZR8FYHZWWQF/480x480.jpg",
-          "1000x1000": "https://audius-content-9.figment.io/content/01HRWS6NHS7P1EJZR8FYHZWWQF/1000x1000.jpg"
+          "150x150": "https://audius-content-9.cultur3stake.com/content/01J1FK0YC26V16N7E3677S0BWH/150x150.jpg",
+          "480x480": "https://audius-content-9.cultur3stake.com/content/01J1FK0YC26V16N7E3677S0BWH/480x480.jpg",
+          "1000x1000": "https://audius-content-9.cultur3stake.com/content/01J1FK0YC26V16N7E3677S0BWH/1000x1000.jpg"
         },
-        "repost_count": 20,
-        "track_count": 50,
+        "repost_count": 1,
+        "track_count": 4,
         "is_deactivated": false,
         "is_available": true,
-        "erc_wallet": "0x855d524efb348d7ea4c4fd3b9433d2890ece6296",
-        "spl_wallet": "9vMMEQ43zwsvpFRaBXTmjHrg1vxtadjLwz4Rco9SPSDV",
+        "erc_wallet": "0x04371fd4ebafda32c7427be573955f5272ee41b1",
+        "spl_wallet": "FuxxYhG4sUvcoURordGSPzyfAxSVCusqCHKyqk4ffSAC",
         "spl_usdc_payout_wallet": null,
-        "supporter_count": 7,
-        "supporting_count": 1,
-        "total_audio_balance": 444,
-        "wallet": "0x855d524efb348d7ea4c4fd3b9433d2890ece6296"
+        "supporter_count": 1,
+        "supporting_count": 0,
+        "total_audio_balance": 8,
+        "wallet": "0x04371fd4ebafda32c7427be573955f5272ee41b1"
       },
-      "duration": 149,
+      "duration": 246,
       "is_downloadable": false,
-      "play_count": 5627,
-      "permalink": "/sammyandlesen/iluro-x-sammy-lesen-feat-shawn-odonnell-believer",
+      "play_count": 5911,
+      "permalink": "/extranjeroymercante/camahui",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": [
@@ -7526,76 +7378,90 @@ API response: {
     },
     {
       "artwork": {
-        "150x150": "https://cn4.mainnet.audiusindex.org/content/01J8TZCWNX2SG625T3SWE7ENJ3/150x150.jpg",
-        "480x480": "https://cn4.mainnet.audiusindex.org/content/01J8TZCWNX2SG625T3SWE7ENJ3/480x480.jpg",
-        "1000x1000": "https://cn4.mainnet.audiusindex.org/content/01J8TZCWNX2SG625T3SWE7ENJ3/1000x1000.jpg"
+        "150x150": "https://blockdaemon-audius-content-08.bdnodes.net/content/01J9PKX89WQEH2VVEEHSWGK0GH/150x150.jpg",
+        "480x480": "https://blockdaemon-audius-content-08.bdnodes.net/content/01J9PKX89WQEH2VVEEHSWGK0GH/480x480.jpg",
+        "1000x1000": "https://blockdaemon-audius-content-08.bdnodes.net/content/01J9PKX89WQEH2VVEEHSWGK0GH/1000x1000.jpg"
       },
-      "description": "Anotha one this one I made last year, bit of a fun one\nThis one is a continuation of “Give” - it’s about the ups and downs of life and getting through it in a positive way\nif the day isn’t horrific… it’s terrific! - wise words I heard once\n\nYou get what you give, you get what you give\n\nTake another, it's the weekend\nDrink another, until you binge\nHit up your lover, they won't pretend\nCall it what you want, and then we start up again\n\nUnderwater, I jump in\nI forgive myself, I'm human\nAfter all, you give what you get\nYou get what you give\n\nYou get what you give, you get what you give\n\nI won't ever, do this again\nSilence the noise, I'm better than this\nLive out my life, done what I did\nPut it in the past and then we start up again\n\nLive out my life, keep my promise",
-      "genre": "Acoustic",
-      "id": "d9ob11P",
-      "track_cid": "baeaaaiqseb3xltbourkxeucsx3sqmuv6jqz63j5pla64p44wqvuzmd33plq3q",
+      "description": "[THIS BEAT IS ONLY FREE TO RAP ON AND FOR NON PROFIT. YOU NEED EITHER PURCHASE THE PREMIUM HERE OR TO BUY A LICENSE IN ORDER TO RELEASE OR TO USE FOR PROFIT USE]\n\nPurchase to use on digital platforms such as , iTunes, Spotify, Apple Music, etc.\n\nMUST CREDIT Prod. by CG Beats\n\n🔥 Purchase Beat Here: https://cgmusicproductions.com/beat/jersey-drill-type-beat-kamalas-glock-20153162\n\n💹 Buy 2 Get 1 Free!!🔻\n🌐 Beatstore: https://cgmusicproductions.com/\n\nContact:\n📩 Business Email: cgbeatsmusic@gmail.com\n📩 Loop Email: loopsforcg@gmail.com\n📷 IG:  https://instagram.com/iamcgbeats\n---------------------------------------------",
+      "genre": "Hip-Hop/Rap",
+      "id": "JNzAlQ2",
+      "track_cid": "baeaaaiqsecwydpvxzkahmksxheaksvews6wrhc7tueiltxcxjxv2pj63dtf5g",
       "preview_cid": null,
-      "orig_file_cid": "baeaaaiqsec633zei6wqqsuadfqj33do4v3yccu56a4r55sztymuxrhrnuzyum",
-      "orig_filename": "Shant Singh - Give pt. 2.wav",
-      "is_original_available": false,
-      "mood": "Peaceful",
-      "release_date": "2024-09-28 00:10:35",
+      "orig_file_cid": "baeaaaiqsed2bpoxi4le7mjdxdgbrihbo7bpbma3hhnh5ztlr54yxshr3qtlhw",
+      "orig_filename": "Kamala's Glock.mp3",
+      "is_original_available": true,
+      "mood": "Energizing",
+      "release_date": "2024-10-08 17:48:16",
       "remix_of": {
         "tracks": null
       },
-      "repost_count": 14,
-      "favorite_count": 19,
+      "repost_count": 19,
+      "favorite_count": 21,
       "comment_count": 0,
-      "tags": "acoustic,rock,emo,vocal,indie",
-      "title": " Give pt. 2",
+      "tags": "jerseydrill,drill,nydrill,ukdrill,dance,kamala,beat,instrumental,remix",
+      "title": "Jersey Drill Type Beat - Kamala's Glock",
       "user": {
         "album_count": 0,
-        "artist_pick_track_id": null,
-        "bio": "singer songwriter",
+        "artist_pick_track_id": "ljyx79A",
+        "bio": "💹 Buy 1 Get 1 Free!!🔻\n🌐 Beatstore: https://cgmusicproductions.com/\n\nContact:\n📩 Business Email: cgbeatsmusic@gmail.com\n📩 Loop Email: loopsforcg@gmail.com\n📷 IG: @iamcgbeats https://www.instagram.com/iamcgbeats",
         "cover_photo": {
-          "640x": "https://audius-content-9.cultur3stake.com/content/01HT5KHDBSJGC2VPKFBDVHMR6M/640x.jpg",
-          "2000x": "https://audius-content-9.cultur3stake.com/content/01HT5KHDBSJGC2VPKFBDVHMR6M/2000x.jpg"
+          "640x": "https://cn1.mainnet.audiusindex.org/content/01J2KVWPGADJHKGBKT58F3ANDP/640x.jpg",
+          "2000x": "https://cn1.mainnet.audiusindex.org/content/01J2KVWPGADJHKGBKT58F3ANDP/2000x.jpg"
         },
-        "followee_count": 3,
-        "follower_count": 34,
-        "handle": "shantsingh",
-        "id": "KVQx83o",
-        "is_verified": false,
-        "twitter_handle": "shantsinghh",
-        "instagram_handle": "shantsinghh",
-        "tiktok_handle": "shantsinghh",
+        "followee_count": 25,
+        "follower_count": 1190,
+        "handle": "iamcgbeats",
+        "id": "RK0Kl4g",
+        "is_verified": true,
+        "twitter_handle": null,
+        "instagram_handle": "iamcgbeats",
+        "tiktok_handle": null,
         "verified_with_twitter": false,
-        "verified_with_instagram": false,
+        "verified_with_instagram": true,
         "verified_with_tiktok": false,
-        "website": "https://bio.site/shantsingh",
+        "website": "https://cgmusicproductions.com/",
         "donation": null,
-        "location": "Oceanside, CA",
-        "name": "shant singh",
+        "location": "NYC, NY",
+        "name": "CG Beats",
         "playlist_count": 0,
         "profile_picture": {
-          "150x150": "https://audius-content-9.cultur3stake.com/content/01HT5KH0G9F4YWDW3PK4SC78YK/150x150.jpg",
-          "480x480": "https://audius-content-9.cultur3stake.com/content/01HT5KH0G9F4YWDW3PK4SC78YK/480x480.jpg",
-          "1000x1000": "https://audius-content-9.cultur3stake.com/content/01HT5KH0G9F4YWDW3PK4SC78YK/1000x1000.jpg"
+          "150x150": "https://audius-content-15.cultur3stake.com/content/01J2D0ZHG2VVTD254QKPVX2VX7/150x150.jpg",
+          "480x480": "https://audius-content-15.cultur3stake.com/content/01J2D0ZHG2VVTD254QKPVX2VX7/480x480.jpg",
+          "1000x1000": "https://audius-content-15.cultur3stake.com/content/01J2D0ZHG2VVTD254QKPVX2VX7/1000x1000.jpg"
         },
-        "repost_count": 2,
-        "track_count": 8,
+        "repost_count": 54,
+        "track_count": 178,
         "is_deactivated": false,
         "is_available": true,
-        "erc_wallet": "0x6ab7926be87dca933ad3a7eee2b7eba32ad758b3",
-        "spl_wallet": "edL8xMYfquWvoKZSixniMNg1gjkJHK9Pom3DkhfE51e",
+        "erc_wallet": "0x7143c56cc2466529150f104522dab8577e6e9ac6",
+        "spl_wallet": "27rWX6Lm41NzWBXqj39fHjfZTs9hnU8mxSdGVSSQoo3V",
         "spl_usdc_payout_wallet": null,
-        "supporter_count": 2,
-        "supporting_count": 0,
-        "total_audio_balance": 1163,
-        "wallet": "0x6ab7926be87dca933ad3a7eee2b7eba32ad758b3"
+        "supporter_count": 5,
+        "supporting_count": 1,
+        "total_audio_balance": 35,
+        "wallet": "0x7143c56cc2466529150f104522dab8577e6e9ac6"
       },
-      "duration": 143,
-      "is_downloadable": false,
-      "play_count": 4849,
-      "permalink": "/shantsingh/give-pt-2",
+      "duration": 146,
+      "is_downloadable": true,
+      "play_count": 24,
+      "permalink": "/iamcgbeats/jersey-drill-type-beat-kamalas-glock",
       "is_streamable": true,
       "ddex_app": null,
-      "playlists_containing_track": []
+      "playlists_containing_track": [
+        2053177569,
+        1639978337,
+        174803622,
+        1056939816,
+        329801883,
+        1352648752,
+        838253905,
+        126023252,
+        572104917,
+        37839508,
+        798339160,
+        1231866107,
+        1047109246
+      ]
     },
     {
       "artwork": {
@@ -7664,8 +7530,154 @@ API response: {
       },
       "duration": 62,
       "is_downloadable": false,
-      "play_count": 30,
+      "play_count": 32,
       "permalink": "/repatua/your-doorstep-by-repatua",
+      "is_streamable": true,
+      "ddex_app": null,
+      "playlists_containing_track": []
+    },
+    {
+      "artwork": {
+        "150x150": "https://blockdaemon-audius-content-07.bdnodes.net/content/01J94S1Z1E34Y9T7M9T41VMGYT/150x150.jpg",
+        "480x480": "https://blockdaemon-audius-content-07.bdnodes.net/content/01J94S1Z1E34Y9T7M9T41VMGYT/480x480.jpg",
+        "1000x1000": "https://blockdaemon-audius-content-07.bdnodes.net/content/01J94S1Z1E34Y9T7M9T41VMGYT/1000x1000.jpg"
+      },
+      "description": null,
+      "genre": "Latin",
+      "id": "51qwpRM",
+      "track_cid": "baeaaaiqseaftz5wfhooc6j54zja6ez75qcmss4ht46mudc3cvvgabvmjkv3xe",
+      "preview_cid": null,
+      "orig_file_cid": "baeaaaiqsea3htp2czxfgm5qfhitd5i7jugfty5uqqo2zdo7x4rlyepzzmqtzi",
+      "orig_filename": " REFLECTIONS.m4a",
+      "is_original_available": false,
+      "mood": "Melancholy",
+      "release_date": "2024-10-01 19:31:51",
+      "remix_of": {
+        "tracks": null
+      },
+      "repost_count": 4,
+      "favorite_count": 10,
+      "comment_count": 0,
+      "tags": "Chillhop,Bossanova,Beatmaker,Trending,Viral,Underground,Lofi",
+      "title": " REFLECTIONS",
+      "user": {
+        "album_count": 0,
+        "artist_pick_track_id": "3Exa39M",
+        "bio": "Lofi-jazz, Lofi-HipHop beatmaker/producer. Angelic, Soulful Disciple bringing peaceful SoundWaves and chill vibes #MPCLive2 #Roland #SP-404MK2",
+        "cover_photo": {
+          "640x": "https://blockdaemon-audius-content-02.bdnodes.net/content/01HYDTE23QBFQWDYCXGV3W29Y4/640x.jpg",
+          "2000x": "https://blockdaemon-audius-content-02.bdnodes.net/content/01HYDTE23QBFQWDYCXGV3W29Y4/2000x.jpg"
+        },
+        "followee_count": 354,
+        "follower_count": 69,
+        "handle": "enochssalm",
+        "id": "oEMdAZ5",
+        "is_verified": false,
+        "twitter_handle": null,
+        "instagram_handle": "Yaboycleev ",
+        "tiktok_handle": "Enochssalm",
+        "verified_with_twitter": false,
+        "verified_with_instagram": false,
+        "verified_with_tiktok": false,
+        "website": "https://youtube.com/@Enochssaalm?si=A1EW_Mxzm_Vw8gne",
+        "donation": null,
+        "location": "North Carolina ",
+        "name": "🪐ENOCH🪐",
+        "playlist_count": 1,
+        "profile_picture": {
+          "150x150": "https://audius-content-1.figment.io/content/01HCKV4QKFJ2FD1XRBTGYE3TFB/150x150.jpg",
+          "480x480": "https://audius-content-1.figment.io/content/01HCKV4QKFJ2FD1XRBTGYE3TFB/480x480.jpg",
+          "1000x1000": "https://audius-content-1.figment.io/content/01HCKV4QKFJ2FD1XRBTGYE3TFB/1000x1000.jpg"
+        },
+        "repost_count": 89,
+        "track_count": 101,
+        "is_deactivated": false,
+        "is_available": true,
+        "erc_wallet": "0x1f0eeffd3db10c36bdc47daf6ba5e3afde77e215",
+        "spl_wallet": "FhdX5LgGPSWJJmqXaTxtr4jwbHA1QNbXRgsUFhHFXhJE",
+        "spl_usdc_payout_wallet": null,
+        "supporter_count": 1,
+        "supporting_count": 1,
+        "total_audio_balance": 108,
+        "wallet": "0x1f0eeffd3db10c36bdc47daf6ba5e3afde77e215"
+      },
+      "duration": 230,
+      "is_downloadable": false,
+      "play_count": 162,
+      "permalink": "/enochssalm/reflections",
+      "is_streamable": true,
+      "ddex_app": null,
+      "playlists_containing_track": []
+    },
+    {
+      "artwork": {
+        "150x150": "https://cn4.mainnet.audiusindex.org/content/01J8TZCWNX2SG625T3SWE7ENJ3/150x150.jpg",
+        "480x480": "https://cn4.mainnet.audiusindex.org/content/01J8TZCWNX2SG625T3SWE7ENJ3/480x480.jpg",
+        "1000x1000": "https://cn4.mainnet.audiusindex.org/content/01J8TZCWNX2SG625T3SWE7ENJ3/1000x1000.jpg"
+      },
+      "description": "Anotha one this one I made last year, bit of a fun one\nThis one is a continuation of “Give” - it’s about the ups and downs of life and getting through it in a positive way\nif the day isn’t horrific… it’s terrific! - wise words I heard once\n\nYou get what you give, you get what you give\n\nTake another, it's the weekend\nDrink another, until you binge\nHit up your lover, they won't pretend\nCall it what you want, and then we start up again\n\nUnderwater, I jump in\nI forgive myself, I'm human\nAfter all, you give what you get\nYou get what you give\n\nYou get what you give, you get what you give\n\nI won't ever, do this again\nSilence the noise, I'm better than this\nLive out my life, done what I did\nPut it in the past and then we start up again\n\nLive out my life, keep my promise",
+      "genre": "Acoustic",
+      "id": "d9ob11P",
+      "track_cid": "baeaaaiqseb3xltbourkxeucsx3sqmuv6jqz63j5pla64p44wqvuzmd33plq3q",
+      "preview_cid": null,
+      "orig_file_cid": "baeaaaiqsec633zei6wqqsuadfqj33do4v3yccu56a4r55sztymuxrhrnuzyum",
+      "orig_filename": "Shant Singh - Give pt. 2.wav",
+      "is_original_available": false,
+      "mood": "Peaceful",
+      "release_date": "2024-09-28 00:10:35",
+      "remix_of": {
+        "tracks": null
+      },
+      "repost_count": 14,
+      "favorite_count": 19,
+      "comment_count": 0,
+      "tags": "acoustic,rock,emo,vocal,indie",
+      "title": " Give pt. 2",
+      "user": {
+        "album_count": 0,
+        "artist_pick_track_id": null,
+        "bio": "singer songwriter",
+        "cover_photo": {
+          "640x": "https://audius-content-9.cultur3stake.com/content/01HT5KHDBSJGC2VPKFBDVHMR6M/640x.jpg",
+          "2000x": "https://audius-content-9.cultur3stake.com/content/01HT5KHDBSJGC2VPKFBDVHMR6M/2000x.jpg"
+        },
+        "followee_count": 3,
+        "follower_count": 34,
+        "handle": "shantsingh",
+        "id": "KVQx83o",
+        "is_verified": false,
+        "twitter_handle": "shantsinghh",
+        "instagram_handle": "shantsinghh",
+        "tiktok_handle": "shantsinghh",
+        "verified_with_twitter": false,
+        "verified_with_instagram": false,
+        "verified_with_tiktok": false,
+        "website": "https://bio.site/shantsingh",
+        "donation": null,
+        "location": "Oceanside, CA",
+        "name": "shant singh",
+        "playlist_count": 0,
+        "profile_picture": {
+          "150x150": "https://audius-content-9.cultur3stake.com/content/01HT5KH0G9F4YWDW3PK4SC78YK/150x150.jpg",
+          "480x480": "https://audius-content-9.cultur3stake.com/content/01HT5KH0G9F4YWDW3PK4SC78YK/480x480.jpg",
+          "1000x1000": "https://audius-content-9.cultur3stake.com/content/01HT5KH0G9F4YWDW3PK4SC78YK/1000x1000.jpg"
+        },
+        "repost_count": 2,
+        "track_count": 8,
+        "is_deactivated": false,
+        "is_available": true,
+        "erc_wallet": "0x6ab7926be87dca933ad3a7eee2b7eba32ad758b3",
+        "spl_wallet": "edL8xMYfquWvoKZSixniMNg1gjkJHK9Pom3DkhfE51e",
+        "spl_usdc_payout_wallet": null,
+        "supporter_count": 2,
+        "supporting_count": 0,
+        "total_audio_balance": 1163,
+        "wallet": "0x6ab7926be87dca933ad3a7eee2b7eba32ad758b3"
+      },
+      "duration": 143,
+      "is_downloadable": false,
+      "play_count": 4850,
+      "permalink": "/shantsingh/give-pt-2",
       "is_streamable": true,
       "ddex_app": null,
       "playlists_containing_track": []
@@ -7693,9 +7705,154 @@ Request Headers: {
 }
 Query: What are the top 3 trending tracks on Audius right now?
 Generating answer for query: What are the top 3 trending tracks on Audius right now?
-Input categories: null
-No categories provided
-Answer: An error occurred while processing your query: "What are the top 3 trending tracks on Audius right now?". Please try again or rephrase your question. Error details: No APIs available for selection
+Entering extractCategory function
+Initial state: {
+  "llm": {
+    "lc": 1,
+    "type": "constructor",
+    "id": [
+      "langchain",
+      "chat_models",
+      "openai",
+      "ChatOpenAI"
+    ],
+    "kwargs": {
+      "model": "gpt-3.5-turbo",
+      "temperature": 0,
+      "openai_api_key": {
+        "lc": 1,
+        "type": "secret",
+        "id": [
+          "OPENAI_API_KEY"
+        ]
+      }
+    }
+  },
+  "query": "What are the top 3 trending tracks on Audius right now?",
+  "categories": null,
+  "apis": null,
+  "bestApi": null,
+  "params": null,
+  "response": null
+}
+Query: What are the top 3 trending tracks on Audius right now?
+LLM type: object
+LLM methods: [
+  'lc_serializable',
+  'lc_kwargs',
+  'lc_runnable',
+  'name',
+  'verbose',
+  'callbacks',
+  'tags',
+  'metadata',
+  'caller',
+  'cache',
+  '_encoding',
+  'lc_namespace',
+  'temperature',
+  'topP',
+  'frequencyPenalty',
+  'presencePenalty',
+  'n',
+  'logitBias',
+  'modelName',
+  'model',
+  'modelKwargs',
+  'stop',
+  'stopSequences',
+  'user',
+  'timeout',
+  'streaming',
+  'maxTokens',
+  'logprobs',
+  'topLogprobs',
+  'openAIApiKey',
+  'apiKey',
+  'azureOpenAIApiVersion',
+  'azureOpenAIApiKey',
+  'azureADTokenProvider',
+  'azureOpenAIApiInstanceName',
+  'azureOpenAIApiDeploymentName',
+  'azureOpenAIBasePath',
+  'organization',
+  'client',
+  'clientConfig'
+]
+LLM supports structured output
+Total APIs loaded: 23
+Invoking LLM chain with query: What are the top 3 trending tracks on Audius right now?
+LLM chain raw result: ["Get Track","Search Tracks","Get Trending Tracks"]
+Extracted categories: [ 'Get Track', 'Search Tracks', 'Get Trending Tracks' ]
+Returning categories: [ 'Get Track', 'Search Tracks', 'Get Trending Tracks' ]
+getApis function called with state: {
+  "llm": {
+    "lc": 1,
+    "type": "constructor",
+    "id": [
+      "langchain",
+      "chat_models",
+      "openai",
+      "ChatOpenAI"
+    ],
+    "kwargs": {
+      "model": "gpt-3.5-turbo",
+      "temperature": 0,
+      "openai_api_key": {
+        "lc": 1,
+        "type": "secret",
+        "id": [
+          "OPENAI_API_KEY"
+        ]
+      }
+    }
+  },
+  "query": "What are the top 3 trending tracks on Audius right now?",
+  "categories": [
+    "Get Track",
+    "Search Tracks",
+    "Get Trending Tracks"
+  ],
+  "apis": null,
+  "bestApi": null,
+  "params": null,
+  "response": null
+}
+Input categories: [ 'Get Track', 'Search Tracks', 'Get Trending Tracks' ]
+Attempting to read file from: /Users/b.c.nims/just-glassBead-things/glassBead-002-karoshi/audius-langtool/data/audius_corpus.json
+Successfully loaded data. Total endpoints count: 23
+Category set: [ 'Get Track', 'Search Tracks', 'Get Trending Tracks' ]
+HIGH_LEVEL_CATEGORY_MAPPING: {
+  Tracks: [ 'Get Track', 'Search Tracks', 'Get Trending Tracks' ],
+  Users: [ 'Get User', 'Search Users', 'Get User By Handle' ],
+  Playlists: [ 'Get Playlist', 'Search Playlists' ],
+  General: [ 'Audius Web Search' ]
+}
+Derived high level categories: [ 'tracks' ]
+Filtered APIs count: 8
+Filtered APIs: [
+  { name: 'Get Track', category: 'Tracks' },
+  { name: 'Search Tracks', category: 'Tracks' },
+  { name: 'Get Trending Tracks', category: 'Tracks' },
+  { name: 'Get Bulk Tracks', category: 'Tracks' },
+  { name: 'Search Tracks', category: 'Tracks' },
+  { name: 'Get Trending Tracks', category: 'Tracks' },
+  { name: 'Get Underground Trending Tracks', category: 'Tracks' },
+  { name: 'Stream Track', category: 'Tracks' }
+]
+Selecting API for query: What are the top 3 trending tracks on Audius right now?
+Available APIs: [
+  'Get Track',
+  'Search Tracks',
+  'Get Trending Tracks',
+  'Get Bulk Tracks',
+  'Search Tracks',
+  'Get Trending Tracks',
+  'Get Underground Trending Tracks',
+  'Stream Track'
+]
+Invoking chain with query: What are the top 3 trending tracks on Audius right now?
+Answer: An error occurred while processing your query: "What are the top 3 trending tracks on Audius right now?". Please try again or rephrase your question. Error details: No best API found
 Expected Answer: The top 3 trending tracks on Audius right now are:
 1. "Molly Otto - These Things (Sam Day Remix)" by bitbird
 2. "dim.one / story to tell" by snooze💤
@@ -7714,105 +7871,543 @@ Expected Answer: The top 3 trending tracks on Audius right now are:
 15. "Trivecta - Alaska (ft. Casey Cook) (Ambroz x A-PAR Remix)" by Ambroz
 16. "Puddlz" by ethanplus
 17. "Psalm Trees - Seu Trio, ft. ALEXANDER" by Chillhop Music
-18. "Craig Connelly & Lasada - Found You" by Black Hole Recordings
+18. "NIGHTMARE" by VARIANT
 19. "Trivecta - Alaska ft. Casey Cook (VLP Remix)" by VLP
-20. "NIGHTMARE" by VARIANT
-21. "poison (extended edit - AUDIUS XCLUSIVE)" by ellipse
-22. "Nothing Real" by Sain't Paul
-23. "What you need " by snooze💤
-24. "TeamSupreme ReCharged - Vol. 6 feat. SoulfulxNature" by TeamSupreme
-25. "Teddy Swims - Bad Dreams (Geo Raphael Remix)" by Geo Raphael
+20. "poison (extended edit - AUDIUS XCLUSIVE)" by ellipse
+21. "Nothing Real" by Sain't Paul
+22. "What you need by bb.saur" by snooze💤
+23. "TeamSupreme ReCharged - Vol. 6 feat. SoulfulxNature" by TeamSupreme
+24. "Teddy Swims - Bad Dreams (Geo Raphael Remix)" by Geo Raphael
+25. "Craig Connelly & Lasada - Found You" by Black Hole Recordings
 26. "Luv Inna Meteor Shower (Instrumental)" by Don Kody (Big Indoe Music)
 27. "Heart Smart by RacerX" by Eve
 28. "Play" by EIME
 29. "Soul in train" by Ljazz
-30. "Professional Loiters" by Scan-N-Kutt
-31. "Crystal Child" by AKTHESAVIOR
-32. "MPH - Show Me" by Coop Records
+30. "Crystal Child" by AKTHESAVIOR
+31. "Professional Loiters" by Scan-N-Kutt
+32. "Augmented Reality" by Royce
 33. "The Art of Waiting" by winkandwoo
-34. "Augmented Reality" by Royce
-35. "VENAL - Genesis" by Electric Wave
-36. "BadTune & Moosa Saleem - Echoes" by Trapical Music
+34. "VENAL - Genesis" by Electric Wave
+35. "BadTune & Moosa Saleem - Echoes" by Trapical Music
+36. "MPH - Show Me" by Coop Records
 37. "Cnvs - Batallas (Broz Rodriguez Remix)" by Broz Rodriguez 
-38. "Tidal Waves" by Chess
-39. "Compulsions Ft.Steelyvibe" by vale412
+38. "Compulsions Ft.Steelyvibe" by vale412
+39. "Tidal Waves" by Chess
 40. "CryJaxx - Don't Look Back" by CryJaxx
 41. "Broken By Ft.Ashesanddream" by vale412
-42. "Picturesque" by Stewart X
-43. "Trivecta ft Casey Cook - Alaska Remix" by Bonfire بابا ☔
+42. "Trivecta ft Casey Cook - Alaska Remix" by Bonfire بابا ☔
+43. "Picturesque" by Stewart X
 44. "Trivecta - Alaska Feat. Casey Cook (Ryahu Remix)" by Ryahu
 45. "The Lover And The Dream Distortion" by ChiefDijon
 46. "Summertime {Gershwin} - Aristide Sicco al Sax" by EAR 🇮🇹
 47. "Apocalyptic Charity" by Scan-N-Kutt
-48. "Kasbo - Vårsång" by Coop Records
-49. "Sono tuo {De Gregori} by Amos" by EAR 🇮🇹
+48. "Hablar Contigo K. 1" by DJ Shinsuke !
+49. "Kasbo - Vårsång" by Coop Records
 50. "LOWCOST - GG" by GMLX 
-51. "Hablame - Madriz Crudos" by GMLX 
-52. "Hablar Contigo K. 1" by DJ Shinsuke !
+51. "Sono tuo {De Gregori} by Amos" by EAR 🇮🇹
+52. "Hablame - Madriz Crudos" by GMLX 
 53. "Immortal" by Aarr Kellz
 54. "Event Horizon " by Aarr Kellz
 55. "Ice Breaker -2024 Mix- K. 2" by DJ Shinsuke !
 56. "sketches by BOLQUIO: journey to egg" by BOLQUIO
 57. "Clienti demmerda" by Allago
-58. "Atmos" by Sabba
-59. "ZomVillage - Madriz Crudos" by GMLX 
+58. "ZomVillage - Madriz Crudos" by GMLX 
+59. "Atmos" by Sabba
 60. "WITAB" by KMIR
 61. "Screenshot " by snooze💤
 62. "sketches by BOLQUIO: wannabe" by BOLQUIO
 63. "FAST LIVE - PAST LIVE REMIX  (preview track)  - GG" by GMLX 
 64. "On That Dust" by Aarr Kellz
-65. "Splintercat" by brokenkites
-66. "castellanos flamenqueros - madriz crudos" by GMLX 
-67. "MADRIZ HORRORCORE - GG" by GMLX 
-68. "New Wave ViBE" by BladeX
-69. "Men and Mules (Instrumental)" by brokenkites
-70. "Touch" by camoufly
-71. "XTRESS - GG" by GMLX 
-72. "Vamanous (Slowed)" by MICah
-73. "Jiggy (prod. super_tyte)" by super_tyte
-74. "Twins (Ayegbe Royal Mix)" by mAncient
-75. "MADRIZCRUDOS CLIQUE - GG" by GMLX 
-76. "Reflections (DEMO)" by Mozatronic
-77. "SSSHHH - GG" by GMLX 
-78. "Its Over (Slowed)" by MICah
-79. "Under the Street lights - Caper" by Darkstarz Records
-80. "me da lo mismo - madriz crudos" by GMLX 
-81. "LE PEPÓ - FAILING" by LE PEPÓ 
-82. "ぴ" by Ebisu Takeshi
-83. "One Night" by Manzobeat
-84. "MICHAEL PORTER - collide (feat. JiLLi) " by MichaelPorterMusic
-85. "Name That Tune #560 by The Backstreet Boys" by Harvey Twyman
-86. "Remember Me" by Whaskii
-87. "émeraude 🟢✨✨✨" by Dharmax
-88. "Frame Imperfect" by ELIMINA
-89. "dim.finale" by snooze💤
-90. "Can't Hold Me " by zo beatz
-91. "BLACK JAG" by 🪐ENOCH🪐
-92. "Mi Auto Fantástico" by Buxus El BeatMaker
-93. "Playboi Carti Type Beat 2X24 - ''PSYCHO''" by STARK MADE THIS 
-94. "Spirit of Naima - One for Florian" by Chillhop Music
-95. "Skrillex, Hamdi, TAICHU & OFFAIAH - Push (KAITO. X M?STIC REMIX)" by M?STIC 
+65. "castellanos flamenqueros - madriz crudos" by GMLX 
+66. "MADRIZ HORRORCORE - GG" by GMLX 
+67. "New Wave ViBE" by BladeX
+68. "Men and Mules (Instrumental)" by brokenkites
+69. "Touch" by camoufly
+70. "XTRESS - GG" by GMLX 
+71. "Vamanous (Slowed)" by MICah
+72. "Jiggy (prod. super_tyte)" by super_tyte
+73. "Twins (Ayegbe Royal Mix)" by mAncient
+74. "MADRIZCRUDOS CLIQUE - GG" by GMLX 
+75. "Reflections (DEMO)" by Mozatronic
+76. "SSSHHH - GG" by GMLX 
+77. "Its Over (Slowed)" by MICah
+78. "Under the Street lights - Caper" by Darkstarz Records
+79. "me da lo mismo - madriz crudos" by GMLX 
+80. "LE PEPÓ - FAILING" by LE PEPÓ 
+81. "ぴ" by Ebisu Takeshi
+82. "One Night" by Manzobeat
+83. "MICHAEL PORTER - collide (feat. JiLLi) " by MichaelPorterMusic
+84. "Name That Tune #560 by The Backstreet Boys" by Harvey Twyman
+85. "Remember Me" by Whaskii
+86. "émeraude 🟢✨✨✨" by Dharmax
+87. "Can't Hold Me " by zo beatz
+88. "dim.finale" by snooze💤
+89. "Frame Imperfect" by ELIMINA
+90. "BLACK JAG" by 🪐ENOCH🪐
+91. "Mi Auto Fantástico" by Buxus El BeatMaker
+92. "Playboi Carti Type Beat 2X24 - ''PSYCHO''" by STARK MADE THIS 
+93. "Spirit of Naima - One for Florian" by Chillhop Music
+94. "Skrillex, Hamdi, TAICHU & OFFAIAH - Push (KAITO. X M?STIC REMIX)" by M?STIC 
+95. "Name That Tune #561 by George Ezra" by Harvey Twyman
 96. "Camahui" by Extranjero & Mercante
-97. "Name That Tune #561 by George Ezra" by Harvey Twyman
-98. "ILURO x SAMMY & LESEN (feat. Shawn O'Donnell) - Believer" by SAMMY & LESEN
-99. " Give pt. 2" by shant singh
-100. "Your Doorstep by Repatua" by Repatua
+97. "Jersey Drill Type Beat - Kamala's Glock" by CG Beats
+98. "Your Doorstep by Repatua" by Repatua
+99. " REFLECTIONS" by 🪐ENOCH🪐
+100. " Give pt. 2" by shant singh
 Expected Endpoint: /tracks/trending
 ---
 Query: How many followers does Deadmau5 have on Audius?
 Generating answer for query: How many followers does Deadmau5 have on Audius?
-Input categories: null
-No categories provided
-Answer: An error occurred while processing your query: "How many followers does Deadmau5 have on Audius?". Please try again or rephrase your question. Error details: No APIs available for selection
+Entering extractCategory function
+Initial state: {
+  "llm": {
+    "lc": 1,
+    "type": "constructor",
+    "id": [
+      "langchain",
+      "chat_models",
+      "openai",
+      "ChatOpenAI"
+    ],
+    "kwargs": {
+      "model": "gpt-3.5-turbo",
+      "temperature": 0,
+      "openai_api_key": {
+        "lc": 1,
+        "type": "secret",
+        "id": [
+          "OPENAI_API_KEY"
+        ]
+      }
+    }
+  },
+  "query": "How many followers does Deadmau5 have on Audius?",
+  "categories": null,
+  "apis": null,
+  "bestApi": null,
+  "params": null,
+  "response": null
+}
+Query: How many followers does Deadmau5 have on Audius?
+LLM type: object
+LLM methods: [
+  'lc_serializable',
+  'lc_kwargs',
+  'lc_runnable',
+  'name',
+  'verbose',
+  'callbacks',
+  'tags',
+  'metadata',
+  'caller',
+  'cache',
+  '_encoding',
+  'lc_namespace',
+  'temperature',
+  'topP',
+  'frequencyPenalty',
+  'presencePenalty',
+  'n',
+  'logitBias',
+  'modelName',
+  'model',
+  'modelKwargs',
+  'stop',
+  'stopSequences',
+  'user',
+  'timeout',
+  'streaming',
+  'maxTokens',
+  'logprobs',
+  'topLogprobs',
+  'openAIApiKey',
+  'apiKey',
+  'azureOpenAIApiVersion',
+  'azureOpenAIApiKey',
+  'azureADTokenProvider',
+  'azureOpenAIApiInstanceName',
+  'azureOpenAIApiDeploymentName',
+  'azureOpenAIBasePath',
+  'organization',
+  'client',
+  'clientConfig'
+]
+LLM supports structured output
+Total APIs loaded: 23
+Invoking LLM chain with query: How many followers does Deadmau5 have on Audius?
+LLM chain raw result: ["Get Track","Search Tracks","Get Trending Tracks","Get User","Search Users","Get User By Handle","Get Playlist","Search Playlists","Audius Web Search"]
+Extracted categories: [
+  'Get Track',
+  'Search Tracks',
+  'Get Trending Tracks',
+  'Get User',
+  'Search Users',
+  'Get User By Handle',
+  'Get Playlist',
+  'Search Playlists',
+  'Audius Web Search'
+]
+Returning categories: [
+  'Get Track',
+  'Search Tracks',
+  'Get Trending Tracks',
+  'Get User',
+  'Search Users',
+  'Get User By Handle',
+  'Get Playlist',
+  'Search Playlists',
+  'Audius Web Search'
+]
+getApis function called with state: {
+  "llm": {
+    "lc": 1,
+    "type": "constructor",
+    "id": [
+      "langchain",
+      "chat_models",
+      "openai",
+      "ChatOpenAI"
+    ],
+    "kwargs": {
+      "model": "gpt-3.5-turbo",
+      "temperature": 0,
+      "openai_api_key": {
+        "lc": 1,
+        "type": "secret",
+        "id": [
+          "OPENAI_API_KEY"
+        ]
+      }
+    }
+  },
+  "query": "How many followers does Deadmau5 have on Audius?",
+  "categories": [
+    "Get Track",
+    "Search Tracks",
+    "Get Trending Tracks",
+    "Get User",
+    "Search Users",
+    "Get User By Handle",
+    "Get Playlist",
+    "Search Playlists",
+    "Audius Web Search"
+  ],
+  "apis": null,
+  "bestApi": null,
+  "params": null,
+  "response": null
+}
+Input categories: [
+  'Get Track',
+  'Search Tracks',
+  'Get Trending Tracks',
+  'Get User',
+  'Search Users',
+  'Get User By Handle',
+  'Get Playlist',
+  'Search Playlists',
+  'Audius Web Search'
+]
+Attempting to read file from: /Users/b.c.nims/just-glassBead-things/glassBead-002-karoshi/audius-langtool/data/audius_corpus.json
+Successfully loaded data. Total endpoints count: 23
+Category set: [
+  'Get Track',
+  'Search Tracks',
+  'Get Trending Tracks',
+  'Get User',
+  'Search Users',
+  'Get User By Handle',
+  'Get Playlist',
+  'Search Playlists',
+  'Audius Web Search'
+]
+HIGH_LEVEL_CATEGORY_MAPPING: {
+  Tracks: [ 'Get Track', 'Search Tracks', 'Get Trending Tracks' ],
+  Users: [ 'Get User', 'Search Users', 'Get User By Handle' ],
+  Playlists: [ 'Get Playlist', 'Search Playlists' ],
+  General: [ 'Audius Web Search' ]
+}
+Derived high level categories: [ 'tracks', 'users', 'playlists', 'general' ]
+Filtered APIs count: 22
+Filtered APIs: [
+  { name: 'Get Track', category: 'Tracks' },
+  { name: 'Search Tracks', category: 'Tracks' },
+  { name: 'Get Trending Tracks', category: 'Tracks' },
+  { name: 'Get User', category: 'Users' },
+  { name: 'Search Users', category: 'Users' },
+  { name: 'Get Playlist', category: 'Playlists' },
+  { name: 'Search Playlists', category: 'Playlists' },
+  { name: 'Audius Web Search', category: 'General' },
+  { name: 'Get Bulk Tracks', category: 'Tracks' },
+  { name: 'Search Tracks', category: 'Tracks' },
+  { name: 'Get Trending Tracks', category: 'Tracks' },
+  { name: 'Get Underground Trending Tracks', category: 'Tracks' },
+  { name: 'Stream Track', category: 'Tracks' },
+  { name: 'Get User By Handle', category: 'Users' },
+  { name: 'Get User ID from Wallet', category: 'Users' },
+  { name: 'Search Users', category: 'Users' },
+  { name: "Get User's Favorite Tracks", category: 'Users' },
+  { name: "Get User's Reposts", category: 'Users' },
+  { name: "Get User's Most Used Track Tags", category: 'Users' },
+  { name: 'Get Playlist', category: 'Playlists' },
+  { name: 'Search Playlists', category: 'Playlists' },
+  { name: 'Get Trending Playlists', category: 'Playlists' }
+]
+Selecting API for query: How many followers does Deadmau5 have on Audius?
+Available APIs: [
+  'Get Track',
+  'Search Tracks',
+  'Get Trending Tracks',
+  'Get User',
+  'Search Users',
+  'Get Playlist',
+  'Search Playlists',
+  'Audius Web Search',
+  'Get Bulk Tracks',
+  'Search Tracks',
+  'Get Trending Tracks',
+  'Get Underground Trending Tracks',
+  'Stream Track',
+  'Get User By Handle',
+  'Get User ID from Wallet',
+  'Search Users',
+  "Get User's Favorite Tracks",
+  "Get User's Reposts",
+  "Get User's Most Used Track Tags",
+  'Get Playlist',
+  'Search Playlists',
+  'Get Trending Playlists'
+]
+Invoking chain with query: How many followers does Deadmau5 have on Audius?
+Answer: An error occurred while processing your query: "How many followers does Deadmau5 have on Audius?". Please try again or rephrase your question. Error details: No best API found
 Expected Answer: Deadmau5 has Unable to fetch follower count followers on Audius.
 Expected Endpoint: /users/handle
 ---
 Query: What's the top trending playlist on Audius this week?
 Generating answer for query: What's the top trending playlist on Audius this week?
-Input categories: null
-No categories provided
-Answer: An error occurred while processing your query: "What's the top trending playlist on Audius this week?". Please try again or rephrase your question. Error details: No APIs available for selection
+Entering extractCategory function
+Initial state: {
+  "llm": {
+    "lc": 1,
+    "type": "constructor",
+    "id": [
+      "langchain",
+      "chat_models",
+      "openai",
+      "ChatOpenAI"
+    ],
+    "kwargs": {
+      "model": "gpt-3.5-turbo",
+      "temperature": 0,
+      "openai_api_key": {
+        "lc": 1,
+        "type": "secret",
+        "id": [
+          "OPENAI_API_KEY"
+        ]
+      }
+    }
+  },
+  "query": "What's the top trending playlist on Audius this week?",
+  "categories": null,
+  "apis": null,
+  "bestApi": null,
+  "params": null,
+  "response": null
+}
+Query: What's the top trending playlist on Audius this week?
+LLM type: object
+LLM methods: [
+  'lc_serializable',
+  'lc_kwargs',
+  'lc_runnable',
+  'name',
+  'verbose',
+  'callbacks',
+  'tags',
+  'metadata',
+  'caller',
+  'cache',
+  '_encoding',
+  'lc_namespace',
+  'temperature',
+  'topP',
+  'frequencyPenalty',
+  'presencePenalty',
+  'n',
+  'logitBias',
+  'modelName',
+  'model',
+  'modelKwargs',
+  'stop',
+  'stopSequences',
+  'user',
+  'timeout',
+  'streaming',
+  'maxTokens',
+  'logprobs',
+  'topLogprobs',
+  'openAIApiKey',
+  'apiKey',
+  'azureOpenAIApiVersion',
+  'azureOpenAIApiKey',
+  'azureADTokenProvider',
+  'azureOpenAIApiInstanceName',
+  'azureOpenAIApiDeploymentName',
+  'azureOpenAIBasePath',
+  'organization',
+  'client',
+  'clientConfig'
+]
+LLM supports structured output
+Total APIs loaded: 23
+Invoking LLM chain with query: What's the top trending playlist on Audius this week?
+LLM chain raw result: ["Get Track","Search Tracks","Get Trending Tracks","Get User","Search Users","Get User By Handle","Get Playlist","Search Playlists","Audius Web Search"]
+Extracted categories: [
+  'Get Track',
+  'Search Tracks',
+  'Get Trending Tracks',
+  'Get User',
+  'Search Users',
+  'Get User By Handle',
+  'Get Playlist',
+  'Search Playlists',
+  'Audius Web Search'
+]
+Returning categories: [
+  'Get Track',
+  'Search Tracks',
+  'Get Trending Tracks',
+  'Get User',
+  'Search Users',
+  'Get User By Handle',
+  'Get Playlist',
+  'Search Playlists',
+  'Audius Web Search'
+]
+getApis function called with state: {
+  "llm": {
+    "lc": 1,
+    "type": "constructor",
+    "id": [
+      "langchain",
+      "chat_models",
+      "openai",
+      "ChatOpenAI"
+    ],
+    "kwargs": {
+      "model": "gpt-3.5-turbo",
+      "temperature": 0,
+      "openai_api_key": {
+        "lc": 1,
+        "type": "secret",
+        "id": [
+          "OPENAI_API_KEY"
+        ]
+      }
+    }
+  },
+  "query": "What's the top trending playlist on Audius this week?",
+  "categories": [
+    "Get Track",
+    "Search Tracks",
+    "Get Trending Tracks",
+    "Get User",
+    "Search Users",
+    "Get User By Handle",
+    "Get Playlist",
+    "Search Playlists",
+    "Audius Web Search"
+  ],
+  "apis": null,
+  "bestApi": null,
+  "params": null,
+  "response": null
+}
+Input categories: [
+  'Get Track',
+  'Search Tracks',
+  'Get Trending Tracks',
+  'Get User',
+  'Search Users',
+  'Get User By Handle',
+  'Get Playlist',
+  'Search Playlists',
+  'Audius Web Search'
+]
+Attempting to read file from: /Users/b.c.nims/just-glassBead-things/glassBead-002-karoshi/audius-langtool/data/audius_corpus.json
+Successfully loaded data. Total endpoints count: 23
+Category set: [
+  'Get Track',
+  'Search Tracks',
+  'Get Trending Tracks',
+  'Get User',
+  'Search Users',
+  'Get User By Handle',
+  'Get Playlist',
+  'Search Playlists',
+  'Audius Web Search'
+]
+HIGH_LEVEL_CATEGORY_MAPPING: {
+  Tracks: [ 'Get Track', 'Search Tracks', 'Get Trending Tracks' ],
+  Users: [ 'Get User', 'Search Users', 'Get User By Handle' ],
+  Playlists: [ 'Get Playlist', 'Search Playlists' ],
+  General: [ 'Audius Web Search' ]
+}
+Derived high level categories: [ 'tracks', 'users', 'playlists', 'general' ]
+Filtered APIs count: 22
+Filtered APIs: [
+  { name: 'Get Track', category: 'Tracks' },
+  { name: 'Search Tracks', category: 'Tracks' },
+  { name: 'Get Trending Tracks', category: 'Tracks' },
+  { name: 'Get User', category: 'Users' },
+  { name: 'Search Users', category: 'Users' },
+  { name: 'Get Playlist', category: 'Playlists' },
+  { name: 'Search Playlists', category: 'Playlists' },
+  { name: 'Audius Web Search', category: 'General' },
+  { name: 'Get Bulk Tracks', category: 'Tracks' },
+  { name: 'Search Tracks', category: 'Tracks' },
+  { name: 'Get Trending Tracks', category: 'Tracks' },
+  { name: 'Get Underground Trending Tracks', category: 'Tracks' },
+  { name: 'Stream Track', category: 'Tracks' },
+  { name: 'Get User By Handle', category: 'Users' },
+  { name: 'Get User ID from Wallet', category: 'Users' },
+  { name: 'Search Users', category: 'Users' },
+  { name: "Get User's Favorite Tracks", category: 'Users' },
+  { name: "Get User's Reposts", category: 'Users' },
+  { name: "Get User's Most Used Track Tags", category: 'Users' },
+  { name: 'Get Playlist', category: 'Playlists' },
+  { name: 'Search Playlists', category: 'Playlists' },
+  { name: 'Get Trending Playlists', category: 'Playlists' }
+]
+Selecting API for query: What's the top trending playlist on Audius this week?
+Available APIs: [
+  'Get Track',
+  'Search Tracks',
+  'Get Trending Tracks',
+  'Get User',
+  'Search Users',
+  'Get Playlist',
+  'Search Playlists',
+  'Audius Web Search',
+  'Get Bulk Tracks',
+  'Search Tracks',
+  'Get Trending Tracks',
+  'Get Underground Trending Tracks',
+  'Stream Track',
+  'Get User By Handle',
+  'Get User ID from Wallet',
+  'Search Users',
+  "Get User's Favorite Tracks",
+  "Get User's Reposts",
+  "Get User's Most Used Track Tags",
+  'Get Playlist',
+  'Search Playlists',
+  'Get Trending Playlists'
+]
+Invoking chain with query: What's the top trending playlist on Audius this week?
+Answer: An error occurred while processing your query: "What's the top trending playlist on Audius this week?". Please try again or rephrase your question. Error details: No best API found
 Expected Answer: No playlist information available
 Expected Endpoint: /playlists/trending
 ---
-Done in 8.44s.
+Done in 5.86s.

@@ -8,10 +8,10 @@ Currently, Atris can:
 1. Interpret user queries about Audius data.
 2. Select the appropriate API endpoint based on the query.
 3. Make requests to the Audius API.
-4. Retrieve and format data from the API for tracks, playlists, and trending content.
+4. Retrieve data from the API for tracks, playlists, and trending content.
 5. Provide specific answers to queries about track information, playlist details, and trending tracks.
 
-The agent now provides targeted responses to a variety of queries, including track searches, playlist information, and trending content. The output formatting has been refined to match the expected answer format.
+However, there are currently issues with API connectivity and response handling that need to be addressed.
 
 ## Running Atris
 
@@ -21,11 +21,20 @@ To run the project locally, follow these steps:
 2. From the audius-langtool directory, run `yarn install`
 3. From the command line, run `cd backend && yarn start`
 
+## Current Issues
+
+- API connectivity problems: The agent is unable to successfully connect to the Audius API.
+- Error handling: There are issues with processing API responses and handling errors.
+- Query processing: The agent is failing to select appropriate APIs for user queries.
+
 ## Next Steps
 
-- Continue to improve error handling for failed queries and API responses.
+- Debug and fix API connectivity issues.
+- Improve error handling for failed queries and API responses.
+- Fix the API selection process in the `select_api.ts` file.
+- Implement proper response parsing for successful API calls.
+- Continue to refine the query interpretation and response generation.
 - Implement user input handling for dynamic queries.
-- Add more detailed information in the formatted output when appropriate.
 - Develop the Next.js UI for a user-friendly interface.
 - Implement caching mechanisms for frequently requested data.
 - Address the deprecation warning for the `punycode` module.

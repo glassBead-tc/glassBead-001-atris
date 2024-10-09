@@ -30,9 +30,9 @@ export class SelectAPITool extends StructuredTool {
   apis: DatasetSchema[];
   keywordAwareness: KeywordAwareness;
 
-  constructor(apis: DatasetSchema[], query: string) {
+  constructor(apis: DatasetSchema[], query: string | null) {
     super();
-    this.description = SelectAPITool.createDescription(apis, query);
+    this.description = SelectAPITool.createDescription(apis, query || "");
     this.schema = z.object({
       api: z
         .enum(apis.map((api) => api.api_name) as [string, ...string[]])
@@ -55,53 +55,97 @@ export class SelectAPITool extends StructuredTool {
     const { api: apiName } = input;
     const bestApi = this.apis.find((a) => a.api_name === apiName);
     if (!bestApi) {
-      throw new Error(
-        `API ${apiName} not found in list of APIs: ${this.apis
-          .map((a) => a.api_name)
-          .join(", ")}`
-      );
+      console.error(`API ${apiName} not found in list of APIs: ${this.apis.map((a) => a.api_name).join(", ")}`);
+      return JSON.stringify({ error: `API ${apiName} not found` });
     }
     return JSON.stringify(bestApi);
   }
 }
 
+// Fix the calculateRelevance function
+export function calculateRelevance(api: DatasetSchema, query: string | null): number {
+    if (!query) return 0;
+    
+    let score = 0;
+    const lowerQuery = query.toLowerCase();
+
+    // Check for presence of both artist and track name
+    if (lowerQuery.includes(" by ") && api.api_name === "Search Tracks") {
+        score += 50;
+    }
+
+    // Check for exact track name match
+    const exactTrackMatch = query.match(/'([^']+)'/);
+    if (exactTrackMatch && api.api_name === "Search Tracks") {
+        score += 50; // Highest priority for exact track name matches
+    }
+
+    if (api.api_name === "Search Tracks" && query.includes("'")) {
+        score += 40;
+    } else if (api.api_name === "Search Users" && lowerQuery.includes("user")) {
+        score += 40;
+    } else if (api.api_name === "Search Playlists" && lowerQuery.includes("playlist")) {
+        score += 40;
+    }
+
+    if (api.api_name === "Search Tracks" && (lowerQuery.includes("track") || lowerQuery.includes("song"))) {
+        score += 30;
+    }
+
+    if (api.api_name === "Get Track" && lowerQuery.includes("track")) {
+        score += 25;
+    }
+
+    if (api.api_name === "Search Users" && (lowerQuery.includes("user") || lowerQuery.includes("artist"))) {
+        score += 30;
+    }
+
+    if (api.api_name === "Get User" && lowerQuery.includes("user")) {
+        score += 25;
+    }
+
+    if (api.api_name === "Search Playlists" && lowerQuery.includes("playlist")) {
+        score += 30;
+    }
+
+    if (api.api_name === "Get Playlist" && lowerQuery.includes("playlist")) {
+        score += 25;
+    }
+
+    if (api.api_name === "Get Trending Tracks" && lowerQuery.includes("trending")) {
+        score += 35;
+    }
+
+    return score;
+}
+
 export async function selectApi(state: GraphState): Promise<Partial<GraphState>> {
   const { query, apis, llm } = state;
   
+  console.log("Selecting API for query:", query);
+  
   if (!apis || apis.length === 0) {
     console.error("No APIs available for selection. Check if APIs are properly loaded.");
-    throw new Error("No APIs available for selection");
+    return { error: "No APIs available for selection" };
   }
+
+  console.log("Available APIs:", apis.map(api => api.api_name));
 
   if (!llm) {
     console.error("Language model (llm) is not initialized.");
-    throw new Error("Language model is not initialized");
+    return { error: "Language model is not initialized" };
   }
 
-  const prompt = ChatPromptTemplate.fromMessages([
-    [
-      "system",
-      `You are an expert on the Audius API, helping to select the best API endpoint for user queries about Audius music streaming platform.
-Given the user's query, use the 'Select_API' tool to choose the most appropriate Audius API endpoint.
-Consider the following when making your selection:
-- Is the query about tracks, users, playlists, or general Audius information?
-- Does the query require searching or fetching a specific item by ID?
-- Are there any special parameters or filters mentioned in the query?
-Additionally, consider the keyword relevance scores provided for each API.`,
-    ],
-    ["human", `Query: {query}`],
-  ]);
+  if (!query) {
+    console.error("Query is null or undefined.");
+    return { error: "Query is null or undefined" };
+  }
 
-  const tool = new SelectAPITool(apis, query);
-
-  // Calculate keyword relevance scores
-  const scoredApis = apis.map(api => {
-    const bridgeApiEndpoint = convertToBridgeApiEndpoint(api);
-    return {
-      ...api,
-      relevanceScore: tool.keywordAwareness.calculateApiRelevance(bridgeApiEndpoint as unknown as ApiEndpoint, query)
-    };
-  });
+  // Calculate relevance scores using the merged function
+  const scoredApis = apis.map(api => ({
+    ...api,
+    relevanceScore: calculateRelevance(api, query)
+  }));
 
   // Sort APIs by relevance score
   scoredApis.sort((a, b) => b.relevanceScore - a.relevanceScore);
@@ -112,28 +156,37 @@ Additionally, consider the keyword relevance scores provided for each API.`,
     api_description: `${api.api_description} (Relevance Score: ${api.relevanceScore.toFixed(2)})`
   }));
 
-  const modelWithTools = llm.withStructuredOutput(tool);
+  // Create a new SelectAPITool instance
+  const selectAPITool = new SelectAPITool(apisWithScores, query);
 
-  const chain = prompt.pipe(modelWithTools).pipe(tool);
+  // Create a prompt template
+  const prompt = ChatPromptTemplate.fromTemplate(
+    "Given the query: {query}\n\nSelect the most appropriate API from the following options:\n{apis}"
+  );
+
+  // Create a chain using the language model and the SelectAPITool
+  const chain = prompt.pipe(llm).pipe(selectAPITool);
 
   try {
+    console.log("Invoking chain with query:", query);
     const response = await chain.invoke({
       query,
-      apis: apisWithScores,
+      apis: apisWithScores.map(api => `${api.api_name}: ${api.api_description}`).join("\n"),
     });
+    console.log("Chain response:", response);
     const bestApi: DatasetSchema = JSON.parse(response);
 
+    console.log("Selected API:", bestApi.api_name);
     return {
       bestApi,
       query,
     };
   } catch (error: unknown) {
+    console.error("Error selecting API:", error);
     if (error instanceof Error) {
-      console.error("Error selecting API:", error);
-      throw new Error(`Failed to select API: ${error.message}`);
+      return { error: `Failed to select API: ${error.message}` };
     } else {
-      console.error("Unknown error selecting API:", error);
-      throw new Error("Failed to select API: Unknown error");
+      return { error: "Failed to select API: Unknown error" };
     }
   }
 }

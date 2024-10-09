@@ -63,7 +63,7 @@ export async function requestParameters(
     throw new Error("No best API found");
   }
   const requiredParamsKeys = bestApi.required_parameters.map(
-    ({ name }) => name
+    ({ name }: { name: string }) => name
   );
   const extractedParamsKeys = Object.keys(params ?? {});
   const missingParams = findMissingParams(
@@ -72,9 +72,9 @@ export async function requestParameters(
   );
   const missingParamsSchemas = missingParams
     .map((missingParamKey) =>
-      bestApi.required_parameters.find(({ name }) => name === missingParamKey)
+      bestApi.required_parameters.find(({ name }: { name: string }) => name === missingParamKey)
     )
-    .filter((p) => p !== undefined) as DatasetParameters[];
+    .filter((p): p is DatasetParameters => p !== undefined);
 
   const userInput = await readUserInput(missingParamsSchemas);
   const parsedUserInput = parseUserInput(userInput);

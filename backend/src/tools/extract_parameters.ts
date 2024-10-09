@@ -2,13 +2,25 @@ import { logger } from '../logger.js';
 import { GraphState } from '../types.js';
 import { globalAudiusApi } from '../tools/create_fetch_request.js';
 
-export const extractParameters = async (state: GraphState): Promise<Partial<GraphState>> => {
+interface ExtractedData {
+  params: Record<string, string>;
+  fullPlaylistDetails: any | null;
+  fullUserDetails: any | null;
+  fullTrackDetails: any | null;
+}
+
+export const extractParameters = async (state: GraphState): Promise<Partial<GraphState> & ExtractedData> => {
   const { query, bestApi } = state;
 
   let params: Record<string, string> = {};
   let fullPlaylistDetails: any = null;
   let fullUserDetails: any = null;
   let fullTrackDetails: any = null;
+
+  if (!query) {
+    logger.warn("No query provided in the state");
+    return { params, fullPlaylistDetails, fullUserDetails, fullTrackDetails };
+  }
 
   try {
     if (bestApi?.api_name === 'Get Playlist') {
@@ -60,6 +72,7 @@ export const extractParameters = async (state: GraphState): Promise<Partial<Grap
 
     return { params, fullPlaylistDetails, fullUserDetails, fullTrackDetails };
   } catch (error) {
-    throw error;
+    logger.error("Error in extractParameters:", error);
+    return { params, fullPlaylistDetails, fullUserDetails, fullTrackDetails, error: String(error) };
   }
 };

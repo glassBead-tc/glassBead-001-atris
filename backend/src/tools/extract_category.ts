@@ -1,10 +1,8 @@
-import fs from "fs";
 import { StructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { GraphState } from "../types.js";
-import { HIGH_LEVEL_CATEGORY_MAPPING, TRIMMED_CORPUS_PATH } from "constants.js";
-import { DatasetSchema } from "types.js";
+import { GraphState, DatasetSchema } from "../types.js";
+import { HIGH_LEVEL_CATEGORY_MAPPING, TRIMMED_CORPUS_PATH } from "../constants.js";
 
 /**
  * Given a users query, extract the high level category which
@@ -49,14 +47,22 @@ export class ExtractHighLevelCategories extends StructuredTool {
 export async function extractCategory(
   state: GraphState
 ): Promise<Partial<GraphState>> {
+  console.log("Entering extractCategory function");
+  console.log("Initial state:", JSON.stringify(state, null, 2));
+
   const { llm, query } = state;
 
   if (!llm) {
+    console.error("LLM is not initialized in the GraphState");
     return {
       error: "LLM is not initialized in the GraphState",
       categories: null,
     };
   }
+
+  console.log("Query:", query);
+  console.log("LLM type:", typeof llm);
+  console.log("LLM methods:", Object.keys(llm));
 
   const prompt = ChatPromptTemplate.fromMessages([
     [
@@ -75,11 +81,12 @@ Here are all the high level categories, and every tool name that falls under the
   const tool = new ExtractHighLevelCategories();
   
   if (llm && typeof llm.withStructuredOutput === 'function') {
+    console.log("LLM supports structured output");
     const modelWithTools = llm.withStructuredOutput(tool);
     const chain = prompt.pipe(modelWithTools).pipe(tool);
 
     const allApisData: { endpoints: DatasetSchema[] } = JSON.parse(
-      fs.readFileSync(TRIMMED_CORPUS_PATH, "utf-8")
+      await import('fs').then(fs => fs.promises.readFile(TRIMMED_CORPUS_PATH, "utf-8"))
     );
     
     if (!allApisData || !Array.isArray(allApisData.endpoints)) {
@@ -99,11 +106,15 @@ Here are all the high level categories, and every tool name that falls under the
       })
       .join("\n\n");
 
+      console.log("Total APIs loaded:", allApis.length);
+
     // Format the prompt with the necessary input
     const formattedPrompt = await prompt.format({
       categoriesAndTools,
       query
     });
+
+    console.log("Invoking LLM chain with query:", query);
 
     // Use the chain instead of directly invoking the LLM
     const result = await chain.invoke({
@@ -111,13 +122,17 @@ Here are all the high level categories, and every tool name that falls under the
       categoriesAndTools
     });
 
+
     // The result should already be an array of categories
     const categories = JSON.parse(result);
 
-    // Return the categories as part of the state update
+    console.log("LLM chain raw result:", result);
+
+    console.log("Extracted categories:", categories);
+    console.log("Returning categories:", categories);
     return {
       categories: categories,
-      // Make sure to include any other state properties that this function might modify
+      // Only include other properties if they are actually modified in this function
     };
   } else {
     return {

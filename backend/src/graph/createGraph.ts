@@ -4,36 +4,56 @@ import { getApis } from "../tools/get_apis.js";
 import { selectApi } from "../tools/select_api.js";
 import { extractParameters } from "../tools/extract_parameters.js";
 import { GraphState } from "../types.js";
-import lodash from 'lodash';
-import { requestParameters } from "tools/request_parameters.js";
+import { requestParameters } from "../tools/request_parameters.js";
+import { ChatOpenAI, ChatOpenAICallOptions } from "@langchain/openai";
+import { DatasetSchema } from "../types.js";
 
-const { merge } = lodash;
-
-const graphChannels = {
-  llm: null,
-  query: null,
-  categories: null,
-  apis: null,
-  bestApi: null,
-  params: null,
-  response: null,
-};
-
-export function createGraph() {
+export function createGraph(llm: ChatOpenAI<ChatOpenAICallOptions>) {
   const graph = new StateGraph<GraphState>({
-    channels: graphChannels,
-  })
-    .addNode("extract_category_node", extractCategory)
-    .addNode("get_apis_node", getApis)
-    .addNode("select_api_node", selectApi)
-    .addNode("extract_params_node", extractParameters)
-    .addNode("execute_request_node", requestParameters)
-    .addEdge("extract_category_node", "get_apis_node")
-    .addEdge("get_apis_node", "select_api_node")
-    .addEdge("select_api_node", "extract_params_node")
-    .addEdge("extract_params_node", "execute_request_node")
-    .addEdge(START, "extract_category_node")
-    .addEdge("execute_request_node", END);
+    channels: {
+      llm: { 
+        default: () => llm,
+        reducer: (_current: ChatOpenAI<ChatOpenAICallOptions> | null, newVal: ChatOpenAI<ChatOpenAICallOptions> | null) => newVal ?? null
+      },
+      query: { 
+        default: () => null,
+        reducer: (_current: string | null, newVal: string | null) => newVal ?? null
+      },
+      categories: { 
+        default: () => null,
+        reducer: (_current: string[] | null, newVal: string[] | null) => newVal ?? null
+      },
+      apis: { 
+        default: () => null,
+        reducer: (_current: DatasetSchema[] | null, newVal: DatasetSchema[] | null) => newVal ?? null
+      },
+      bestApi: { 
+        default: () => null,
+        reducer: (_current: DatasetSchema | null, newVal: DatasetSchema | null) => newVal ?? null
+      },
+      params: { 
+        default: () => null,
+        reducer: (_current: Record<string, string> | null, newVal: Record<string, string> | null) => newVal ?? null
+      },
+      response: { 
+        default: () => null,
+        reducer: (_current: any | null, newVal: any | null) => newVal ?? null
+      },
+    },
+  });
+
+  graph
+    .addNode("extract_category", extractCategory)
+    .addNode("get_apis", getApis)
+    .addNode("select_api", selectApi)
+    .addNode("extract_parameters", extractParameters)
+    .addNode("request_parameters", requestParameters)
+    .addEdge("extract_category", "get_apis")
+    .addEdge("get_apis", "select_api")
+    .addEdge("select_api", "extract_parameters")
+    .addEdge("extract_parameters", "request_parameters")
+    .addEdge(START, "extract_category")
+    .addEdge("request_parameters", END);
 
   return graph.compile();
 }

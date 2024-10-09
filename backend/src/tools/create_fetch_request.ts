@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import { GraphState } from "../types.js";
+import { GraphState, DatasetSchema } from "../types.js";
 
 const API_KEY = process.env.AUDIUS_API_KEY!;
 const BASE_URL = 'https://discoveryprovider.audius.co/v1';
@@ -100,29 +100,29 @@ export const globalAudiusApi = new AudiusApi();
 export async function createFetchRequest(state: GraphState): Promise<GraphState> {
   const { bestApi, params, query } = state;
   if (!bestApi) {
-    return { ...state, error: "No best API selected." };
+    return { ...state, error: "No best API selected.", response: null };
   }
 
   try {
-    let response;
+    let response: any;
     switch (bestApi.api_name) {
       case "Get User By Handle":
-        response = await globalAudiusApi.getUserByHandle(query);
+        response = await globalAudiusApi.getUserByHandle(query as string);
         break;
       case "Search Tracks":
-        response = await globalAudiusApi.searchTracks(query);
+        response = await globalAudiusApi.searchTracks(query as string);
         break;
       case "Search Users":
-        response = await globalAudiusApi.searchUsers(query);
+        response = await globalAudiusApi.searchUsers(query as string);
         break;
       case "Get Trending Tracks":
         response = await globalAudiusApi.getTrendingTracks(3);
         break;
       case "Search Playlists":
-        response = await globalAudiusApi.searchPlaylists(query);
+        response = await globalAudiusApi.searchPlaylists(query as string);
         break;
       case "Get Playlist":
-        response = await globalAudiusApi.getPlaylist(params.playlistId);
+        response = await globalAudiusApi.getPlaylist(params?.playlistId as string);
         break;
       case "Get Trending Playlists":
         response = await globalAudiusApi.getTopTrendingPlaylist();
@@ -131,10 +131,10 @@ export async function createFetchRequest(state: GraphState): Promise<GraphState>
         response = await globalAudiusApi.getTopTrendingPlaylistTracks();
         break;
       default:
-        return { ...state, error: `Unsupported API endpoint: ${bestApi.api_name}` };
+        return { ...state, error: `Unsupported API endpoint: ${bestApi.api_name}`, response: null };
     }
 
-    return { ...state, response };
+    return { ...state, response, error: undefined };
   } catch (error) {
     console.error('Error in createFetchRequest:', error);
     return { 

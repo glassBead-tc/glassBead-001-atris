@@ -33,43 +33,16 @@ export interface ApiEndpoint {
   api_url: string;
 }
 
-export type GraphState = {
-  /**
-   * The LLM to use for the graph
-   */
-  llm: ChatOpenAI | null; 
-  /**
-   * The query to extract an API for
-   */
-  query: string;
-  /**
-   * The relevant API categories for the query
-   */
+export interface GraphState {
+  llm: ChatOpenAI | null;
+  query: string | null;
   categories: string[] | null;
-  /**
-   * The relevant APIs from the categories
-   */
-  apis: DatasetSchema[] | null;
-  /**
-   * The most relevant API for the query
-   */
-  bestApi: DatasetSchema | null;
-  /**
-   * The params for the API call
-   */
-  params: Record<string, string>;
-  /**
-   * The API response
-   */
-  response: Record<string, any> | null;
-  /**
-   * Full playlist details when fetching a specific playlist
-   */
-  fullPlaylistDetails?: any; // Add this line
-  fullUserDetails?: any; // Add this line
-  fullTrackDetails?: any; // Add this line
-  error?: string;
-};
+  apis: any[] | null;
+  bestApi: any | null;
+  params: any | null;
+  response: any | null;
+  error?: string; // Added error property
+}
 
 export type FetchResult = {
   response?: any;

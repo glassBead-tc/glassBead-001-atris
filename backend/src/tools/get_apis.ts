@@ -4,36 +4,44 @@ import { DatasetSchema, GraphState } from "../types.js";
 import { HIGH_LEVEL_CATEGORY_MAPPING, TRIMMED_CORPUS_PATH } from "../constants.js";
 
 export const getApis = async (state: GraphState): Promise<Partial<GraphState>> => {
+    console.log("getApis function called with state:", JSON.stringify(state, null, 2));
     const { categories } = state;
     console.log("Input categories:", categories);
 
     if (!categories || categories.length === 0) {
-        console.log("No categories provided");
+        console.log("No categories provided, returning empty APIs array");
         return { apis: [] };
     }
 
     try {
+        console.log("Attempting to read file from:", TRIMMED_CORPUS_PATH);
         const allData: { endpoints: DatasetSchema[] } = JSON.parse(fs.readFileSync(TRIMMED_CORPUS_PATH, "utf-8"));
-        console.log("Loaded data endpoints count:", allData.endpoints.length);
+        console.log("Successfully loaded data. Total endpoints count:", allData.endpoints.length);
         
         const categorySet = new Set(categories);
         console.log("Category set:", Array.from(categorySet));
 
+        console.log("HIGH_LEVEL_CATEGORY_MAPPING:", HIGH_LEVEL_CATEGORY_MAPPING);
         const highLevelCategories = new Set(
             Object.entries(HIGH_LEVEL_CATEGORY_MAPPING)
                 .filter(([_, low]) => low.some(cat => categorySet.has(cat)))
                 .map(([high, _]) => high.toLowerCase())
         );
-        console.log("High level categories:", Array.from(highLevelCategories));
+        console.log("Derived high level categories:", Array.from(highLevelCategories));
 
         const apis = allData.endpoints
             .filter(api => highLevelCategories.has(api.category_name.toLowerCase()));
         console.log("Filtered APIs count:", apis.length);
-        console.log("Filtered APIs:", apis.map(api => api.api_name));
+        console.log("Filtered APIs:", apis.map(api => ({ name: api.api_name, category: api.category_name })));
+
+        if (apis.length === 0) {
+            console.log("Warning: No APIs matched the given categories");
+        }
 
         return { apis };
     } catch (error) {
         console.error("Error in getApis:", error);
+        console.error("Stack trace:", error instanceof Error ? error.stack : "No stack trace available");
         return { apis: [], error: "Failed to fetch APIs" };
     }
 };

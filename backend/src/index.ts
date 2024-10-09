@@ -1,6 +1,7 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { createGraph } from "./graph/createGraph.js";
 import { globalAudiusApi } from "./tools/create_fetch_request.js";
+import { GraphState } from "./types.js";
 
 // Define interfaces for the API response structures
 interface Track {
@@ -65,7 +66,14 @@ async function setupTestCases() {
   ];
 }
 
-export async function main() {
+async function main() {
+  const llm = new ChatOpenAI({
+    modelName: "gpt-3.5-turbo",
+    temperature: 0,
+  });
+
+  const graph = createGraph(llm);
+
   try {
     const isConnected = await globalAudiusApi.testConnection();
     if (isConnected) {
@@ -80,12 +88,6 @@ export async function main() {
     return;
   }
 
-  const app = createGraph();
-  const llm = new ChatOpenAI({
-    modelName: "gpt-4-turbo-preview",
-    temperature: 0,
-  });
-
   let testCases;
   try {
     testCases = await setupTestCases();
@@ -96,7 +98,7 @@ export async function main() {
 
   for (const testCase of testCases) {
     console.log(`Query: ${testCase.query}`);
-    const answer = await generateAnswer(app, llm, testCase.query);
+    const answer = await generateAnswer(graph, testCase.query);
     console.log(`Answer: ${answer}`);
     console.log(`Expected Answer: ${testCase.expectedAnswer}`);
     console.log(`Expected Endpoint: ${testCase.expectedEndpoint}`);
@@ -104,7 +106,7 @@ export async function main() {
   }
 }
 
-async function generateAnswer(app: any, llm: any, query: string): Promise<string> {
+async function generateAnswer(app: ReturnType<typeof createGraph>, query: string): Promise<string> {
   try {
     console.log("Generating answer for query:", query);
     const result = await app.invoke({ query });
