@@ -21,10 +21,10 @@
   "license": "MIT",
   "dependencies": {
     "@audius/sdk": "^6.0.1",
-    "@langchain/community": "^0.2.9",
-    "@langchain/core": "^0.2.6",
+    "@langchain/community": "^0.2.4",
+    "@langchain/core": "^0.2.2",
     "@langchain/langgraph": "^0.0.22",
-    "@langchain/openai": "^0.3.5",
+    "@langchain/openai": "^0.0.34",
     "audius": "^1.1.1",
     "axios": "^1.7.7",
     "langchain": "^0.2.5",

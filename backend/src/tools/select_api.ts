@@ -4,6 +4,7 @@ import { StringOutputParser } from "@langchain/core/output_parsers";
 import { ChatOpenAI } from "@langchain/openai";
 import { DatasetSchema, GraphState } from "../types.js";
 
+// Change the template format to use backticks and simple placeholders
 const apiSelectionPrompt = ChatPromptTemplate.fromTemplate(`
   Given the following query: {{query}}
   
@@ -21,7 +22,7 @@ const apiSelectionPrompt = ChatPromptTemplate.fromTemplate(`
   }
   
   Only include parameters that are relevant to the query.
-`);
+`, { templateFormat: "mustache" }); 
 
 function calculateRelevance(api: DatasetSchema, query: string): number {
   let score = 0;
