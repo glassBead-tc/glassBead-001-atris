@@ -67,9 +67,15 @@ export class SelectAPITool extends StructuredTool {
 
 export async function selectApi(state: GraphState): Promise<Partial<GraphState>> {
   const { query, apis, llm } = state;
-  if (apis === null || apis.length === 0) {
-    // logger.error("No APIs passed to select_api_node");
-    throw new Error("No APIs passed to select_api_node");
+  
+  if (!apis || apis.length === 0) {
+    console.error("No APIs available for selection. Check if APIs are properly loaded.");
+    throw new Error("No APIs available for selection");
+  }
+
+  if (!llm) {
+    console.error("Language model (llm) is not initialized.");
+    throw new Error("Language model is not initialized");
   }
 
   const prompt = ChatPromptTemplate.fromMessages([
@@ -103,23 +109,33 @@ Additionally, consider the keyword relevance scores provided for each API.`,
   // Add relevance scores to the API descriptions
   const apisWithScores = scoredApis.map(api => ({
     ...api,
-    api_description: `${api.api_description} (Relevance Score: ${api.relevanceScore})`
+    api_description: `${api.api_description} (Relevance Score: ${api.relevanceScore.toFixed(2)})`
   }));
 
-  const modelWithTools = llm!.withStructuredOutput(tool);
+  const modelWithTools = llm.withStructuredOutput(tool);
 
   const chain = prompt.pipe(modelWithTools).pipe(tool);
 
-  const response = await chain.invoke({
-    query,
-    apis: apisWithScores,
-  });
-  const bestApi: DatasetSchema = JSON.parse(response);
+  try {
+    const response = await chain.invoke({
+      query,
+      apis: apisWithScores,
+    });
+    const bestApi: DatasetSchema = JSON.parse(response);
 
-  return {
-    bestApi,
-    query,
-  };
+    return {
+      bestApi,
+      query,
+    };
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Error selecting API:", error);
+      throw new Error(`Failed to select API: ${error.message}`);
+    } else {
+      console.error("Unknown error selecting API:", error);
+      throw new Error("Failed to select API: Unknown error");
+    }
+  }
 }
 
 // Helper function to convert DatasetSchema to BridgeApiEndpoint
