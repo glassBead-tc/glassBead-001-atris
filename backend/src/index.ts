@@ -132,6 +132,7 @@ async function generateAnswer(app: CompiledStateGraph<GraphState, Partial<GraphS
 
         // Populate the APIs
         const apisChannel = getApisValue(app); // Use a helper function to safely get 'apis' channel
+        console.log("APIs Channel:", apisChannel); // Debugging output
         if (apisChannel && 'value' in apisChannel) {
             state.apis = apisChannel.value;
         } else {

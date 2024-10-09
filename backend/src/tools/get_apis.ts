@@ -22,6 +22,7 @@ export const getApis = async (state: GraphState): Promise<Partial<GraphState>> =
         console.log("Category set:", Array.from(categorySet));
 
         console.log("HIGH_LEVEL_CATEGORY_MAPPING:", HIGH_LEVEL_CATEGORY_MAPPING);
+        console.log("TRIMMED_CORPUS_PATH:", TRIMMED_CORPUS_PATH);
         const highLevelCategories = new Set(
             Object.entries(HIGH_LEVEL_CATEGORY_MAPPING)
                 .filter(([_, low]) => low.some(cat => categorySet.has(cat)))

@@ -17,11 +17,11 @@ const apiSelectionPrompt = ChatPromptTemplate.fromTemplate(`
       "param1": "default_value",
       "param2": "default_value"
     },
-    "description": "Brief description of what the API does",
+    "description": "Brief description of what the API does"
   }
   
   Only include parameters that are relevant to the query.
-  `);
+`);
 
 function calculateRelevance(api: DatasetSchema, query: string): number {
   let score = 0;
