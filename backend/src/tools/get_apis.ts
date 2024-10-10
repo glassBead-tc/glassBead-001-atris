@@ -6,8 +6,8 @@ import { HIGH_LEVEL_CATEGORY_MAPPING, TRIMMED_CORPUS_PATH } from "../constants.j
 export const getApis = async (state: GraphState): Promise<Partial<GraphState>> => {
     const { categories } = state;
 
-    if (!categories || categories.length === 0) {
-        return { apis: [], error: "No categories provided" };
+    if (!categories || !Array.isArray(categories) || categories.length === 0) {
+        return { apis: [], error: "No valid categories provided" };
     }
 
     try {
