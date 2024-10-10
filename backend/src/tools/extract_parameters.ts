@@ -1,78 +1,48 @@
 import { logger } from '../logger.js';
 import { GraphState } from '../types.js';
-import { globalAudiusApi } from '../tools/create_fetch_request.js';
+import { globalAudiusApi } from './create_fetch_request.js';
 
-interface ExtractedData {
-  params: Record<string, string>;
-  fullPlaylistDetails: any | null;
-  fullUserDetails: any | null;
-  fullTrackDetails: any | null;
-}
-
-export const extractParameters = async (state: GraphState): Promise<Partial<GraphState> & ExtractedData> => {
+export const extractParameters = async (state: GraphState): Promise<Partial<GraphState>> => {
   const { query, bestApi } = state;
 
-  let params: Record<string, string> = {};
-  let fullPlaylistDetails: any = null;
-  let fullUserDetails: any = null;
-  let fullTrackDetails: any = null;
-
-  if (!query) {
-    logger.warn("No query provided in the state");
-    return { params, fullPlaylistDetails, fullUserDetails, fullTrackDetails };
+  if (!bestApi) {
+    return { error: "No API selected" };
   }
 
+  let params: Record<string, any> = {};
+
   try {
-    if (bestApi?.api_name === 'Get Playlist') {
-      // Existing playlist logic...
-    } else if (bestApi?.api_name === 'Search Playlists') {
-      // Existing search playlists logic...
-    } else if (bestApi?.api_name === 'Get User' || bestApi?.api_name === 'Search Users') {
-      const userNameMatch = query.match(/'([^']+)'/);
-      if (userNameMatch) {
-        const userName = userNameMatch[1];
-        
-        const searchResult = await globalAudiusApi.searchUsers(userName);
+    if (bestApi.api_name === 'Get Playlist' || bestApi.api_name === 'Search Playlists') {
+      const playlistNameMatch = query.match(/'([^']+)'/);
+      if (playlistNameMatch) {
+        const playlistName = playlistNameMatch[1];
+        const searchResult = await globalAudiusApi.searchPlaylists(playlistName);
         if (searchResult && searchResult.data && searchResult.data.length > 0) {
-          const userId = searchResult.data[0].id;
-          params.user_id = userId;
-          
-          // Fetch full user details
-          const userDetails = await globalAudiusApi.getUser(userId);
-          if (userDetails && userDetails.data) {
-            fullUserDetails = userDetails.data;
-          }
+          params.playlist_id = searchResult.data[0].id;
         } else {
-          logger.warn("No user found for the given name");
+          return { error: "No playlist found for the given name" };
         }
       } else {
         params.query = query;
       }
-    } else if (bestApi?.api_name === 'Get Track' || bestApi?.api_name === 'Search Tracks') {
+    } else if (bestApi.api_name === 'Get Track' || bestApi.api_name === 'Search Tracks') {
       const trackNameMatch = query.match(/'([^']+)'/);
       if (trackNameMatch) {
         const trackName = trackNameMatch[1];
-        
         const searchResult = await globalAudiusApi.searchTracks(trackName);
         if (searchResult && searchResult.data && searchResult.data.length > 0) {
-          const exactMatch = searchResult.data.find((track: any) => 
-            track.title.toLowerCase() === trackName.toLowerCase()
-          );
-          const trackToUse = exactMatch || searchResult.data[0];
-          params.track_id = trackToUse.id;
-          fullTrackDetails = trackToUse;
+          params.track_id = searchResult.data[0].id;
         } else {
-          logger.warn("No track found for the given name");
+          return { error: "No track found for the given name" };
         }
       } else {
         params.query = query;
       }
     }
-    // Add more conditions for other API types as needed
 
-    return { params, fullPlaylistDetails, fullUserDetails, fullTrackDetails };
+    return { params };
   } catch (error) {
-    logger.error("Error in extractParameters:", error);
-    return { params, fullPlaylistDetails, fullUserDetails, fullTrackDetails, error: String(error) };
+    console.error("Error in extractParameters:", error);
+    return { error: "Failed to extract parameters" };
   }
 };

@@ -3,10 +3,9 @@ import { extractCategory } from "../tools/extract_category.js";
 import { getApis } from "../tools/get_apis.js";
 import { selectApi } from "../tools/select_api.js";
 import { extractParameters } from "../tools/extract_parameters.js";
+import { createFetchRequest } from "../tools/create_fetch_request.js";
 import { GraphState } from "../types.js";
-import { requestParameters } from "../tools/request_parameters.js";
 import { ChatOpenAI, ChatOpenAICallOptions } from "@langchain/openai";
-import { DatasetSchema } from "../types.js";
 
 export function createGraph(llm: ChatOpenAI<ChatOpenAICallOptions>) {
   const graph = new StateGraph<GraphState>({
@@ -21,23 +20,23 @@ export function createGraph(llm: ChatOpenAI<ChatOpenAICallOptions>) {
       },
       categories: { 
         default: () => [],
-        reducer: (current, newVal) => newVal.length > 0 ? newVal : current
+        reducer: (current, newVal) => newVal || current
       },
       apis: { 
         default: () => [],
-        reducer: (current, newVal) => newVal.length > 0 ? newVal : current
+        reducer: (current, newVal) => newVal || current
       },
       bestApi: { 
-        default: () => ({ parameters: {} } as DatasetSchema & { parameters: Record<string, any> }),
-        reducer: (current, newVal) => newVal?.api_name ? newVal : current ?? ({ parameters: {} } as DatasetSchema & { parameters: Record<string, any> })
+        default: () => null,
+        reducer: (current, newVal) => newVal || current
       },
       params: { 
         default: () => ({}),
-        reducer: (current, newVal) => Object.keys(newVal).length > 0 ? newVal : current
+        reducer: (current, newVal) => newVal || current
       },
       response: { 
-        default: () => ({}),
-        reducer: (current, newVal) => newVal !== null && newVal !== undefined ? newVal : current
+        default: () => null,
+        reducer: (current, newVal) => newVal || current
       },
     },
   });
@@ -47,13 +46,13 @@ export function createGraph(llm: ChatOpenAI<ChatOpenAICallOptions>) {
     .addNode("get_apis", getApis)
     .addNode("select_api", selectApi)
     .addNode("extract_parameters", extractParameters)
-    .addNode("request_parameters", requestParameters)
+    .addNode("create_fetch_request", createFetchRequest)
     .addEdge(START, "extract_category")
     .addEdge("extract_category", "get_apis")
     .addEdge("get_apis", "select_api")
     .addEdge("select_api", "extract_parameters")
-    .addEdge("extract_parameters", "request_parameters")
-    .addEdge("request_parameters", END);
+    .addEdge("extract_parameters", "create_fetch_request")
+    .addEdge("create_fetch_request", END);
 
   return graph.compile();
 }
