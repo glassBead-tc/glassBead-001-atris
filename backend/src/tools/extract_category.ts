@@ -1,43 +1,21 @@
 import { StructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { RunnableFunc } from "@langchain/core/runnables";
 import { GraphState, DatasetSchema } from "../types.js";
 import { HIGH_LEVEL_CATEGORY_MAPPING, TRIMMED_CORPUS_PATH } from "../constants.js";
 
-/**
- * Given a users query, extract the high level category which
- * best represents the query.
- *
- * TODO: add schema, name, description, and _call method
- */
 export class ExtractHighLevelCategories extends StructuredTool {
   schema = z.object({
-    highLevelCategories: z
-      .array(
-        z
-          .enum(
-            Object.keys(HIGH_LEVEL_CATEGORY_MAPPING) as [string, ...string[]]
-          )
-          .describe("An enum of all categories which best match the query.")
-      )
+    highLevelCategories: z.array(z.enum(Object.keys(HIGH_LEVEL_CATEGORY_MAPPING) as [string, ...string[]]))
       .describe("The high level categories to extract from the query."),
   });
 
   name = "ExtractHighLevelCategories";
 
-  description =
-    "Given a user query, extract the high level category which best represents the query.";
+  description = "Given a user query, extract the high level category which best represents the query.";
 
   async _call(input: z.infer<typeof this.schema>): Promise<string> {
-    const categoriesMapped = input.highLevelCategories
-      .map(
-        (category) =>
-          HIGH_LEVEL_CATEGORY_MAPPING[
-            category as keyof typeof HIGH_LEVEL_CATEGORY_MAPPING
-          ]
-      )
-      .flat();
+    const categoriesMapped = input.highLevelCategories.map(category => HIGH_LEVEL_CATEGORY_MAPPING[category as keyof typeof HIGH_LEVEL_CATEGORY_MAPPING]).flat();
     return JSON.stringify(categoriesMapped);
   }
 }
@@ -48,121 +26,45 @@ export class ExtractHighLevelCategories extends StructuredTool {
 export async function extractCategory(
   state: GraphState
 ): Promise<Partial<GraphState>> {
-  console.log("Entering extractCategory function");
-
+  console.log("Current state:", state);
   const { llm, query } = state;
 
   if (!llm) {
-    console.error("LLM is not initialized in the GraphState");
-    return {
-      error: "LLM is not initialized in the GraphState",
-      // categories: null,
-    };
+    return { error: "LLM is not initialized in the GraphState" };
   }
 
-  console.log("Query:", query);
-  console.log("LLM type:", typeof llm);
-
   const prompt = ChatPromptTemplate.fromMessages([
-    [
-      "system",
-      `You are an expert software engineer.
-
-Currently, you are helping a fellow engineer select the best category of APIs based on their query.
-You are only presented with a list of high level API categories, and their query.
-Think slowly, and carefully select the best category for the query.
-Here are all the high level categories, and every tool name that falls under them:
-{categoriesAndTools}`,
-    ],
+    ["system", `You are an expert software engineer. Currently, you are helping a fellow engineer select the best category of APIs based on their query. Here are all the high level categories, and every tool name that falls under them: {categoriesAndTools}`],
     ["human", `Query: {query}`],
   ]);
 
   const tool = new ExtractHighLevelCategories();
-  
-  if (llm && typeof llm.withStructuredOutput === 'function') {
-    console.log("LLM supports structured output");
+
+  if (typeof llm.withStructuredOutput === 'function') {
     const modelWithTools = llm.withStructuredOutput(tool);
     const chain = prompt.pipe(modelWithTools).pipe(tool);
 
-    const allApisData: { endpoints: DatasetSchema[] } = JSON.parse(
-      await import('fs').then(fs => fs.promises.readFile(TRIMMED_CORPUS_PATH, "utf-8"))
-    );
-    
+    const allApisData = await import('fs').then(fs => fs.promises.readFile(TRIMMED_CORPUS_PATH, "utf-8")).then(JSON.parse);
     if (!allApisData || !Array.isArray(allApisData.endpoints)) {
       throw new Error("Expected an object with an 'endpoints' array");
     }
 
     const allApis: DatasetSchema[] = allApisData.endpoints;
+    const categoriesAndTools = Object.entries(HIGH_LEVEL_CATEGORY_MAPPING).map(([high]) => {
+      const allTools = allApis.filter(api => api.category_name.toLowerCase() === high.toLowerCase());
+      return `High Level Category: ${high}\nTools:\n${allTools.map(item => `Name: ${item.tool_name}`).join("\n")}`;
+    }).join("\n\n");
 
-    const categoriesAndTools = Object.entries(HIGH_LEVEL_CATEGORY_MAPPING)
-      .map(([high]) => {
-        const allTools = allApis.filter((api) => 
-          api.category_name.toLowerCase() === high.toLowerCase()
-        );
-        return `High Level Category: ${high}\nTools:\n${allTools
-          .map((item) => `Name: ${item.tool_name}`)
-          .join("\n")}`;
-      })
-      .join("\n\n");
+    const formattedPrompt = await prompt.format({ categoriesAndTools, query });
+    const result = await chain.invoke({ query, categoriesAndTools });
+    const categories = parseCategories(result);
 
-      console.log("Total APIs loaded:", allApis.length);
-
-    // Format the prompt with the necessary input
-    const formattedPrompt = await prompt.format({
-      categoriesAndTools,
-      query
-    });
-
-    console.log("Invoking LLM chain with query:", query);
-
-    // Use the chain instead of directly invoking the LLM
-    const result = await chain.invoke({
-      query,
-      categoriesAndTools
-    });
-
-
-    // The result should already be an array of categories
-    const categories = JSON.parse(result);
-
-    console.log("Extracted categories count:", categories.length);
-    console.log("Returning categories:", categories);
-    return {
-      categories: categories,
-      // Only include other properties if they are actually modified in this function
-    };
+    return { categories };
   } else {
-    return {
-      error: "LLM is not properly initialized or doesn't have the expected methods",
-      // categories: null,
-    };
+    return { error: "LLM is not properly initialized or doesn't have the expected methods" };
   }
 }
 
 function parseCategories(content: string): string[] {
-  // Remove any leading/trailing whitespace
-  content = content.trim();
-
-  // Check if the content is wrapped in brackets or quotes
-  const unwrappedContent = content.replace(/^[\[\("']|[\]\)"']$/g, '');
-
-  // Split the content by commas, semicolons, or newlines
-  const rawCategories = unwrappedContent.split(/[,;\n]+/);
-
-  // Process each category
-  const categories = rawCategories
-    .map(category => {
-      // Remove leading/trailing whitespace and quotes
-      category = category.trim().replace(/^["']|["']$/g, '');
-      
-      // Remove any numbering or bullet points
-      category = category.replace(/^\d+\.|\-|\*/, '').trim();
-
-      // Convert to title case (capitalize first letter of each word)
-      return category.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
-    })
-    .filter(category => category.length > 0); // Remove any empty categories
-
-  // Remove duplicates
-  return Array.from(new Set(categories));
+  return content.trim().split(/[,;\n]+/).map(category => category.trim()).filter(category => category.length > 0);
 }

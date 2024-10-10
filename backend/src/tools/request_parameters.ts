@@ -11,7 +11,7 @@ const paramsFormat = `<name>,<value>:::<name>,<value>`;
  * @param {DatasetParameters[]} missingParams
  */
 export function readUserInput(
-  missingParams: DatasetParameters[]
+  missingParams: (string | DatasetParameters)[]
 ): Promise<string> {
   const rl = readline.createInterface({
     input: process.stdin,
@@ -19,11 +19,10 @@ export function readUserInput(
   });
 
   const missingParamsString = missingParams
-    .map((p) => `Name: ${p.name}, Description: ${p.description}`)
+    .map((p) => typeof p === 'string' ? `Name: ${p}` : `Name: ${p.name}, Description: ${p.description}`)
     .join("\n----\n");
   const question = `LangTool couldn't find all the required params for the API.\nMissing params:\n${missingParamsString}\nPlease provide the missing params in the following format:\n${paramsFormat}\n`;
 
-  // logger.debug("Requesting user input for missing params:", missingParams);
   return new Promise((resolve) => {
     rl.question(question, (answer) => {
       rl.close();
@@ -62,19 +61,19 @@ export async function requestParameters(
   if (!bestApi) {
     throw new Error("No best API found");
   }
+  
   const requiredParamsKeys = bestApi.required_parameters.map(
-    ({ name }: { name: string }) => name
+    ({ name }) => name
   );
   const extractedParamsKeys = Object.keys(params ?? {});
   const missingParams = findMissingParams(
     requiredParamsKeys,
     extractedParamsKeys
   );
-  const missingParamsSchemas = missingParams
-    .map((missingParamKey) =>
-      bestApi.required_parameters.find(({ name }: { name: string }) => name === missingParamKey)
-    )
-    .filter((p): p is DatasetParameters => p !== undefined);
+
+  const missingParamsSchemas = missingParams.map((missingParamKey) =>
+    bestApi.required_parameters.find(({ name }) => name === missingParamKey)
+  ).filter((p): p is DatasetParameters => p !== undefined);
 
   const userInput = await readUserInput(missingParamsSchemas);
   const parsedUserInput = parseUserInput(userInput);

@@ -98,6 +98,7 @@ function extractSearchQuery(query: string): { track: string; artist: string } {
     }
   }
 
+
 export {
     extractSearchQuery,
     extractTrackId,

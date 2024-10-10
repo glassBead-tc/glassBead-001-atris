@@ -17,7 +17,7 @@ export interface DatasetSchema {
   required_parameters: DatasetParameters[];
   optional_parameters: DatasetParameters[];
   method: string;
-  template_response: Record<string, any>;
+  template_response?: Record<string, any>;
   api_url: string;
 }
 

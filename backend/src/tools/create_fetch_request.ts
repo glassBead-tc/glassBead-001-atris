@@ -53,6 +53,10 @@ class AudiusApi {
     return this.request('GET', '/tracks/trending', { limit });
   }
 
+  async getTrack(trackId: string) {
+    return this.request('GET', `/tracks/${trackId}`);
+  }
+
   async getTopTrendingPlaylist(limit: number = 1) {
     return this.request('GET', '/playlists/trending', { limit });
   }
@@ -115,32 +119,47 @@ export async function createFetchRequest(state: GraphState): Promise<GraphState>
     return { ...state, error: "No best API selected.", response: null };
   }
 
+  // Early return check for required parameters
+  if (bestApi.api_name === "Get Playlist" && !params.playlist_id) {
+    return { ...state, error: "Missing required parameter: playlist_id", response: null };
+  }
+
+  if (bestApi.api_name === "Get Track" && !params.track_id) {
+    return { ...state, error: "Missing required parameter: track_id", response: null };
+  }
+
+  if (bestApi.api_name === "Search Tracks" && !params.query) {
+    return { ...state, error: "Missing required parameter: query", response: null };
+  }
+
+  if (bestApi.api_name === "Search Playlists" && !params.query) {
+    return { ...state, error: "Missing required parameter: query", response: null };
+  }
+
   try {
+    console.log("Selected API Name:", bestApi.api_name); // Log the selected API name
     let response: any;
+
     switch (bestApi.api_name) {
       case "Get User By Handle":
         response = await globalAudiusApi.getUserByHandle(query as string);
-        break;
-      case "Search Tracks":
-        response = await globalAudiusApi.searchTracks(query as string);
-        break;
-      case "Search Users":
-        response = await globalAudiusApi.searchUsers(query as string);
-        break;
-      case "Get Trending Tracks":
-        response = await globalAudiusApi.getTrendingTracks(3);
-        break;
-      case "Search Playlists":
-        response = await globalAudiusApi.searchPlaylists(query as string);
+        console.log("Response from Get User By Handle:", response); // Log the response
         break;
       case "Get Playlist":
-        response = await globalAudiusApi.getPlaylist(params?.playlistId as string);
+        response = await globalAudiusApi.getPlaylist(params.playlist_id);
+        console.log("Response from Get Playlist:", response); // Log the response
         break;
-      case "Get Trending Playlists":
-        response = await globalAudiusApi.getTopTrendingPlaylist();
+      case "Search Playlists":
+        response = await globalAudiusApi.searchPlaylists(params.query);
+        console.log("Response from Search Playlists:", response); // Log the response
         break;
-      case "Get Trending Playlist Tracks":
-        response = await globalAudiusApi.getTopTrendingPlaylistTracks();
+      case "Get Track":
+        response = await globalAudiusApi.getTrack(params.track_id);
+        console.log("Response from Get Track:", response); // Log the response
+        break;
+      case "Search Tracks":
+        response = await globalAudiusApi.searchTracks(params.query);
+        console.log("Response from Search Tracks:", response); // Log the response
         break;
       default:
         return { ...state, error: `Unsupported API endpoint: ${bestApi.api_name}`, response: null };

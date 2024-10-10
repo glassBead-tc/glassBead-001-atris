@@ -13,39 +13,31 @@ export function createGraph(llm: ChatOpenAI<ChatOpenAICallOptions>) {
     channels: {
       llm: { 
         default: () => llm,
-        reducer: (current: ChatOpenAI<ChatOpenAICallOptions>, newVal: ChatOpenAI<ChatOpenAICallOptions>) => newVal || current
+        reducer: (current, newVal) => newVal || current
       },
       query: { 
         default: () => "",
-        reducer: (current: string, newVal: string) => newVal || current
+        reducer: (current, newVal) => newVal || current
       },
       categories: { 
         default: () => [],
-        reducer: (current: string[], newVal: string[]) => newVal.length > 0 ? newVal : current
+        reducer: (current, newVal) => newVal.length > 0 ? newVal : current
       },
       apis: { 
         default: () => [],
-        reducer: (current: DatasetSchema[], newVal: DatasetSchema[]) => newVal.length > 0 ? newVal : current
+        reducer: (current, newVal) => newVal.length > 0 ? newVal : current
       },
       bestApi: { 
         default: () => ({ parameters: {} } as DatasetSchema & { parameters: Record<string, any> }),
-        reducer: (
-          current: (DatasetSchema & { parameters: Record<string, any> }) | undefined, 
-          newVal: (DatasetSchema & { parameters: Record<string, any> }) | undefined
-        ): DatasetSchema & { parameters: Record<string, any> } | undefined => {
-          if (newVal?.api_name) {
-            return newVal;
-          }
-          return current ?? ({ parameters: {} } as DatasetSchema & { parameters: Record<string, any> });
-        }
+        reducer: (current, newVal) => newVal?.api_name ? newVal : current ?? ({ parameters: {} } as DatasetSchema & { parameters: Record<string, any> })
       },
       params: { 
         default: () => ({}),
-        reducer: (current: Record<string, string>, newVal: Record<string, string>) => Object.keys(newVal).length > 0 ? newVal : current
+        reducer: (current, newVal) => Object.keys(newVal).length > 0 ? newVal : current
       },
       response: { 
         default: () => ({}),
-        reducer: (current: any, newVal: any) => newVal !== null && newVal !== undefined ? newVal : current
+        reducer: (current, newVal) => newVal !== null && newVal !== undefined ? newVal : current
       },
     },
   });
@@ -56,11 +48,11 @@ export function createGraph(llm: ChatOpenAI<ChatOpenAICallOptions>) {
     .addNode("select_api", selectApi)
     .addNode("extract_parameters", extractParameters)
     .addNode("request_parameters", requestParameters)
+    .addEdge(START, "extract_category")
     .addEdge("extract_category", "get_apis")
     .addEdge("get_apis", "select_api")
     .addEdge("select_api", "extract_parameters")
     .addEdge("extract_parameters", "request_parameters")
-    .addEdge(START, "extract_category")
     .addEdge("request_parameters", END);
 
   return graph.compile();

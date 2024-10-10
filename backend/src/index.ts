@@ -1,9 +1,12 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { createGraph } from "./graph/createGraph.js";
 import { globalAudiusApi } from "./tools/create_fetch_request.js";
-import { GraphState } from "./types.js";
+import { GraphState, DatasetSchema } from "./types.js"; // Ensure DatasetSchema is imported
 import { selectApi } from "./tools/select_api.js";
 import { CompiledStateGraph } from "@langchain/langgraph";
+import { getApis } from "tools/get_apis.js";
+import { parseQuery } from './utils/searchUtils.js'; // Import the parseQuery function
+import { extractCategory } from './tools/extract_category.js'; // Import the extractCategory function
 
 // Define interfaces for the API response structures
 interface Track {
@@ -83,7 +86,8 @@ async function main() {
     temperature: 0,
   });
 
-  const graph: CompiledStateGraph<GraphState, Partial<GraphState>, "__start__"> = createGraph(llm);
+  // Create the graph and pass the LLM instance
+  const graph = createGraph(llm);
 
   try {
     const isConnected = await globalAudiusApi.testConnection();
@@ -109,7 +113,7 @@ async function main() {
 
   for (const testCase of testCases) {
     console.log(`Query: ${testCase.query}`);
-    const answer = await generateAnswer(graph, testCase.query);
+    const answer = await generateAnswer(testCase.query, graph); // Pass the graph here
     console.log(`Generated answer for query: "${testCase.query}"`);
     console.log(`Expected Answer: ${testCase.expectedAnswer}`);
     console.log(`Expected Endpoint: ${testCase.expectedEndpoint}`);
@@ -117,32 +121,49 @@ async function main() {
   }
 }
 
-async function generateAnswer(app: CompiledStateGraph<GraphState, Partial<GraphState>, "__start__">, query: string): Promise<string> {
-    try {
-        // Create a GraphState object
-        const state: GraphState = {
-            query,
-            apis: [], // We'll populate this later
-            llm: getLlmValue(app), // Use a helper function to safely get 'llm'
-            categories: [],
-            params: {},
-            response: undefined,
-            error: undefined
-        };
+async function generateAnswer(query: string, graph: CompiledStateGraph<GraphState, Partial<GraphState>, "__start__">): Promise<string> {
+    const state: GraphState = {
+        llm: getLlmValue(graph), // Initialize with your LLM instance
+        query,
+        categories: [], // Initialize as an empty array
+        apis: [],
+        bestApi: { 
+            id: "", // Ensure this is a valid ID
+            category_name: "", // Ensure this is a valid category name
+            tool_name: "", // Ensure this is a valid tool name
+            api_name: "", // Ensure this is a valid API name
+            api_description: "", // Ensure this is a valid API description
+            parameters: {}, // Include parameters
+            required_parameters: [], // Add required parameters
+            optional_parameters: [], // Add optional parameters
+            method: "", // Add the HTTP method (GET, POST, etc.)
+            template_response: {}, // Add a template response if applicable
+            api_url: "", // Add the API URL
+        },
+        params: {},
+        response: {},
+    };
 
-        // Populate the APIs
-        const apisChannel = getApisValue(app); // Use a helper function to safely get 'apis' channel
-        console.log("APIs Channel:", apisChannel); // Debugging output
-        if (apisChannel && 'value' in apisChannel) {
-            state.apis = apisChannel.value;
-        } else {
-            console.error("Unable to find APIs in the graph structure");
-            return `Unable to process the query: "${query}". APIs not found.`;
+    try {
+        // Call extractCategory to populate categories in the state
+        const categoryResult = await extractCategory(state);
+        if (categoryResult.error) {
+            console.error("Error extracting categories:", categoryResult.error);
+            return `Unable to process the query: "${query}". ${categoryResult.error}`;
         }
 
-        // Call selectApi with the GraphState
-        const result = await selectApi(state);
+        // Update the state with extracted categories
+        state.categories = categoryResult.categories || []; // Ensure categories is always an array
 
+        // Proceed to get APIs based on the extracted categories
+        const apiResult = await getApis(state);
+        if (apiResult.error) {
+            console.error("Error getting APIs:", apiResult.error);
+            return `Unable to process the query: "${query}". ${apiResult.error}`;
+        }
+
+        // Call selectApi with the updated state
+        const result = await selectApi(state);
         console.log("Raw API selection result:", JSON.stringify(result));
 
         if (result.error) {
@@ -160,7 +181,6 @@ async function generateAnswer(app: CompiledStateGraph<GraphState, Partial<GraphS
 
         // Here you would typically call the selected API with the provided parameters
         // and then format the response into a human-readable answer
-        // For now, we'll just return a placeholder response
         return `Processed query: "${query}" using API: "${selectedApi.api_name}". ${selectedApi.api_description}`;
 
     } catch (error) {
@@ -171,10 +191,10 @@ async function generateAnswer(app: CompiledStateGraph<GraphState, Partial<GraphS
 
 // Helper function to safely get the 'llm' value
 function getLlmValue(graph: CompiledStateGraph<GraphState, Partial<GraphState>, "__start__">): any {
-    if (graph.builder && graph.builder.channels && 'llm' in graph.builder.channels) {
-        return graph.builder.channels.llm;
+    if (!graph || !graph.builder || !graph.builder.channels) {
+        throw new Error("Graph is not properly initialized or does not contain the expected structure");
     }
-    throw new Error("Llm channel not found in the graph structure");
+    return graph.builder.channels.llm;
 }
 
 // Helper function to safely get the 'apis' channel
@@ -183,7 +203,6 @@ function getApisValue(graph: CompiledStateGraph<GraphState, Partial<GraphState>,
         return graph.builder.channels.apis;
     }
     throw new Error("Apis channel not found in the graph structure");
-
 }
 
 // Example validation function
