@@ -64,6 +64,10 @@ export async function selectApi(state: GraphState): Promise<Partial<GraphState>>
       return { error: "No suitable API found" };
     }
 
+    console.log("Query:", query);
+    console.log("Selected API:", selectedApi.api_name);
+    console.log("Parameters:", result.parameters);
+
     return { bestApi: { ...selectedApi, parameters: result.parameters } };
   } catch (error) {
     console.error("Error in selectApi:", error);

@@ -30,6 +30,9 @@ export async function extractCategory(state: GraphState): Promise<Partial<GraphS
     const result = await chain.invoke({ query, categoriesAndTools });
     const categories = JSON.parse(result);
 
+    console.log("Query:", query);
+    console.log("Extracted categories:", categories);
+
     return { categories };
   } catch (error) {
     console.error("Error in extractCategory:", error);

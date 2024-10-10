@@ -23,6 +23,9 @@ export const getApis = async (state: GraphState): Promise<Partial<GraphState>> =
         const apis = allData.endpoints
             .filter(api => highLevelCategories.has(api.category_name.toLowerCase()));
 
+        console.log("Input categories:", categories);
+        console.log("Selected APIs:", apis.map(api => api.api_name));
+
         return { apis };
     } catch (error) {
         console.error("Error in getApis:", error);
