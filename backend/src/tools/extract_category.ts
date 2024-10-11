@@ -28,7 +28,7 @@ export async function extractCategory(state: GraphState): Promise<Partial<GraphS
     }).join("\n\n");
 
     const result = await chain.invoke({ query, categoriesAndTools });
-    const categories = JSON.parse(result);
+    const categories = JSON.parse(result).categories;
 
     console.log("Query:", query);
     console.log("Extracted categories:", categories);

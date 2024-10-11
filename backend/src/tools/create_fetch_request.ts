@@ -139,6 +139,9 @@ export async function createFetchRequest(state: GraphState): Promise<Partial<Gra
       case "Search Tracks":
         response = await globalAudiusApi.searchTracks(params.query);
         break;
+      case "Get Trending Tracks":
+        response = await globalAudiusApi.getTrendingTracks(params.limit);
+        break;
       default:
         return { error: `Unsupported API endpoint: ${bestApi.api_name}` };
     }

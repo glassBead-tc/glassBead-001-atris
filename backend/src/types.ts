@@ -30,4 +30,5 @@ export interface GraphState {
   params: Record<string, any>;
   response: any;
   error?: string; // Add this line
+  formattedResponse?: string;
 }
