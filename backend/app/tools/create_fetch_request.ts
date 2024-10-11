@@ -109,69 +109,58 @@ class AudiusApi {
   async getUser(userId: string) {
     return this.request('GET', `/users/${userId}`);
   }
+
+  async getUserProfile(userId: string) {
+    // Implementation
+  }
+
+  async getTracksByGenre(genre: string) {
+    // Implementation
+  }
+
+  async getTrackPlays(trackId: string) {
+    // Implementation
+  }
 }
 
 export const globalAudiusApi = new AudiusApi();
 
-export async function createFetchRequest(state: GraphState): Promise<GraphState> {
-  const { bestApi, params, query } = state;
+export async function createFetchRequest(state: GraphState): Promise<Partial<GraphState>> {
+  const { bestApi, params } = state;
+
   if (!bestApi) {
-    return { ...state, error: "No best API selected.", response: null };
-  }
-
-  // Early return check for required parameters
-  if (bestApi.api_name === "Get Playlist" && !params.playlist_id) {
-    return { ...state, error: "Missing required parameter: playlist_id", response: null };
-  }
-
-  if (bestApi.api_name === "Get Track" && !params.track_id) {
-    return { ...state, error: "Missing required parameter: track_id", response: null };
-  }
-
-  if (bestApi.api_name === "Search Tracks" && !params.query) {
-    return { ...state, error: "Missing required parameter: query", response: null };
-  }
-
-  if (bestApi.api_name === "Search Playlists" && !params.query) {
-    return { ...state, error: "Missing required parameter: query", response: null };
+    return { error: "No API selected" };
   }
 
   try {
-    console.log("Selected API Name:", bestApi.api_name); // Log the selected API name
     let response: any;
 
     switch (bestApi.api_name) {
       case "Get User By Handle":
-        response = await globalAudiusApi.getUserByHandle(query as string);
-        console.log("Response from Get User By Handle:", response); // Log the response
+        response = await globalAudiusApi.getUserByHandle(params.handle);
         break;
       case "Get Playlist":
         response = await globalAudiusApi.getPlaylist(params.playlist_id);
-        console.log("Response from Get Playlist:", response); // Log the response
         break;
       case "Search Playlists":
         response = await globalAudiusApi.searchPlaylists(params.query);
-        console.log("Response from Search Playlists:", response); // Log the response
         break;
       case "Get Track":
         response = await globalAudiusApi.getTrack(params.track_id);
-        console.log("Response from Get Track:", response); // Log the response
         break;
       case "Search Tracks":
         response = await globalAudiusApi.searchTracks(params.query);
-        console.log("Response from Search Tracks:", response); // Log the response
+        break;
+      case "Get Trending Tracks":
+        response = await globalAudiusApi.getTrendingTracks(params.limit);
         break;
       default:
-        return { ...state, error: `Unsupported API endpoint: ${bestApi.api_name}`, response: null };
+        return { error: `Unsupported API endpoint: ${bestApi.api_name}` };
     }
 
-    return { ...state, response, error: undefined };
+    return { response };
   } catch (error) {
     console.error('Error in createFetchRequest:', error);
-    return { 
-      ...state, 
-      error: error instanceof Error ? error.message : "An unknown error occurred",
-      response: null
-    };
+    return { error: "Failed to fetch data from API" };
   }
 }

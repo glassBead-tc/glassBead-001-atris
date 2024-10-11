@@ -1,4 +1,4 @@
-import { ApiEndpoint } from '../types.js';
+import { DatasetSchema } from '../types.js';
 
 interface KeywordPattern {
   pattern: RegExp;
@@ -7,9 +7,9 @@ interface KeywordPattern {
 }
 
 export class KeywordAwareness {
-  private apis: ApiEndpoint[];
+  private apis: DatasetSchema[];
 
-  constructor(apis: ApiEndpoint[]) {
+  constructor(apis: DatasetSchema[]) {
     this.apis = apis;
   }
 
@@ -41,7 +41,7 @@ export class KeywordAwareness {
     { pattern: /track/, apis: ['Get Track', 'Search Tracks'], weight: 5 },
   ];
 
-  calculateApiRelevance(api: ApiEndpoint, query: string): number {
+  calculateApiRelevance(api: DatasetSchema, query: string): number {
     let relevance = 0;
     const lowercaseQuery = query.toLowerCase();
     const queryWords = lowercaseQuery.split(' ');
@@ -82,7 +82,7 @@ export class KeywordAwareness {
 }
 
 // Usage in selectApi function
-export function selectApi(apis: ApiEndpoint[], query: string): ApiEndpoint | null {
+export function selectApi(apis: DatasetSchema[], query: string): DatasetSchema | null {
   const keywordAwareness = new KeywordAwareness(apis);
   
   const scoredApis = apis.map(api => ({

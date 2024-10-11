@@ -11,7 +11,7 @@
     "module": "NodeNext",
     "sourceMap": true,
     "allowSyntheticDefaultImports": true,
-    "baseUrl": "./src",
+    "baseUrl": "app",
     "declaration": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
@@ -27,6 +27,6 @@
     "tests/"
   ],
   "include": [
-    "./src"
-  ],
+    "app"
+, "oldAgent_docs"  ],
 }

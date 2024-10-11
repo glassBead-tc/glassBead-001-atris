@@ -1,0 +1,21 @@
+# Document Map
+
+- `adaptive_instructions.md`: User preferences and project-specific insights
+- `component_map.md`: Map of components and their relationships
+- `completionCriteria.md`: Prioritized list of project goals and features
+- `currentTask.md`: Project overview, active tasks, and context
+- `development_plan.md`: Detailed development strategies and plans
+- `development_queue.md`: Prioritized backlog of components and MVPs
+- `document_map.md`: This file - index of all documentation files
+- `ecosystem_map.md`: Hierarchical map of all components
+- `errors.md`: Log of issues and their solutions
+- `handoff_document.md`: Context for new models or developers
+- `integration_plans.md`: Strategies for combining MVPs into larger products
+- `lessons_learned.md`: Insights and best practices discovered during development
+- `mvp_catalog.md`: List of identified MVP opportunities
+- `mvp_feedback.md`: User feedback and insights from MVP testing
+- `progressTracker.md`: Visual progress representation with reflections
+- `roadmap.md`: Project timeline and milestones
+- `system_architecture.md`: System architecture diagrams and explanations
+- `techStack.md`: Technologies used across the ecosystem
+- `userInstructions/`: Folder for external action guides
