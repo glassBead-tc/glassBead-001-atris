@@ -32,3 +32,4 @@ export interface GraphState {
   error?: string; // Add this line
   formattedResponse?: string;
 }
+

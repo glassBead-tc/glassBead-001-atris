@@ -1,6 +1,7 @@
 import { logger } from '../logger.js';
-import { GraphState } from '../types.js';
+import { GraphState } from "../types.js";
 import { globalAudiusApi } from './create_fetch_request.js';
+import { parseQuery } from "../utils/searchUtils.js";
 
 export const extractParameters = async (state: GraphState): Promise<Partial<GraphState>> => {
   const { query, bestApi } = state;
@@ -12,6 +13,9 @@ export const extractParameters = async (state: GraphState): Promise<Partial<Grap
   let params: Record<string, any> = {};
 
   try {
+    const parsedQuery = parseQuery(query);
+    logger.debug(`Parsed query for parameter extraction: ${JSON.stringify(parsedQuery)}`);
+
     if (bestApi.api_name === 'Get Trending Tracks') {
       const numberMatch = query.match(/(\d+|one|two|three|four|five|six|seven|eight|nine|ten)/i);
       if (numberMatch) {
@@ -23,7 +27,7 @@ export const extractParameters = async (state: GraphState): Promise<Partial<Grap
         const limit = numberMap[numberWord] || parseInt(numberWord);
         params.limit = Math.min(limit, 100); // Cap at 100 to prevent excessive requests
       } else {
-        params.limit = 3; // Default to 3 if no number is specified
+        params.limit = 5; // Default to 5 if no number is specified
       }
     } else if (bestApi.api_name === 'Get Playlist' || bestApi.api_name === 'Search Playlists') {
       // Existing playlist logic
@@ -55,9 +59,30 @@ export const extractParameters = async (state: GraphState): Promise<Partial<Grap
       }
     }
 
+    // Add logic for other API types based on parsedQuery
+    switch (parsedQuery.type) {
+      case 'genre':
+      case 'plays':
+      case 'performer':
+        if (parsedQuery.title) params.title = parsedQuery.title;
+        if (parsedQuery.artist) params.artist = parsedQuery.artist;
+        break;
+      case 'search_user':
+        params.query = parsedQuery.title || query;
+        break;
+    }
+
+    // Ensure all required parameters are set
+    bestApi.required_parameters.forEach(param => {
+      if (!params[param.name]) {
+        params[param.name] = param.default || '';
+      }
+    });
+
+    logger.info(`Extracted parameters: ${JSON.stringify(params)}`);
     return { params };
   } catch (error) {
-    console.error("Error in extractParameters:", error);
+    logger.error("Error in extractParameters:", error);
     return { error: "Failed to extract parameters" };
   }
 };

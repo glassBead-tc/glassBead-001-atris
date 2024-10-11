@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { TRIMMED_CORPUS_PATH } from "./src/constants.js";
+import { TRIMMED_CORPUS_PATH } from "./app/constants.js";
 
 function checkCorpus() {
     try {

@@ -1,6 +1,5 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { createGraph } from "./graph/createGraph.js";
-import { GraphState } from "./types.js";
 import { globalAudiusApi } from "./tools/create_fetch_request.js";
 
 async function main() {

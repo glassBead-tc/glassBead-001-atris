@@ -35,40 +35,22 @@ export function formatTrackResults(response: any, originalQuery: string): string
       return "Unable to find the requested information.";
     }
   
-    const ensureArray = (data: any) => Array.isArray(data) ? data : [data];
-  
     try {
       switch (apiName) {
         case "Get Trending Tracks":
+          return formatTrendingResults(response.data, 'tracks');
+        case "Get Trending Playlists":
+          return formatTrendingResults(response.data, 'playlists');
         case "Search Tracks":
-          return formatTrackResults(response, originalQuery);
-  
+          return formatMultipleTracks(response.data);
         case "Get Track":
-          const trackData = ensureArray(response.data);
-          if (trackData.length === 0) {
-            return "No track information found.";
-          }
-          const track = trackData[0];
-          return `Track Information:
-            Title: ${track.title || 'Unknown'}
-            Artist: ${track.user?.name || 'Unknown'}
-            Genre: ${track.genre || 'Unknown'}
-            Plays: ${track.play_count || 'Unknown'}`;
-  
+          return formatDetailedTrackInfo(response.data);
         case "Get User":
         case "Search Users":
-          const users = ensureArray(response.data);
-          if (users.length === 0) {
-            return "No users found.";
-          }
-          return users.length === 1 ? formatUserInfo([users[0]], originalQuery) :
-            `Found ${users.length} users:\n${users.slice(0, 5).map((u: any) => `- ${u.name || u.handle || 'Unknown'} (@${u.handle || 'Unknown'})`).join('\n')}`;
-  
-        case "Search Playlists":
+          return formatUserResults(response.data);
         case "Get Playlist":
-          const playlists = ensureArray(response.data.data || response.data);
-          return formatPlaylistInfo(playlists, originalQuery, response.fullPlaylistDetails);
-  
+        case "Search Playlists":
+          return formatPlaylistResults(response.data);
         default:
           return "Unsupported API response format.";
       }
@@ -166,3 +148,65 @@ export function formatSearchTracks(tracks: any[], query: string): string {
     }).join(', ');
     return `The top trending playlists on Audius right now are: ${playlistList}. Here are the tracks on each: ${playlistTracklist}`;
   }
+
+export function formatDetailedTrackInfo(track: any): string {
+  return `
+    Track: "${track.title}"
+    Artist: ${track.user.name}
+    Genre: ${track.genre || 'Unknown'}
+    Release Date: ${new Date(track.release_date).toLocaleDateString() || 'Unknown'}
+    Plays: ${track.play_count || 'Unknown'}
+    Duration: ${formatDuration(track.duration)}
+    ${track.album ? `Album: ${track.album.title}` : ''}
+  `.trim();
+}
+
+export function formatMultipleTracks(tracks: any[]): string {
+  return tracks.map((track, index) => 
+    `${index + 1}. "${track.title}" by ${track.user.name} (${track.play_count || 'Unknown'} plays)`
+  ).join('\n');
+}
+
+export function formatPlaylistResults(playlist: any): string {
+  const trackList = playlist.tracks.slice(0, 5).map((track: any) => 
+    `"${track.title}" by ${track.user.name}`
+  ).join(', ');
+
+  return `
+    Playlist: "${playlist.playlist_name}"
+    Created by: ${playlist.user.name}
+    Tracks: ${playlist.track_count}
+    Favorites: ${playlist.favorite_count}
+    Repost Count: ${playlist.repost_count}
+    Top 5 Tracks: ${trackList}
+    ${playlist.description ? `Description: ${playlist.description}` : ''}
+  `.trim();
+}
+
+export function formatUserResults(user: any): string {
+  return `
+    User: ${user.name} (@${user.handle})
+    Followers: ${user.follower_count}
+    Following: ${user.followee_count}
+    Tracks: ${user.track_count}
+    ${user.bio ? `Bio: ${user.bio}` : ''}
+  `.trim();
+}
+
+export function formatTrendingResults(trending: any[], type: 'tracks' | 'playlists'): string {
+  const formattedList = trending.slice(0, 5).map((item, index) => {
+    if (type === 'tracks') {
+      return `${index + 1}. "${item.title}" by ${item.user.name} (${item.play_count} plays)`;
+    } else {
+      return `${index + 1}. "${item.playlist_name}" by ${item.user.name} (${item.favorite_count} favorites)`;
+    }
+  }).join('\n');
+
+  return `Top 5 Trending ${type.charAt(0).toUpperCase() + type.slice(1)}:\n${formattedList}`;
+}
+
+function formatDuration(durationInSeconds: number): string {
+  const minutes = Math.floor(durationInSeconds / 60);
+  const seconds = durationInSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}

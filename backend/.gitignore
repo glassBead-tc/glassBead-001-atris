@@ -3,6 +3,7 @@ dist
 .turbo
 .env.development.local
 pdfs/**
-src/generated/**
+app/generated/**
 .env
-backend/testoutput.txt
+testoutput.txt
+oldAgent_docs/

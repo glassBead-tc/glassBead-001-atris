@@ -1,6 +1,6 @@
 // test_select_api.ts
-import { selectApi } from './backend/src/tools/select_api.js'; // Added .js extension
-import { GraphState } from './backend/src/types.js'; // Added .js extension
+import { selectApi } from './backend/app/tools/select_api.js'; // Added .js extension
+import { GraphState } from './backend/app/types.js'; // Added .js extension
 import { ChatOpenAICallOptions } from '@langchain/openai'; // Import the necessary types
 
 // Create a mock GraphState
