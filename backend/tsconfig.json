@@ -28,5 +28,5 @@
   ],
   "include": [
     "app"
-, "oldAgent_docs"  ],
+, "oldAgent_docs", "api/route.ts"  ],
 }

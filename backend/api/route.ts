@@ -1,5 +1,5 @@
-import { routeQuery } from '../utils/searchUtils.js';
-import { handleApiError } from '../utils/errorHandler.js';
+import { routeQuery } from '../app/utils/searchUtils.js';
+import { handleApiError } from '../app/utils/errorHandler.js';
 
 export async function handleAudiusQuery(req: any, res: any) {
   try {
