@@ -30,7 +30,7 @@ export function formatTrackResults(response: any, originalQuery: string): string
   } 
   
   // Add this new function to format API results
-  export function formatApiResults(response: any, originalQuery: string, apiName: string): string {
+  export function formatApiResults(response: any, apiName: string): string {
     if (!response || !response.data) {
       return "Unable to find the requested information.";
     }
@@ -133,10 +133,11 @@ export function formatSearchTracks(tracks: any[], query: string): string {
       Top 5 Tracks: ${topTracks}
     `;
   }
-  export function formatTrendingTracks(data: any[]): string {
-    const tracks = data.slice(0, 5);
-    const trackList = tracks.map((track: any) => `"${track.title}" by ${track.user.name}`).join(', ');
-    return `The top trending tracks on Audius right now are: ${trackList}`;
+  
+  export function formatTrendingTracks(tracks: any[]): string {
+    return tracks.map((track, index) => 
+      `${index + 1}. "${track.title}" by ${track.user.name}`
+    ).join('\n');
   }
 
   export function formatTrendingPlaylists(data: any[]): string {
@@ -149,16 +150,13 @@ export function formatSearchTracks(tracks: any[], query: string): string {
     return `The top trending playlists on Audius right now are: ${playlistList}. Here are the tracks on each: ${playlistTracklist}`;
   }
 
-export function formatDetailedTrackInfo(track: any): string {
-  return `
-    Track: "${track.title}"
-    Artist: ${track.user.name}
-    Genre: ${track.genre || 'Unknown'}
-    Release Date: ${new Date(track.release_date).toLocaleDateString() || 'Unknown'}
-    Plays: ${track.play_count || 'Unknown'}
-    Duration: ${formatDuration(track.duration)}
-    ${track.album ? `Album: ${track.album.title}` : ''}
-  `.trim();
+export function formatDetailedTrackInfo(tracks: any[]): string {
+  return tracks.map((track, index) => 
+    `${index + 1}. "${track.title}" by ${track.user.name}\n` +
+    `   Genre: ${track.genre || 'Unknown'}\n` +
+    `   Plays: ${track.play_count}\n` +
+    `   Duration: ${Math.floor(track.duration / 60)}:${(track.duration % 60).toString().padStart(2, '0')}`
+  ).join('\n\n');
 }
 
 export function formatMultipleTracks(tracks: any[]): string {
@@ -167,30 +165,16 @@ export function formatMultipleTracks(tracks: any[]): string {
   ).join('\n');
 }
 
-export function formatPlaylistResults(playlist: any): string {
-  const trackList = playlist.tracks.slice(0, 5).map((track: any) => 
-    `"${track.title}" by ${track.user.name}`
-  ).join(', ');
-
-  return `
-    Playlist: "${playlist.playlist_name}"
-    Created by: ${playlist.user.name}
-    Tracks: ${playlist.track_count}
-    Favorites: ${playlist.favorite_count}
-    Repost Count: ${playlist.repost_count}
-    Top 5 Tracks: ${trackList}
-    ${playlist.description ? `Description: ${playlist.description}` : ''}
-  `.trim();
+export function formatPlaylistResults(playlists: any[]): string {
+  return playlists.map((playlist, index) => 
+    `${index + 1}. "${playlist.playlist_name}" by ${playlist.user.name} (${playlist.total_play_count} plays)`
+  ).join('\n');
 }
 
-export function formatUserResults(user: any): string {
-  return `
-    User: ${user.name} (@${user.handle})
-    Followers: ${user.follower_count}
-    Following: ${user.followee_count}
-    Tracks: ${user.track_count}
-    ${user.bio ? `Bio: ${user.bio}` : ''}
-  `.trim();
+export function formatUserResults(users: any[]): string {
+  return users.map((user, index) => 
+    `${index + 1}. ${user.name} (@${user.handle}) - ${user.follower_count} followers, ${user.track_count} tracks`
+  ).join('\n');
 }
 
 export function formatTrendingResults(trending: any[], type: 'tracks' | 'playlists'): string {

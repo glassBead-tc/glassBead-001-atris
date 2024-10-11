@@ -10,11 +10,11 @@ This project is an Audius API integration system using LangGraph.js and Next.js.
 4. Simplified State Management Pipeline
 
 ## Current Status
-- Basic query pipeline implemented
-- Trending tracks functionality working
-- Number parsing for limit queries added
-- "No Best API Found" error resolved through refactoring
-- Simplified state management pipeline implemented
+- Basic query pipeline implemented, but requires refinement
+- Some functionality working, but inconsistencies exist
+- "No Best API Found" error resolved, but other issues persist
+- State management pipeline implemented, but may need optimization
+- Documentation may be out of sync with current codebase
 
 ## Next Steps
 1. Implement playlist search and retrieval

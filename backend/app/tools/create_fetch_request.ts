@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { GraphState, DatasetSchema } from "../types.js";
+import { formatTrendingTracks } from '../utils/formatResults.js';
 
 const API_KEY = process.env.AUDIUS_API_KEY!;
 const BASE_URL = 'https://discoveryprovider.audius.co/v1';
@@ -50,6 +51,7 @@ class AudiusApi {
   }
 
   async getTrendingTracks(limit: number = 3) {
+    console.log(`Getting trending tracks with limit: ${limit}`);
     return this.request('GET', '/tracks/trending', { limit });
   }
 
@@ -70,8 +72,11 @@ class AudiusApi {
     return this.request('GET', '/tracks/search', { query, limit });
   }
 
-  async searchUsers(query: string, limit: number = 10) {
-    return this.request('GET', '/users/search', { query, limit });
+  async searchUsers(query: string, limit: number = 10, sortBy: string = '', orderBy: string = '') {
+    const params: any = { query, limit };
+    if (sortBy) params.sort_by = sortBy;
+    if (orderBy) params.order_by = orderBy;
+    return this.request('GET', '/users/search', params);
   }
 
   async searchPlaylists(query: string, limit: number = 10) {
@@ -116,6 +121,8 @@ export async function createFetchRequest(state: GraphState): Promise<Partial<Gra
     return { error: "No API selected" };
   }
 
+  console.log(`Fetching data from ${bestApi.api_name}`);
+
   try {
     let response: any;
 
@@ -133,18 +140,29 @@ export async function createFetchRequest(state: GraphState): Promise<Partial<Gra
         response = await globalAudiusApi.getTrack(params.track_id);
         break;
       case "Search Tracks":
+        console.log("Searching tracks with query:", params.query);
         response = await globalAudiusApi.searchTracks(params.query);
         break;
       case "Get Trending Tracks":
-        response = await globalAudiusApi.getTrendingTracks(params.limit);
+        console.log("Getting trending tracks with limit:", params.limit);
+        response = await globalAudiusApi.getTrendingTracks(params.limit || 3);
+        console.log("Trending tracks response:", response);
+        break;
+      case "Search Users":
+        response = await globalAudiusApi.searchUsers(params.query, params.limit, params.sort_by, params.order_by);
         break;
       default:
+        console.log("Unsupported API endpoint:", bestApi.api_name);
         return { error: `Unsupported API endpoint: ${bestApi.api_name}` };
+    }
+
+    if (!response || !response.data) {
+      return { error: "No data returned from API" };
     }
 
     return { response };
   } catch (error) {
-    console.error('Error in createFetchRequest:', error);
-    return { error: "Failed to fetch data from API" };
+    console.error(`Error in API request:`, error);
+    return { error: `Failed to fetch data from API: ${(error as Error).message}` };
   }
 }

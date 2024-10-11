@@ -5,24 +5,24 @@ import { GraphState, DatasetSchema } from "../types.js";
 import { parseQuery } from "../utils/searchUtils.js";
 import { logger } from '../logger.js';
 
-const apiSelectionPrompt = ChatPromptTemplate.fromTemplate(`
-  Given the following query: {{query}}
+// const apiSelectionPrompt = ChatPromptTemplate.fromTemplate(`
+//   Given the following query: {{query}}
   
-  Please select the most appropriate API from the following list:
-  {{apis}}
+//   Please select the most appropriate API from the following list:
+//   {{apis}}
   
-  Provide your response in the following JSON format:
-  {
-    "api": "API Name",
-    "parameters": {
-      "param1": "default_value",
-      "param2": "default_value"
-    },
-    "description": "Brief description of what the API does"
-  }
+//   Provide your response in the following JSON format:
+//   {
+//     "api": "API Name",
+//     "parameters": {
+//       "param1": "default_value",
+//       "param2": "default_value"
+//     },
+//     "description": "Brief description of what the API does"
+//   }
   
-  Only include parameters that are relevant to the query.
-`, { templateFormat: "mustache" });
+//   Only include parameters that are relevant to the query.
+// `, { templateFormat: "mustache" });
 
 function calculateRelevance(api: DatasetSchema, query: string, parsedQuery: ReturnType<typeof parseQuery>): number {
   let score = 0;
@@ -34,33 +34,19 @@ function calculateRelevance(api: DatasetSchema, query: string, parsedQuery: Retu
 
   // Additional scoring based on parsed query
   switch (parsedQuery.type) {
-    case 'genre':
-    case 'plays':
-    case 'performer':
-      if (api.api_name === "Get Track" || api.api_name === "Search Tracks") {
-        score += 5;
-      }
-      break;
     case 'trending':
-      if (parsedQuery.title === 'tracks' && api.api_name === "Get Trending Tracks") {
-        score += 10;
-      } else if (parsedQuery.title === 'playlists' && api.api_name === "Get Trending Playlists") {
-        score += 10;
+      if (parsedQuery.type === 'trending' && api.api_name === "Get Trending Tracks") {
+        score += 50; // Increase this score significantly
       }
       break;
-    case 'search_track':
-      if (api.api_name === "Search Tracks") {
-        score += 10;
-      }
-      break;
-    case 'search_playlist':
-      if (api.api_name === "Search Playlists") {
-        score += 10;
-      }
-      break;
-    case 'search_user':
+    case 'mostFollowers':
       if (api.api_name === "Search Users") {
-        score += 10;
+        score += 15;
+      }
+      break;
+    case 'genre':
+      if (api.api_name === "Search Tracks") {
+        score += 15;
       }
       break;
   }
@@ -69,46 +55,52 @@ function calculateRelevance(api: DatasetSchema, query: string, parsedQuery: Retu
 }
 
 export async function selectApi(state: GraphState): Promise<Partial<GraphState>> {
-  const { query, apis, llm } = state;
+  const { query, apis } = state;
 
   if (!apis || apis.length === 0) {
-    return { error: "No APIs available for selection" };
+    return { error: "No APIs available" };
   }
 
   const parsedQuery = parseQuery(query);
-  logger.debug(`Parsed query: ${JSON.stringify(parsedQuery)}`);
 
-  const scoredApis = apis.map(api => ({
-    ...api,
-    relevanceScore: calculateRelevance(api, query, parsedQuery)
-  }));
+  let bestApi: DatasetSchema | null = null;
+  let highestScore = -1;
 
-  scoredApis.sort((a, b) => b.relevanceScore - a.relevanceScore);
-  const topApis = scoredApis.slice(0, 5);
-
-  const chain = RunnableSequence.from([
-    apiSelectionPrompt,
-    llm,
-    new StringOutputParser(),
-    (output: string) => JSON.parse(output),
-  ]);
-
-  try {
-    const apiList = topApis.map(api => `${api.api_name}: ${api.api_description}`).join("\n");
-    const result = await chain.invoke({ query, apis: apiList });
-
-    const selectedApi = topApis.find(api => api.api_name === result.api);
-    if (!selectedApi) {
-      return { error: "No suitable API found" };
+  for (const api of apis) {
+    const score = calculateRelevance(api, query, parsedQuery);
+    if (score > highestScore) {
+      highestScore = score;
+      bestApi = api;
     }
-
-    logger.info("Query:", query);
-    logger.info("Selected API:", selectedApi.api_name);
-    logger.info("Parameters:", result.parameters);
-
-    return { bestApi: { ...selectedApi, parameters: result.parameters } };
-  } catch (error) {
-    logger.error("Error in selectApi:", error);
-    return { error: "Failed to select API" };
   }
+
+  if (!bestApi) {
+    return { error: "No suitable API found" };
+  }
+
+  let params: Record<string, any> = {};
+
+  switch (bestApi.api_name) {
+    case "Get Trending Tracks":
+      params = { limit: 3 }; // Set the limit to 3 for top trending tracks
+      break;
+    case "Search Users":
+      if (parsedQuery.type === 'mostFollowers') {
+        params = { query: "", limit: 1, sort_by: "follower_count", order_by: "desc" };
+      } else {
+        params = { query: parsedQuery.title || "" };
+      }
+      break;
+    case "Search Tracks":
+      if (parsedQuery.type === 'genre') {
+        params = { query: `${parsedQuery.title} ${parsedQuery.artist}`.trim() };
+      } else {
+        params = { query: parsedQuery.title || "" };
+      }
+      break;
+  }
+
+  console.log(`Selected API: ${bestApi?.api_name}, Query: "${query}"`);
+
+  return { bestApi, params };
 }

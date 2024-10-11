@@ -3,12 +3,8 @@ import { GraphState } from "../types.js";
 export async function processApiResponse(state: GraphState): Promise<Partial<GraphState>> {
   const { response, bestApi, query, params } = state;
 
-  if (!response) {
-    return { error: "No API response to process" };
-  }
-
-  if (!bestApi) {
-    return { error: "No API selected" };
+  if (!response || !bestApi) {
+    return { error: "Invalid state for processing" };
   }
 
   try {
@@ -19,16 +15,32 @@ export async function processApiResponse(state: GraphState): Promise<Partial<Gra
         const limit = params.limit || 3;
         formattedResponse = formatTrendingTracks(response.data, limit);
         break;
+      case "Search Users":
+        if (params.sort_by === "follower_count" && params.order_by === "desc") {
+          const topArtist = response.data[0];
+          formattedResponse = `The artist with the most followers on Audius is ${topArtist.name} (@${topArtist.handle}) with ${topArtist.follower_count.toLocaleString()} followers.`;
+        } else {
+          formattedResponse = `Found ${response.data.length} users matching the query.`;
+        }
+        break;
+      case "Search Tracks":
+        if (query.toLowerCase().includes('genre')) {
+          const track = response.data[0];
+          formattedResponse = track 
+            ? `The genre of "${track.title}" by ${track.user.name} is ${track.genre || 'Unknown'}.`
+            : "No tracks found matching the query.";
+        } else {
+          formattedResponse = `Found ${response.data.length} tracks matching the query.`;
+        }
+        break;
       default:
-        formattedResponse = JSON.stringify(response, null, 2);
+        formattedResponse = `Processed ${bestApi.api_name} response with ${response.data.length} results.`;
     }
 
-    console.log("User Query:", query);
-    console.log("Formatted Response:", formattedResponse);
-
+    console.log(`Processed ${bestApi.api_name} response`);
     return { response: formattedResponse };
   } catch (error) {
-    console.error("Error in processApiResponse:", error);
+    console.error(`Error processing ${bestApi.api_name} response:`, error);
     return { error: "Failed to process API response" };
   }
 }
