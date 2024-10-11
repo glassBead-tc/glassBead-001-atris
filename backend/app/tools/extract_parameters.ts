@@ -3,6 +3,16 @@ import { GraphState } from "../types.js";
 import { globalAudiusApi } from './create_fetch_request.js';
 import { parseQuery } from "../utils/searchUtils.js";
 
+// Define an interface for the track object
+interface AudiusTrack {
+  id: string;
+  title: string;
+  user: {
+    name: string;
+  };
+  genre: string;
+}
+
 export const extractParameters = async (state: GraphState): Promise<Partial<GraphState>> => {
   const { query, bestApi } = state;
 
@@ -14,7 +24,6 @@ export const extractParameters = async (state: GraphState): Promise<Partial<Grap
 
   try {
     const parsedQuery = parseQuery(query);
-    logger.debug(`Parsed query for parameter extraction: ${JSON.stringify(parsedQuery)}`);
 
     if (bestApi.api_name === 'Get Trending Tracks') {
       const numberMatch = query.match(/(\d+|one|two|three|four|five|six|seven|eight|nine|ten)/i);
@@ -44,16 +53,15 @@ export const extractParameters = async (state: GraphState): Promise<Partial<Grap
         params.query = query;
       }
     } else if (bestApi.api_name === 'Get Track' || bestApi.api_name === 'Search Tracks') {
-      // Existing track logic
+      // Updated track logic
       const trackNameMatch = query.match(/'([^']+)'/);
-      if (trackNameMatch) {
+      const artistMatch = query.match(/by\s+([^']+)/i);
+      if (trackNameMatch && artistMatch) {
         const trackName = trackNameMatch[1];
-        const searchResult = await globalAudiusApi.searchTracks(trackName);
-        if (searchResult && searchResult.data && searchResult.data.length > 0) {
-          params.track_id = searchResult.data[0].id;
-        } else {
-          return { error: "No track found for the given name" };
-        }
+        const artistName = artistMatch[1].trim();
+        const searchQuery = `"${trackName}" "${artistName}"`;
+        params.query = searchQuery;
+        params.limit = 10; // Increase limit to improve chances of finding the exact match
       } else {
         params.query = query;
       }
@@ -62,10 +70,15 @@ export const extractParameters = async (state: GraphState): Promise<Partial<Grap
     // Add logic for other API types based on parsedQuery
     switch (parsedQuery.type) {
       case 'genre':
+        params = extractGenreParameters(parsedQuery);
+        break;
       case 'plays':
       case 'performer':
         if (parsedQuery.title) params.title = parsedQuery.title;
         if (parsedQuery.artist) params.artist = parsedQuery.artist;
+        break;
+      case 'mostFollowers':
+        params = { query: "", limit: 1, sort_by: "follower_count", order_by: "desc" };
         break;
       case 'search_user':
         params.query = parsedQuery.title || query;
@@ -86,3 +99,10 @@ export const extractParameters = async (state: GraphState): Promise<Partial<Grap
     return { error: "Failed to extract parameters" };
   }
 };
+
+function extractGenreParameters(parsedQuery: ReturnType<typeof parseQuery>): Record<string, any> {
+  return {
+    query: `"${parsedQuery.title}" "${parsedQuery.artist}"`.trim(),
+    limit: 10
+  };
+}
