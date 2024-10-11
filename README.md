@@ -68,11 +68,3 @@ For detailed setup instructions, please refer to the documents in the `backend/a
 9. Optimize performance and API call batching
 10. Develop comprehensive unit tests
 
-## Contributing
-
-We welcome contributions! Please see our `CONTRIBUTING.md` file for guidelines on how to contribute to this project.
-
-## License
-
-[Add your license information here]
-
