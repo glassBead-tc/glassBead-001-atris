@@ -105,22 +105,6 @@ class AudiusApi {
       return null;
     }
   }
-
-  async getUser(userId: string) {
-    return this.request('GET', `/users/${userId}`);
-  }
-
-  async getUserProfile(userId: string) {
-    // Implementation
-  }
-
-  async getTracksByGenre(genre: string) {
-    // Implementation
-  }
-
-  async getTrackPlays(trackId: string) {
-    // Implementation
-  }
 }
 
 export const globalAudiusApi = new AudiusApi();

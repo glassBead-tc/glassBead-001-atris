@@ -1,6 +1,7 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { createGraph } from "./graph/createGraph.js";
 import { globalAudiusApi } from "./tools/create_fetch_request.js";
+import { logger } from './logger.js';
 
 async function main() {
   const llm = new ChatOpenAI({
@@ -13,27 +14,36 @@ async function main() {
   try {
     const isConnected = await globalAudiusApi.testConnection();
     if (isConnected) {
-      console.log('API connection successful. Proceeding with the application.');
+      logger.info('API connection successful. Proceeding with the application.');
       
       const query = "What are the top 3 trending tracks on Audius right now?";
+      logger.info(`User Query: ${query}`);
+
       const stream = await app.stream({
         llm,
         query,
       });
 
+      let finalResponse = '';
+
       for await (const event of stream) {
-        console.log("\n------\n");
         if (Object.keys(event)[0] === "execute_request_node") {
-          console.log("---FINISHED---");
-          console.log(event.execute_request_node);
+          finalResponse = event.execute_request_node;
+          logger.info("Final Response:");
+          logger.info(finalResponse);
         } else {
-          console.log("Stream event: ", Object.keys(event)[0]);
+          logger.debug(`Stream event: ${Object.keys(event)[0]}`);
         }
       }
+
+      logger.info("--- Query and Response Summary ---");
+      logger.info(`Query: ${query}`);
+      logger.info(`Response: ${finalResponse}`);
+      logger.info("----------------------------------");
     }
   } catch (error) {
-    console.error("Error in main:", error);
+    logger.error("Error in main:", error);
   }
 }
 
-main().catch(console.error);
+main().catch((error) => logger.error("Unhandled error:", error));

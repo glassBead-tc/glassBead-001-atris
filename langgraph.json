@@ -1,7 +1,7 @@
 {
   "dockerfile_lines": [],
   "graphs": {
-    "graph": "./backend/src/index.ts:graph"
+    "graph": "./backend/app/graph/createGraph.ts"
   },
   "env": "./.env",
   "node_version": "20"

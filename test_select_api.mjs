@@ -1,16 +1,6 @@
 // test_select_api.ts
-import { selectApi } from './backend/src/tools/select_api.js'; // Added .js extension
-import { ChatOpenAI } from '@langchain/openai';
-// Mocking the LLM
-const llm = new ChatOpenAI({
-    modelName: "gpt-3.5-turbo",
-    temperature: 0,
-    streaming: true, // This is valid
-    // Remove the following lines as they are not valid properties
-    // createResponseFormat: 'json',
-    // betaParsedCompletionWithRetry: false
-});
-// Create a mock GraphState with type assertion
+import { selectApi } from './backend/app/tools/select_api.js'; // Added .js extension
+// Create a mock GraphState
 const mockState = {
     query: "What is the best API for trending tracks?",
     apis: [
@@ -39,12 +29,26 @@ const mockState = {
             api_url: "/v1/tracks",
         },
     ],
-    llm: new ChatOpenAI({
+    llm: {
         modelName: "gpt-3.5-turbo",
         temperature: 0,
         streaming: true,
-        streamUsage: true, // Assert type if needed
-    }), // Use 'any' to bypass type safety
+        topP: 1,
+        frequencyPenalty: 0,
+        presencePenalty: 0,
+        n: 1,
+        streamUsage: true,
+        callKeys: () => [], // Mock implementation
+        lc_serializable: true, // Mock implementation
+        lc_secrets: () => ({}), // Mock implementation
+        lc_aliases: () => ({}), // Mock implementation
+        get model() {
+            return this.modelName; // Mock implementation
+        },
+        getLsParams: () => ({}), // Mock implementation
+        bindTools: () => { }, // Mock implementation
+        createResponseFormat: () => { }, // Mock implementation
+    }, // Use 'any' to bypass type safety temporarily
     categories: [],
     params: {},
     response: undefined,

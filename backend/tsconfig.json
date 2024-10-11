@@ -11,22 +11,16 @@
     "module": "NodeNext",
     "sourceMap": true,
     "allowSyntheticDefaultImports": true,
-    "baseUrl": "app",
+    "esModuleInterop": true,
+    "jsx": "preserve", // Added this line
+    "baseUrl": "./src",
     "declaration": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUnusedParameters": true,
     "useDefineForClassFields": true,
-    "strictPropertyInitialization": false,
-    "esModuleInterop": true,
-    "types": ["node", "lodash"]
+    "strictPropertyInitialization": false
   },
-  "exclude": [
-    "node_modules/",
-    "dist/",
-    "tests/"
-  ],
-  "include": [
-    "app"
-, "oldAgent_docs", "api/route.ts"  ],
+  "include": ["app/**/*"],
+  "exclude": ["node_modules", "dist", "tests"]
 }
