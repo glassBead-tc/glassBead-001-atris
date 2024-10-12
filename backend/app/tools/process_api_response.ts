@@ -1,62 +1,88 @@
 import { GraphState } from "../types.js";
+import { logger } from '../logger.js';
+import { TrackData } from "../lib/audiusData.js";
+
+console.log("process_api_response.ts file loaded");
 
 export async function processApiResponse(state: GraphState): Promise<Partial<GraphState>> {
-  const { response, bestApi, query, params } = state;
-
-  if (!response || !bestApi) {
-    return { error: "Invalid state for processing" };
-  }
-
+  console.log("1. Entering processApiResponse");
+  console.log("2. Query:", state.query);
+  
   try {
-    let formattedResponse: string;
-
-    switch (bestApi.api_name) {
-      case "Get Trending Tracks":
-        const limit = params.limit || 3;
-        formattedResponse = formatTrendingTracks(response.data, limit);
-        break;
-      case "Search Users":
-        if (params.sort_by === "follower_count" && params.order_by === "desc") {
-          const topArtist = response.data[0];
-          formattedResponse = `The artist with the most followers on Audius is ${topArtist.name} (@${topArtist.handle}) with ${topArtist.follower_count.toLocaleString()} followers.`;
-        } else {
-          formattedResponse = `Found ${response.data.length} users matching the query.`;
-        }
-        break;
-      case "Search Tracks":
-        if (query.toLowerCase().includes('genre')) {
-          formattedResponse = processGenreQuery(query, response.data);
-        } else {
-          formattedResponse = `Found ${response.data.length} tracks matching the query.`;
-        }
-        break;
-      default:
-        formattedResponse = `Processed ${bestApi.api_name} response with ${response.data.length} results.`;
+    console.log("3. Checking state.response");
+    if (!state.response || !Array.isArray(state.response.data)) {
+      console.log("4. State response:", JSON.stringify(state.response, null, 2));
+      throw new Error("No response data to process");
     }
 
-    console.log(`Processed ${bestApi.api_name} response`);
-    return { response: formattedResponse };
+    console.log("5. Casting tracks");
+    const tracks = state.response.data as TrackData[];
+    console.log("6. Number of tracks:", tracks.length);
+
+    let formattedResponse: string;
+
+    console.log("7. Checking query type");
+    if (state.query.toLowerCase().includes('trending') && state.query.toLowerCase().includes('genre')) {
+      console.log("8. Formatting trending genres");
+      formattedResponse = formatTrendingGenres(tracks, tracks.length);
+    } else if (state.query.toLowerCase().includes('genre of')) {
+      console.log("9. Processing genre query");
+      formattedResponse = processGenreQuery(state.query, tracks);
+    } else {
+      console.log("10. Formatting default response");
+      formattedResponse = formatDefaultResponse(tracks);
+    }
+
+    console.log("11. Processed response:", formattedResponse);
+
+    return { ...state, formattedResponse, error: null };
   } catch (error) {
-    console.error(`Error processing ${bestApi.api_name} response:`, error);
-    return { error: "Failed to process API response" };
+    console.error("12. Error in processApiResponse:", error);
+    console.error("13. Error stack:", (error as Error).stack);
+    console.error("14. State at error:", JSON.stringify(state, null, 2));
+    return { 
+      ...state, 
+      formattedResponse: "I'm sorry, but I encountered an error while processing the API response. Could you please try your question again?",
+      error: error instanceof Error ? error.message : String(error)
+    };
   }
 }
 
-function formatTrendingTracks(tracks: any[], limit: number): string {
-  return tracks.slice(0, limit).map((track, index) => 
-    `${index + 1}. "${track.title}" by ${track.user.name}`
-  ).join("\n");
+function formatTrendingGenres(tracks: TrackData[], limit: number): string {
+  if (!Array.isArray(tracks) || tracks.length === 0) {
+    throw new Error("No trending tracks found or invalid data");
+  }
+
+  const genreCounts: {[key: string]: number} = {};
+  tracks.forEach((track) => {
+    const genre = track.genre || 'Unknown';
+    genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+  });
+
+  const sortedGenres = Object.entries(genreCounts)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 5);
+
+  const trendingGenres = sortedGenres.map(([genre, count], index) => 
+    `${index + 1}. ${genre} (${count} track${count !== 1 ? 's' : ''})`
+  ).join('\n');
+
+  return `Here are the top trending genres on Audius this week based on the top ${limit} trending tracks:\n${trendingGenres}`;
 }
 
-function processGenreQuery(query: string, tracks: any[]): string {
+function processGenreQuery(query: string, tracks: TrackData[]): string {
+  if (!Array.isArray(tracks) || tracks.length === 0) {
+    throw new Error("No tracks found matching the query");
+  }
+
   const trackNameMatch = query.match(/'([^']+)'/);
   const artistMatch = query.match(/by\s+([^']+)/i);
   
   if (trackNameMatch && artistMatch) {
     const trackName = trackNameMatch[1];
-    const artistName = artistMatch[1].trim().replace(/[.,?!]$/, ''); // Remove trailing punctuation
+    const artistName = artistMatch[1].trim().replace(/[.,?!]$/, '');
     
-    const exactMatch = tracks.find((track: any) => 
+    const exactMatch = tracks.find((track) => 
       track.title.toLowerCase() === trackName.toLowerCase() &&
       track.user.name.toLowerCase() === artistName.toLowerCase()
     );
@@ -64,27 +90,37 @@ function processGenreQuery(query: string, tracks: any[]): string {
     if (exactMatch) {
       return `The genre of "${exactMatch.title}" by ${exactMatch.user.name} is ${exactMatch.genre || 'Unknown'}.`;
     } else {
-      // Find the closest match
-      const closestMatch = tracks.reduce((closest: any, current: any) => {
-        const currentSimilarity = calculateSimilarity(current.title, trackName) + calculateSimilarity(current.user.name, artistName);
-        const closestSimilarity = closest ? calculateSimilarity(closest.title, trackName) + calculateSimilarity(closest.user.name, artistName) : -1;
-        return currentSimilarity > closestSimilarity ? current : closest;
-      }, null);
-
-      let response = `No exact match found for "${trackName}" by ${artistName}. `;
-      response += `Found ${tracks.length} tracks in the search results. `;
+      const closestMatch = findClosestMatch(tracks, trackName, artistName);
       
       if (closestMatch) {
-        response += `The closest match is "${closestMatch.title}" by ${closestMatch.user.name}, genre: ${closestMatch.genre || 'Unknown'}. `;
+        return `I couldn't find an exact match for "${trackName}" by ${artistName}. The closest match I found is "${closestMatch.title}" by ${closestMatch.user.name}, and its genre is ${closestMatch.genre || 'Unknown'}. Is this the track you were looking for?`;
+      } else {
+        return `I'm sorry, but I couldn't find a track matching "${trackName}" by ${artistName}. Can you please check the spelling of the track and artist names?`;
       }
-      
-      response += "You may want to refine your search or check the spelling of the track and artist names.";
-      
-      return response;
     }
   } else {
-    return "Unable to process the query. Please provide both the track name (in quotes) and the artist name.";
+    return "I'm having trouble understanding your query. Can you please provide both the track name (in quotes) and the artist name?";
   }
+}
+
+function formatDefaultResponse(data: any): string {
+  if (Array.isArray(data) && data.length > 0) {
+    return `I found ${data.length} results for your query. Here's a summary of the first result: ${JSON.stringify(data[0], null, 2)}`;
+  } else if (typeof data === 'object' && data !== null) {
+    return `Here's the information I found: ${JSON.stringify(data, null, 2)}`;
+  } else {
+    return `I'm sorry, but I couldn't find any specific information for your query. Can you please try rephrasing your question?`;
+  }
+}
+
+function findClosestMatch(tracks: TrackData[], trackName: string, artistName: string): TrackData | undefined {
+  return tracks.reduce((closest: TrackData | undefined, current: TrackData) => {
+    const currentSimilarity = calculateSimilarity(current.title, trackName) + calculateSimilarity(current.user.name, artistName);
+    if (!closest || currentSimilarity > (closest as any).similarity) {
+      return { ...current, similarity: currentSimilarity };
+    }
+    return closest;
+  }, undefined);
 }
 
 function calculateSimilarity(str1: string, str2: string): number {

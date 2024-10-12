@@ -1,41 +1,35 @@
-import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { GraphState, DatasetSchema } from "../types.js";
-import { ExtractHighLevelCategories } from "./extract_high_level_categories.js";
-import { HIGH_LEVEL_CATEGORY_MAPPING, TRIMMED_CORPUS_PATH } from "../constants.js";
+import { GraphState } from "../types.js";
+import { logger } from '../logger.js';
 
-export async function extractCategory(state: GraphState): Promise<Partial<GraphState>> {
-  const { llm, query } = state;
-
-  if (!llm) {
-    return { error: "LLM is not initialized in the GraphState" };
-  }
-
+export async function extractCategory(state: GraphState): Promise<GraphState> {
   try {
-    const prompt = ChatPromptTemplate.fromMessages([
-      ["system", `You are an expert software engineer. Currently, you are helping a fellow engineer select the best category of APIs based on their query. Here are all the high level categories, and every tool name that falls under them: {categoriesAndTools}`],
-      ["human", `Query: {query}`],
-    ]);
+    if (!state.query) {
+      throw new Error('Query is undefined or empty');
+    }
 
-    const tool = new ExtractHighLevelCategories();
-    const modelWithTools = llm.withStructuredOutput(tool);
-    const chain = prompt.pipe(modelWithTools).pipe(tool);
+    const query = state.query.toLowerCase();
+    const categories = [];
 
-    const allApisData = await import('fs').then(fs => fs.promises.readFile(TRIMMED_CORPUS_PATH, "utf-8")).then(JSON.parse);
-    const allApis: DatasetSchema[] = allApisData.endpoints;
-    const categoriesAndTools = Object.entries(HIGH_LEVEL_CATEGORY_MAPPING).map(([high]) => {
-      const allTools = allApis.filter((api: DatasetSchema) => api.category_name.toLowerCase() === high.toLowerCase());
-      return `High Level Category: ${high}\nTools:\n${allTools.map(item => `Name: ${item.tool_name}`).join("\n")}`;
-    }).join("\n\n");
+    if (query.includes('track') || query.includes('song') || query.includes('genre') || query.includes('trending')) {
+      categories.push('Tracks');
+    }
+    if (query.includes('artist') || query.includes('follower') || query.includes('user')) {
+      categories.push('Users');
+    }
+    if (query.includes('playlist')) {
+      categories.push('Playlists');
+    }
+    if (query.includes('tip') || query.includes('donate')) {
+      categories.push('Tips');
+    }
+    if (categories.length === 0) {
+      categories.push('General');
+    }
 
-    const result = await chain.invoke({ query, categoriesAndTools });
-    const categories = JSON.parse(result).categories;
-
-    console.log("Query:", query);
-    console.log("Extracted categories:", categories);
-
-    return { categories };
+    logger.debug(`Extracted categories: ${categories}`);
+    return { ...state, categories };
   } catch (error) {
-    console.error("Error in extractCategory:", error);
-    return { error: "Failed to extract categories" };
+    logger.error(`Error in extractCategory: ${error instanceof Error ? error.message : String(error)}`);
+    throw error; // Re-throw the error to be caught by the graph
   }
 }

@@ -1,4 +1,5 @@
 import { TrackArtwork, ProfilePicture, CoverPhoto, Track, Playlist, User } from '@audius/sdk';
+import { logger } from '../logger.js';
 
 // Export the AudiusData type
 export type TrackData = {
@@ -120,13 +121,6 @@ if (!process.env.AUDIUS_API_KEY || !process.env.AUDIUS_API_SECRET) {
 const apiKey = process.env.AUDIUS_API_KEY!;
 const apiSecret = process.env.AUDIUS_API_SECRET!;
 
-// Remove the SDK initialization
-// const audiusSdk = sdk({
-//   appName: 'audius-ai-sdk', // Replace with your actual app name
-//   apiKey: apiKey,
-//   apiSecret: apiSecret,
-// });
-
 export async function fetchAudiusData(query: string): Promise<AudiusData | null> {
   try {
     const response = await fetch('/api/audius', {
@@ -149,7 +143,7 @@ export async function fetchAudiusData(query: string): Promise<AudiusData | null>
 
     return null;
   } catch (error) {
-    console.error("Error fetching Audius data:", error);
+    logger.error("Error fetching Audius data:", error);
     return null;
   }
 }
@@ -209,7 +203,7 @@ async function searchRemixes(query: string): Promise<AudiusData | null> {
     }
     return null;
   } catch (error) {
-    console.error("Error searching for remixes:", error);
+    logger.error("Error searching for remixes:", error);
     return null;
   }
 }

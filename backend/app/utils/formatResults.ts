@@ -1,3 +1,5 @@
+import { logger } from '../logger.js';
+
 export function formatTrackResults(response: any, originalQuery: string): string {
     if (!response || !response.data || !response.data.data || !Array.isArray(response.data.data)) {
       return "Unable to find information about the requested track.";
@@ -29,8 +31,7 @@ export function formatTrackResults(response: any, originalQuery: string): string
     }
   } 
   
-  // Add this new function to format API results
-  export function formatApiResults(response: any, apiName: string): string {
+export function formatApiResults(response: any, apiName: string): string {
     if (!response || !response.data) {
       return "Unable to find the requested information.";
     }
@@ -55,10 +56,10 @@ export function formatTrackResults(response: any, originalQuery: string): string
           return "Unsupported API response format.";
       }
     } catch (error) {
-      console.error("Error in formatApiResults:", error);
+      logger.error("Error in formatApiResults:", error);
       return "An error occurred while processing the API response.";
     }
-  }
+}
 
 export function formatSearchTracks(tracks: any[], query: string): string {
   const [trackName, artistName] = query.split(' by ').map(s => s.trim());
@@ -80,7 +81,7 @@ export function formatSearchTracks(tracks: any[], query: string): string {
   return `Here are the tracks matching "${query}": ${trackInfo}`;
 }
   
-  export function formatUserInfo(data: any, query: string): string {
+export function formatUserInfo(data: any, query: string): string {
     // Ensure data is always an array
     const users = Array.isArray(data) ? data : [data];
   
@@ -107,9 +108,9 @@ export function formatSearchTracks(tracks: any[], query: string): string {
     return `Found ${users.length} users:\n${users.slice(0, 5).map(user => 
       `- ${user.name || user.handle || 'Unknown'} (@${user.handle || 'Unknown'})`
     ).join('\n')}`;
-  } 
+} 
   
-  export function formatPlaylistInfo(data: any[], query: string, fullPlaylistDetails?: any): string {
+export function formatPlaylistInfo(data: any[], query: string, fullPlaylistDetails?: any): string {
     if (!data || data.length === 0) {
       return `No playlists found matching "${query}"`;
     }
@@ -132,15 +133,15 @@ export function formatSearchTracks(tracks: any[], query: string): string {
       Description: ${playlist.description || 'No description available'}
       Top 5 Tracks: ${topTracks}
     `;
-  }
+}
   
-  export function formatTrendingTracks(tracks: any[]): string {
+export function formatTrendingTracks(tracks: any[]): string {
     return tracks.map((track, index) => 
       `${index + 1}. "${track.title}" by ${track.user.name}`
     ).join('\n');
-  }
+}
 
-  export function formatTrendingPlaylists(data: any[]): string {
+export function formatTrendingPlaylists(data: any[]): string {
     const playlists = data.slice(0, 5);
     const playlistList = playlists.map((playlist: any) => `"${playlist.playlist_name}" by ${playlist.user.name}`).join(', ');
     const playlistTracklist = playlists.map((playlist: any) => {
@@ -148,7 +149,7 @@ export function formatSearchTracks(tracks: any[], query: string): string {
       return `"${playlist.playlist_name}" by ${playlist.user.name} with ${trackCount} tracks`;
     }).join(', ');
     return `The top trending playlists on Audius right now are: ${playlistList}. Here are the tracks on each: ${playlistTracklist}`;
-  }
+}
 
 export function formatDetailedTrackInfo(tracks: any[]): string {
   return tracks.map((track, index) => 

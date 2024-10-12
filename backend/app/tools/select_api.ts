@@ -1,106 +1,96 @@
-import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { RunnableSequence } from "@langchain/core/runnables";
-import { StringOutputParser } from "@langchain/core/output_parsers";
 import { GraphState, DatasetSchema } from "../types.js";
-import { parseQuery } from "../utils/searchUtils.js";
 import { logger } from '../logger.js';
+import { calculateRelevance } from '../utils/relevanceCalculations.js';
+import { apiConfig } from "../audiusApiConfig.js";
 
-// const apiSelectionPrompt = ChatPromptTemplate.fromTemplate(`
-//   Given the following query: {{query}}
-  
-//   Please select the most appropriate API from the following list:
-//   {{apis}}
-  
-//   Provide your response in the following JSON format:
-//   {
-//     "api": "API Name",
-//     "parameters": {
-//       "param1": "default_value",
-//       "param2": "default_value"
-//     },
-//     "description": "Brief description of what the API does"
-//   }
-  
-//   Only include parameters that are relevant to the query.
-// `, { templateFormat: "mustache" });
+const RELEVANCE_THRESHOLD = 0.3; // Minimum relevance score to consider an API
 
-function calculateRelevance(api: DatasetSchema, query: string, parsedQuery: ReturnType<typeof parseQuery>): number {
-  let score = 0;
-  const lowerQuery = query.toLowerCase();
-  const lowerApiName = api.api_name.toLowerCase();
+export async function selectApi(state: GraphState): Promise<GraphState> {
+  const { query } = state;
+  const lowercaseQuery = query.toLowerCase();
 
-  if (lowerQuery.includes(lowerApiName)) score += 10;
-  if (lowerQuery.includes(api.category_name.toLowerCase())) score += 5;
+  let selectedApi: DatasetSchema | null = null;
 
-  // Additional scoring based on parsed query
-  switch (parsedQuery.type) {
-    case 'trending':
-      if (parsedQuery.type === 'trending' && api.api_name === "Get Trending Tracks") {
-        score += 50; // Increase this score significantly
-      }
-      break;
-    case 'mostFollowers':
-      if (api.api_name === "Search Users") {
-        score += 15;
-      }
-      break;
-    case 'genre':
-      if (api.api_name === "Search Tracks") {
-        score += 15;
-      }
-      break;
+  // First, try to match based on specific keywords
+  selectedApi = keywordBasedSelection(lowercaseQuery);
+
+  // If no specific match was found, calculate relevance for each API
+  if (!selectedApi) {
+    selectedApi = relevanceBasedSelection(query);
   }
 
-  return score;
+  if (selectedApi) {
+    logger.debug(`Selected API: ${selectedApi.api_name}, Query: "${query}"`);
+    return { ...state, bestApi: selectedApi };
+  } else {
+    logger.warn(`No suitable API found for query: "${query}"`);
+    return { ...state, error: "I'm sorry, but I couldn't find a suitable API to answer your question. Could you please rephrase or provide more details?" };
+  }
 }
 
-export async function selectApi(state: GraphState): Promise<Partial<GraphState>> {
-  const { query, apis } = state;
+function keywordBasedSelection(lowercaseQuery: string): DatasetSchema | null {
+  const apiEndpoint = findApiEndpoint(lowercaseQuery);
+  return apiEndpoint ? createDatasetSchema(apiEndpoint) : null;
+}
 
-  if (!apis || apis.length === 0) {
-    return { error: "No APIs available" };
-  }
+function relevanceBasedSelection(query: string): DatasetSchema | null {
+  let selectedApiEndpoint: string | null = null;
+  let highestRelevance = -1;
 
-  const parsedQuery = parseQuery(query);
-
-  let bestApi: DatasetSchema | null = null;
-  let highestScore = -1;
-
-  for (const api of apis) {
-    const score = calculateRelevance(api, query, parsedQuery);
-    if (score > highestScore) {
-      highestScore = score;
-      bestApi = api;
+  for (const apiEndpoint of Object.keys(apiConfig)) {
+    const relevance = calculateRelevance(query, apiEndpoint);
+    if (relevance > highestRelevance && relevance >= RELEVANCE_THRESHOLD) {
+      highestRelevance = relevance;
+      selectedApiEndpoint = apiEndpoint;
     }
   }
 
-  if (!bestApi) {
-    return { error: "No suitable API found" };
+  return selectedApiEndpoint ? createDatasetSchema(selectedApiEndpoint) : null;
+}
+
+function findApiEndpoint(lowercaseQuery: string): string | null {
+  if (lowercaseQuery.includes('trending') || lowercaseQuery.includes('top') || lowercaseQuery.includes('popular')) {
+    return '/v1/tracks/trending';
+  } else if (lowercaseQuery.includes('most followers') || lowercaseQuery.includes('most followed') || lowercaseQuery.includes('popular artist')) {
+    return '/v1/users/search';
+  } else if (lowercaseQuery.includes('genre') || lowercaseQuery.includes('track') || lowercaseQuery.includes('song')) {
+    return '/v1/tracks/search';
+  } else if (lowercaseQuery.includes('latest releases') || lowercaseQuery.includes('new music')) {
+    return '/v1/tracks/trending';
+  } else if (lowercaseQuery.includes('playlist')) {
+    return '/v1/playlists/search';
+  } else if (lowercaseQuery.includes('favorite') || lowercaseQuery.includes('liked')) {
+    return '/v1/users/{user_id}/favorites';
+  } else if (lowercaseQuery.includes('repost')) {
+    return '/v1/users/{user_id}/reposts';
+  } else if (lowercaseQuery.includes('underground')) {
+    return '/v1/tracks/trending/underground';
   }
+  return null;
+}
 
-  let params: Record<string, any> = {};
-
-  switch (bestApi.api_name) {
-    case "Get Trending Tracks":
-      params = { limit: 3 }; // Set the limit to 3 for top trending tracks
-      break;
-    case "Search Users":
-      if (parsedQuery.type === 'mostFollowers') {
-        params = { query: "", limit: 1, sort_by: "follower_count", order_by: "desc" };
-      } else {
-        params = { query: parsedQuery.title || "" };
-      }
-      break;
-    case "Search Tracks":
-      if (parsedQuery.type === 'genre') {
-        params = { query: `${parsedQuery.title} ${parsedQuery.artist}`.trim() };
-      } else {
-        params = { query: parsedQuery.title || "" };
-      }
-      break;
-  }
-
-  console.log(`Selected API: ${bestApi?.api_name}, Query: "${query}"`);
-
-  return { bestApi, params };
+function createDatasetSchema(apiEndpoint: string): DatasetSchema {
+  const config = apiConfig[apiEndpoint];
+  return {
+    id: `audius_${apiEndpoint.replace(/\//g, '_')}`,
+    category_name: 'Audius',
+    tool_name: `Audius ${apiEndpoint}`,
+    api_name: apiEndpoint,
+    api_description: `API endpoint for ${apiEndpoint}`,
+    required_parameters: config.required.map(param => ({
+      name: param,
+      type: 'string',
+      description: `Required parameter: ${param}`,
+      default: ''
+    })),
+    optional_parameters: config.optional.map(param => ({
+      name: param,
+      type: 'string',
+      description: `Optional parameter: ${param}`,
+      default: ''
+    })),
+    method: 'GET',
+    api_url: `https://discoveryprovider.audius.co${apiEndpoint}`,
+    parameters: {}
+  };
 }

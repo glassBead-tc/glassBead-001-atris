@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { logger } from '../logger.js';
 
 export async function performWebSearch(query: string): Promise<string> {
   if (!process.env.NEXT_TAVILY_API_KEY) {
@@ -22,7 +23,7 @@ export async function performWebSearch(query: string): Promise<string> {
 
     return formattedResults.trim() || `No relevant web search results found for "${query}".`;
   } catch (error) {
-    console.error('Error performing web search:', error);
+    logger.error('Error performing web search:', error);
     return `Error performing web search for "${query}".`;
   }
 }

@@ -29,7 +29,7 @@ export interface GraphState {
   bestApi: DatasetSchema | null;
   params: Record<string, any>;
   response: any;
-  error?: string; // Add this line
+  error?: string | null;
   formattedResponse?: string;
+  message?: string; // Add this line to include the 'message' property
 }
-

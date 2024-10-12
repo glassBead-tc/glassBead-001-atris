@@ -1,5 +1,6 @@
 import { StructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
+import { logger } from '../logger.js';
 
 export class ExtractHighLevelCategories extends StructuredTool {
   name = "extract_high_level_categories";
@@ -29,9 +30,8 @@ export class ExtractHighLevelCategories extends StructuredTool {
 
       return JSON.stringify({ categories });
     } catch (error) {
-      console.error("Error in ExtractHighLevelCategories:", error);
+      logger.error("Error in ExtractHighLevelCategories:", error);
       return JSON.stringify({ categories: [] });
     }
   }
 }
-
