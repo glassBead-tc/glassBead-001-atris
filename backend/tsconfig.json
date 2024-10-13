@@ -16,13 +16,7 @@
   "include": ["app/**/*", "src/**/*", "interactiveTest.ts"],
   "exclude": [
     "node_modules",
-    "**/__tests__/**",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/*.spec.ts",
-    "**/*.spec.tsx",
     "test/**",
-    "app/__tests__/**",
     "interactiveTest.ts"
   ]
 }

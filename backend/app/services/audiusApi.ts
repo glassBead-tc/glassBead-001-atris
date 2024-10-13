@@ -13,6 +13,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const API_KEY = process.env.AUDIUS_API_KEY;
 const BASE_URL = 'https://discoveryprovider.audius.co/v1';
+const DISCOVERY_PROVIDER_ENDPOINT = process.env.discoveryProviderEndpoint || 'https://discoveryprovider.audius.co';
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
 
@@ -22,9 +23,63 @@ if (!API_KEY) {
 
 interface ApiResponse<T> {
   data: T;
+  nextCursor?: string;
 }
 
 export class AudiusApi {
+  private axiosInstance = axios.create({
+    baseURL: DISCOVERY_PROVIDER_ENDPOINT,
+    headers: {
+      'Authorization': `Bearer ${API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    timeout: 5000, // 5 seconds timeout
+  });
+
+  /**
+   * Tests the connection to the Audius API by hitting the /health_check endpoint.
+   * @returns A promise that resolves to true if the connection is successful.
+   */
+  public async testConnection(): Promise<boolean> {
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const response: AxiosResponse<any> = await this.axiosInstance.get('/health_check');
+        if (response.status === 200) {
+          logger.info('✓ Successfully connected to Audius API.');
+          return true;
+        } else {
+          logger.error(`Unexpected response status: ${response.status}`);
+          throw new Error(`Unexpected response status: ${response.status}`);
+        }
+      } catch (error: unknown) {
+        if (axios.isAxiosError(error)) {
+          logger.error(`Error testing connection to Audius API (Attempt ${attempt}): ${error.message}`);
+        } else {
+          logger.error(`Unexpected error testing connection to Audius API (Attempt ${attempt}):`, error);
+        }
+
+        if (attempt < MAX_RETRIES) {
+          logger.info(`Retrying connection in ${RETRY_DELAY / 1000} seconds...`);
+          await this.delay(RETRY_DELAY);
+        } else {
+          logger.error('🔴 Max connection attempts reached. Failed to connect to Audius API.');
+          throw new Error('Failed to connect to Audius API after multiple attempts.');
+        }
+      }
+    }
+
+    return false; // Should never reach here
+  }
+
+  /**
+   * Delays execution for a specified amount of time.
+   * @param ms - Milliseconds to delay.
+   * @returns A promise that resolves after the delay.
+   */
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
   private async request<T>(config: AxiosRequestConfig, retries = 0): Promise<T> {
     try {
       const url = `${BASE_URL}${config.url}`;
@@ -58,72 +113,55 @@ export class AudiusApi {
           return this.request<T>(config, retries + 1);
         }
       }
-      logger.error(`Unexpected error on ${config.method} ${config.url}:`, error);
+      logger.error(`Request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }
 
-  // **Test Connection Method**
-  async testConnection(): Promise<boolean> {
-    try {
-      // Using a lightweight endpoint for connection testing
-      const response = await this.getTrendingTracks(1);
-      if (response && response.length > 0) {
-        logger.info(`Connection test successful: Retrieved ${response.length} track(s).`);
-        return true;
-      } else {
-        logger.warn("Connection test failed: No data retrieved.");
-        return false;
-      }
-    } catch (error: unknown) {
-      logger.error(`Connection test failed:`, error);
-      return false;
-    }
-  }
-
-  // **Search Users by Handle**
-  async searchUsers(handle: string, limit: number = 10): Promise<ApiResponse<any[]>> {
+  // **Search Tracks**
+  async searchTracks(query: string, limit: number = 10): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>({
       method: 'GET',
-      url: '/users/search',
-      params: { handle, limit }
+      url: '/v1/search/tracks',
+      params: { query, limit }
     });
   }
 
-  // **Search Playlists by Title**
-  async searchPlaylists(title: string, limit: number = 10): Promise<ApiResponse<any[]>> {
+  // **Search Playlists**
+  async searchPlaylists(query: string, limit: number = 10): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>({
       method: 'GET',
-      url: '/playlists/search',
-      params: { title, limit }
+      url: '/v1/search/playlists',
+      params: { query, limit }
     });
   }
 
-  // **Search Tracks by Title**
-  async searchTracks(title: string, limit: number = 10): Promise<ApiResponse<any[]>> {
+  // **Search Genres**
+  async searchGenres(query: string, limit: number = 10): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>({
       method: 'GET',
-      url: '/tracks/search',
-      params: { title, limit }
+      url: '/v1/search/genres',
+      params: { query, limit }
+    });
+  }
+
+  // **Search Users**
+  async searchUsers(query: string, limit: number = 10): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>({
+      method: 'GET',
+      url: '/v1/search/users',
+      params: { query, limit }
     });
   }
 
   // **Get Trending Tracks**
-  async getTrendingTracks(limit: number = 5, timeframe: string = 'week'): Promise<TrackData[]> {
+  async getTrendingTracks(limit: number = 100, timeframe: string = 'week'): Promise<TrackData[]> {
     try {
-      const response = await this.request<{ data: TrackData[] }>({
+      const response = await this.request<ApiResponse<TrackData[]>>({
         method: 'GET',
-        url: '/tracks/trending',
-        params: { limit, timeframe },
+        url: '/v1/tracks/trending',
+        params: { limit, timeframe }
       });
-
-      // Log the full response for inspection
-      logger.debug(`getTrendingTracks response: ${JSON.stringify(response)}`);
-
-      if (!response || !response.data || !Array.isArray(response.data)) {
-        throw new Error("Invalid response format for trending tracks.");
-      }
-
       return response.data;
     } catch (error: unknown) {
       logger.error(`Failed to fetch trending tracks:`, error);
@@ -135,7 +173,7 @@ export class AudiusApi {
   async getUserTracks(userId: string, limit: number = 10): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>({
       method: 'GET',
-      url: `/users/${userId}/tracks`,
+      url: `/v1/users/${userId}/tracks`,
       params: { limit }
     });
   }
@@ -150,7 +188,7 @@ export class AudiusApi {
     const userId = usersResponse.data[0].id;
     return this.request<ApiResponse<any[]>>({
       method: 'GET',
-      url: `/users/${userId}/followers`,
+      url: `/v1/users/${userId}/followers`,
       params: { limit }
     });
   }
@@ -165,23 +203,9 @@ export class AudiusApi {
     const userId = usersResponse.data[0].id;
     return this.request<ApiResponse<any[]>>({
       method: 'GET',
-      url: `/users/${userId}/following`,
+      url: `/v1/users/${userId}/following`,
       params: { limit }
     });
-  }
-
-  // **Get Trending Genres**
-  async getTrendingGenres(limit: number = 5, timeframe: string = 'week'): Promise<{ genre: string; score: number }[]> {
-    try {
-      const trendingTracks = await this.getTrendingTracks(100, timeframe); // Fetch more tracks for better genre analysis
-      const genres = extractGenres(trendingTracks);
-      const topGenres = scoreAndRankGenres(genres);
-      logger.debug(`getTrendingGenres processed genres: ${JSON.stringify(topGenres)}`);
-      return topGenres;
-    } catch (error: unknown) {
-      logger.error(`Failed to get trending genres:`, error);
-      throw new Error('Failed to retrieve trending genres.');
-    }
   }
 }
 

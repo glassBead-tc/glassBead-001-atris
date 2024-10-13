@@ -1,6 +1,6 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { CompiledStateGraph } from "@langchain/langgraph";
-import { GraphState, QueryType, ComplexityLevel } from "../types.js";
+import { GraphState, QueryClassification } from "../types.js";
 import { logger } from '../logger.js';
 import { classifyQuery } from './queryClassifier.js';
 
@@ -16,7 +16,8 @@ export async function handleQuery(
 ): Promise<QueryResult> {
   logger.info(`Handling query: ${query}`);
 
-  const classification = classifyQuery(query);
+  // Await the asynchronous classification of the query
+  const classification: QueryClassification = await classifyQuery(query);
   logger.info(`Query classification: ${JSON.stringify(classification)}`);
 
   logger.info(`Query type: ${classification.type}, Is entity query: ${classification.isEntityQuery}, Entity type: ${classification.entityType}, Entity: ${classification.entity}, Complexity: ${classification.complexity}`);
@@ -84,21 +85,13 @@ export async function handleQuery(
         error: "No formatted response"
       };
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(`Unexpected error processing query "${query}":`, error);
     return { 
       response: "I encountered an unexpected error while processing your query. Please try again later or contact support if the issue persists.",
       error: error instanceof Error ? error.message : String(error)
     };
   }
-}
 
-export function getTestQueries(): string[] {
-  return [
-    // "What are the top 5 trending tracks on Audius right now?",
-    // "Who are the most followed artists on Audius?",
-    "What genres are trending on Audius this week?"
-    // "What are the most popular genres on Audius?"
-    // Additional test queries...
-  ];
+  logger.info("Main execution completed");
 }

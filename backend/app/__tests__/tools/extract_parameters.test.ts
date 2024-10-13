@@ -28,7 +28,7 @@ describe('extractParameters', () => {
       } as DatasetSchema,
       message: '',
       entity: 'John Doe',
-      complexity: 1,
+      complexity: 'low' as ComplexityLevel,
     });
     const result = await extractParameters(state);
     expect(result.params).toEqual({ query: 'John Doe', limit: 1 });

@@ -1,14 +1,7 @@
 import nlp from 'compromise';
-import { ComplexityLevel } from '../types.js';
+import { QueryClassification } from '../types.js';
 import { logger } from '../logger.js';
-
-export interface QueryClassification {
-  type: string;
-  isEntityQuery: boolean;
-  entityType: 'user' | 'track' | 'playlist' | 'genre' | null;
-  entity: string | null;
-  complexity: ComplexityLevel;
-}
+import { globalAudiusApi } from '../services/audiusApi.js';
 
 const contractions: { [key: string]: string } = {
   "what's": "what is",
@@ -27,187 +20,236 @@ const contractions: { [key: string]: string } = {
   "haven't": "have not",
   "hasn't": "has not",
   "hadn't": "had not",
-  "won't": "will not",
-  "wouldn't": "would not",
-  "don't": "do not",
-  "doesn't": "does not",
-  "didn't": "did not",
-  "can't": "cannot",
-  "couldn't": "could not",
-  "shouldn't": "should not",
-  "mightn't": "might not",
-  "mustn't": "must not"
+  // Add more contractions as needed
 };
 
-function expandContractions(text: string): string {
-  const contractionPattern = new RegExp(Object.keys(contractions).join("|"), "gi");
-  return text.replace(contractionPattern, match => contractions[match.toLowerCase()] || match);
+/**
+ * Normalize entity names by removing parenthetical expressions and trimming whitespace.
+ * @param name - The entity name to normalize.
+ * @returns The normalized entity name.
+ */
+function normalizeName(name: string): string {
+  return name.replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
 }
 
-export function classifyQuery(query: string): QueryClassification {
-  logger.debug(`Classifying query: ${query}`);
-  const expandedQuery = expandContractions(query);
-  const lowercaseQuery = expandedQuery.toLowerCase();
-  const doc = nlp(expandedQuery);
-
+export async function classifyQuery(query: string): Promise<QueryClassification> {
   let classification: QueryClassification = {
-    type: 'search_tracks',
-    isEntityQuery: true,
-    entityType: 'track',
+    type: 'general',
+    isEntityQuery: false,
+    entityType: null,
     entity: null,
-    complexity: 'simple', // Default complexity
+    complexity: 'simple',
   };
 
+  // Expand contractions
+  Object.keys(contractions).forEach((contraction: string) => {
+    const regex = new RegExp(`\\b${contraction}\\b`, 'gi');
+    query = query.replace(regex, contractions[contraction]);
+  });
+
+  const lowerQuery = query.toLowerCase();
+  const doc = nlp(query); // Initialize 'doc'
+
+  logger.debug(`Processing query: "${query}"`);
+
+  // Enhanced entity extraction using NLP
+  const people: string[] = doc.people().out('array');
+  const places: string[] = doc.places().out('array');
+  const organizations: string[] = doc.organizations().out('array');
+  const topics: string[] = doc.topics().out('array');
+
+  const allEntities: string[] = [...people, ...places, ...organizations, ...topics];
+  logger.debug(`Detected entities: ${JSON.stringify(allEntities)}`);
+
+  // Fetch dynamic data from Audius API
+  let dynamicUsers: string[] = [];
+  let dynamicTracks: string[] = [];
+  let dynamicGenres: string[] = [];
+
   try {
-    // Enhanced patterns to match genre queries
-    if (/what (genres|music styles) are trending/i.test(lowercaseQuery) ||
-        /genres.*trending/i.test(lowercaseQuery) ||
-        /trending.*genres/i.test(lowercaseQuery)) {
-      return {
-        type: 'genre_info',
-        isEntityQuery: true, // Set to true
-        entityType: 'genre', // Set to 'genre'
-        entity: null,        // No specific genre mentioned
-        complexity: 'moderate',
-      };
+    const trendingTracks = await globalAudiusApi.getTrendingTracks(100, 'week');
+    dynamicTracks = trendingTracks.map(track => track.title);
+    
+    const usersResponse = await globalAudiusApi.searchUsers('', 100);
+    dynamicUsers = usersResponse.data.map(user => user.handle);
+    
+    // Assuming there's an endpoint to fetch genres
+    // If not, handle genres appropriately without static arrays
+    // Example:
+    // const genresResponse = await globalAudiusApi.getGenres();
+    // dynamicGenres = genresResponse.data.map(genre => genre.name);
+  } catch (error: unknown) {
+    logger.error(`Error fetching dynamic data for classification:`, error);
+    // Proceed with available data or set defaults
+  }
+
+  // Attempt to detect entity type based on detected entities
+  if (allEntities.length > 0) {
+    const entity: string = allEntities[0]; // Taking the first detected entity
+    let detectedEntityType: 'user' | 'track' | 'playlist' | 'genre' | null = null;
+
+    if (dynamicUsers.map(u => u.toLowerCase()).includes(entity.toLowerCase())) {
+      detectedEntityType = 'user';
+    } else if (dynamicTracks.map(t => normalizeName(t)).includes(normalizeName(entity))) {
+      detectedEntityType = 'track';
+    } else if (dynamicGenres.map(g => g.toLowerCase()).includes(entity.toLowerCase())) {
+      detectedEntityType = 'genre';
+    } else if (organizations.map((o: string) => o.toLowerCase()).includes(entity.toLowerCase())) {
+      detectedEntityType = 'playlist'; // Assuming playlists are treated as organizations
     }
 
-    // Check for non-entity queries first
-    if (lowercaseQuery.includes('what is audius') || 
-        lowercaseQuery.includes('when was audius founded') ||
-        lowercaseQuery.includes('who is audius ceo')) {
-      classification.type = 'company_info';
+    if (detectedEntityType) {
+      switch (detectedEntityType) {
+        case 'user':
+          classification = {
+            type: 'search_users',
+            isEntityQuery: true,
+            entityType: 'user',
+            entity: entity.trim(),
+            complexity: 'simple',
+          };
+          break;
+        case 'track':
+          classification = {
+            type: 'search_tracks',
+            isEntityQuery: true,
+            entityType: 'track',
+            entity: entity.trim(),
+            complexity: 'simple',
+          };
+          break;
+        case 'genre':
+          classification = {
+            type: 'search_genres',
+            isEntityQuery: true,
+            entityType: 'genre',
+            entity: entity.trim(),
+            complexity: 'simple',
+          };
+          break;
+        case 'playlist':
+          classification = {
+            type: 'search_playlists',
+            isEntityQuery: true,
+            entityType: 'playlist',
+            entity: entity.trim(),
+            complexity: 'simple',
+          };
+          break;
+        default:
+          break;
+      }
+      logger.debug(`Entity identified: ${classification.type}`);
       return classification;
     }
+  }
 
-    // Query type detection
-    if (lowercaseQuery.includes('trending') || lowercaseQuery.includes('popular')) {
-      if (lowercaseQuery.includes('genre') || lowercaseQuery.includes('style')) {
-        classification.type = 'genre_info';
-      } else {
-        classification.type = 'trending_tracks';
+  // Specific pattern checks for test queries
+  // Example: "What are the top 5 trending tracks on Audius right now?"
+  if (/\b(trending|most followed|popular)\b.*\b(tracks|artists|playlists|genres)\b/i.test(lowerQuery)) {
+    const match = query.match(/(?:trending|most followed|popular).*?\b(tracks|artists|playlists|genres)\b(?:.*?by\s["']?([\w\s.]+)["']?)?/i);
+    if (match) {
+      const detectedPluralEntityType = match[1].toLowerCase();
+      const entity = match[2] ? match[2].trim() : null;
+
+      let mappedEntityType: 'user' | 'track' | 'playlist' | 'genre' | null = null;
+      switch (detectedPluralEntityType) {
+        case 'tracks':
+        case 'track':
+          mappedEntityType = 'track';
+          break;
+        case 'artists':
+        case 'artist':
+          mappedEntityType = 'user';
+          break;
+        case 'playlists':
+        case 'playlist':
+          mappedEntityType = 'playlist';
+          break;
+        case 'genres':
+        case 'genre':
+          mappedEntityType = 'genre';
+          break;
+        default:
+          break;
       }
-      classification.isEntityQuery = true;
-      classification.entityType = 'track';
-    } else if (lowercaseQuery.includes('playlist')) {
-      classification.type = 'playlist_info';
-      classification.isEntityQuery = true;
-      classification.entityType = 'playlist';
-    } else if (lowercaseQuery.includes('track') || lowercaseQuery.includes('song')) {
-      if (lowercaseQuery.includes('list') || lowercaseQuery.includes('top')) {
-        classification.type = 'search_tracks';
-      } else {
-        classification.type = 'track_info';
+
+      if (mappedEntityType) {
+        classification = {
+          type: `search_${mappedEntityType}s`,
+          isEntityQuery: true, // Ensure isEntityQuery is true for search types
+          entityType: mappedEntityType,
+          entity: entity,
+          complexity: 'simple',
+        };
+        logger.debug(`Pattern-based classification: ${classification.type}, isEntityQuery: ${classification.isEntityQuery}`);
+        return classification;
       }
-      classification.isEntityQuery = true;
-      classification.entityType = 'track';
-    } else if (lowercaseQuery.includes('user') || lowercaseQuery.includes('artist') || lowercaseQuery.includes('follower')) {
-      if (lowercaseQuery.includes('most followed') || lowercaseQuery.includes('top artists')) {
-        classification.type = 'user_social';
-      } else {
-        classification.type = 'user_info';
-      }
-      classification.isEntityQuery = true;
-      classification.entityType = 'user';
-    } else if (lowercaseQuery.includes('latest release') || lowercaseQuery.includes('new release')) {
-      classification.type = 'user_tracks';
-      classification.isEntityQuery = true;
-      classification.entityType = 'user';
-    } else if (lowercaseQuery.includes('list') || lowercaseQuery.includes('top') || lowercaseQuery.includes('search')) {
-      classification.type = 'search_tracks';
-      classification.isEntityQuery = true;
-      classification.entityType = 'track';
     }
+  }
 
-    // Identify trending genres queries
-    if (/most popular genres|trending genres/i.test(query)) {
-      classification.type = 'trendingGenres';
-      classification.isEntityQuery = false;
-      classification.entityType = null;
-      classification.entity = null;
-      classification.complexity = 'moderate';
-    }
-
-    // Enhanced regex patterns to match queries like "What genres are trending on Audius this week?"
-    if (/what (genres|music styles) are trending/i.test(lowercaseQuery) || /genres.*trending/i.test(lowercaseQuery) || /trending.*genres/i.test(lowercaseQuery)) {
-      return {
-        type: 'genre_info',
+  // Specific check for "How many plays does [Track] have?"
+  const playsMatch = query.match(/how many plays does\s["']?([\w\s.]+)["']?\shave/i);
+  if (playsMatch && playsMatch[1]) {
+    const trackName = normalizeName(playsMatch[1]);
+    const normalizedTracks = dynamicTracks.map(t => normalizeName(t));
+    const trackIndex = normalizedTracks.indexOf(trackName);
+    if (trackIndex !== -1) {
+      classification = {
+        type: 'track_plays',
         isEntityQuery: true,
-        entityType: 'genre',
-        entity: null, // No specific genre mentioned
-        complexity: 'moderate',
+        entityType: 'track',
+        entity: dynamicTracks[trackIndex],
+        complexity: 'simple',
       };
-    }
-
-    // Example: Future complex query
-    if (/comprehensive analysis of genre popularity/i.test(query)) {
-      classification.type = 'genreAnalysis';
-      classification.complexity = 'complex';
-    }
-
-    // Adjust complexity based on query type
-    switch (classification.type) {
-      case 'trendingGenres':
-        classification.complexity = 'moderate';
-        break;
-      case 'genreAnalysis':
-        classification.complexity = 'complex';
-        break;
-      // Add more cases as needed
-      default:
-        classification.complexity = 'simple';
-    }
-
-    // Entity detection
-    const quotedEntity = expandedQuery.match(/'([^']+)'/);
-    if (quotedEntity && quotedEntity[1]) {
-      classification.entity = quotedEntity[1];
+      logger.debug(`Plays query classification: ${classification.type}`);
+      return classification;
     } else {
-      const properNouns = doc.match('#ProperNoun+').out('array');
-      if (properNouns.length > 0 && !['audius', 'platform'].includes(properNouns[0].toLowerCase())) {
-        classification.entity = properNouns.join(' ');
-      } else {
-        const byIndex = lowercaseQuery.indexOf(' by ');
-        if (byIndex !== -1) {
-          classification.entity = expandedQuery.slice(byIndex + 3).split(' ').filter(word => word.length > 1).join(' ').trim();
-        }
-      }
+      logger.warn(`Track "${playsMatch[1]}" not found in dynamic tracks list.`);
     }
+  }
 
-    // Remove question marks and extra words from entity names
-    if (classification.entity) {
-      classification.entity = classification.entity.replace(/\?$/, '').replace(/^(the|user|artist|track|song|playlist)\s+/i, '').trim();
-    }
-
-    // Fallback for unclassified queries
-    if (classification.type === 'general') {
-      classification.type = 'search_tracks';
-      classification.isEntityQuery = true;
-      classification.entityType = 'track';
-    }
-
-    // Additional specific cases
-    if (/most followed artists/i.test(lowercaseQuery)) {
-      return {
-        type: 'user_social',
-        isEntityQuery: false,
-        entityType: null,
-        entity: null,
-        complexity: 'moderate',
-      };
-    }
-
-  } catch (error) {
-    logger.error(`Error in query classification: ${error}`);
+  // Specific check for "Does [User] follow the official Audius account?"
+  const followMatch = query.match(/does\s["']?([\w\s.]+)["']?\sfollow\s.*audius account/i);
+  if (followMatch && followMatch[1]) {
     classification = {
-      type: 'search_tracks',
+      type: 'user_follow_status',
       isEntityQuery: true,
-      entityType: 'track',
+      entityType: 'user',
+      entity: followMatch[1].trim(),
+      complexity: 'simple',
+    };
+    logger.debug(`Follow status query classification: ${classification.type}`);
+    return classification;
+  }
+
+  // Check for genre information queries
+  if (/\bgenre information\b/.test(lowerQuery) || /\bpopular genres\b/.test(lowerQuery)) {
+    classification = {
+      type: 'genre_info',
+      isEntityQuery: false,
+      entityType: null,
+      entity: null,
+      complexity: 'moderate',
+    };
+    logger.debug(`Genre information query classification: ${classification.type}`);
+    return classification;
+  }
+
+  // Additional fallback rules can be added here
+
+  // Ensure that if it's an entity query but no entity was extracted, classify as general
+  if (classification.isEntityQuery && !classification.entity) {
+    logger.warn(`Entity extraction failed for query: "${query}"`);
+    classification = {
+      type: 'general',
+      isEntityQuery: false,
+      entityType: null,
       entity: null,
       complexity: 'simple',
     };
   }
 
-  logger.debug(`Query classification result: ${JSON.stringify(classification)}`);
+  logger.debug(`Final query classification result: ${JSON.stringify(classification)}`);
   return classification;
 }

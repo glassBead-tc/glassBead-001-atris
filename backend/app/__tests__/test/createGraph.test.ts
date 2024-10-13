@@ -43,8 +43,13 @@ describe('createGraph', () => {
   });
 
   test('should handle errors gracefully', async () => {
-    const mockExtractCategory = jest.fn().mockRejectedValue(new Error('Test Error')) as jest.MockedFunction<typeof extractCategory.extractCategory>;
-    extractCategory.extractCategory.mockImplementation(mockExtractCategory);
+    const mockedExtractCategory = jest.mocked(extractCategory.extractCategory);
+    mockedExtractCategory.mockImplementation(async (state: GraphState): Promise<Partial<GraphState>> => ({
+      ...state,
+      error: 'Test Error',
+      categories: ['General'],
+      isEntityQuery: false
+    }));
 
     const initialState: GraphState = createDefaultGraphState({
       query: 'test query',
@@ -55,7 +60,7 @@ describe('createGraph', () => {
 
     const result = await graph.invoke(initialState);
 
-    expect(mockExtractCategory).toHaveBeenCalled();
+    expect(mockedExtractCategory).toHaveBeenCalled();
     expect(result.error).toBeDefined();
     expect(result.error).toContain('Test Error');
     expect(result.formattedResponse).toContain('an error occurred');

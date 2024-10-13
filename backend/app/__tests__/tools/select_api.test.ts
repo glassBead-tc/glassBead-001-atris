@@ -1,4 +1,4 @@
-import { GraphState, DatasetSchema, QueryType } from '../../types.js';
+import { GraphState, DatasetSchema, QueryType, ComplexityLevel } from '../../types.js';
 import { selectApi } from '../../tools/select_api.js';
 
 describe('selectApi', () => {
@@ -39,12 +39,15 @@ describe('selectApi', () => {
     query: '',
     apis: mockApis,
     queryType: 'unknown' as QueryType,
-    entityType: undefined,
+    entityType: null,
+    entity: null, // Ensure this line is present
     categories: [],
     isEntityQuery: false,
     response: null,
     formattedResponse: '',
     error: null,
+    message: null, // Ensure this line is present
+    complexity: 'simple' as ComplexityLevel, // Added this line
     llm: {} as any, // Mock LLM object
     bestApi: null,
     params: {},

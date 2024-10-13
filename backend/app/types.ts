@@ -1,12 +1,13 @@
 import { ChatOpenAI, ChatOpenAICallOptions } from "@langchain/openai";
 
 export type ComplexityLevel = 'simple' | 'moderate' | 'complex' | string;
+
 export interface QueryClassification {
   type: string;
   isEntityQuery: boolean;
-  entityType: string | null;
+  entityType: 'user' | 'track' | 'playlist' | 'genre' | null;
   entity: string | null;
-  complexity: ComplexityLevel; // New property
+  complexity: ComplexityLevel;
 }
 
 export interface DatasetSchema {
@@ -57,6 +58,9 @@ export interface GraphState {
 export type QueryType =
   | 'trending_tracks'
   | 'search_tracks'
+  | 'search_users'
+  | 'search_playlists'
+  | 'search_genres'
   | 'user_social'
   | 'user_info'
   | 'user_tracks'
@@ -64,12 +68,12 @@ export type QueryType =
   | 'playlist_info'
   | 'track_info'
   | 'genre_info'
-  | 'playback'
   | 'company_info'  // New type for queries about Audius as a company
+  | 'track_plays'
+  | 'user_follow_status'
   | 'general';
 
-
-  export type NodeNames = 
+export type NodeNames = 
   | "extract_category"
   | "get_apis"
   | "select_api"
@@ -80,5 +84,11 @@ export type QueryType =
   | "create_fetch_request"
   | "process_api_response"
   | "handle_error"
+  | "handle_playlist_info"
+  | "handle_search_tracks"
+  | "handle_search_genres"
+  | "handle_search_playlists"
+  | "handle_search_users"
+  | "handle_trending_tracks"
   | "log_final_result"
   | "classify_query";

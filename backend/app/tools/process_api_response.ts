@@ -1,6 +1,7 @@
 import { GraphState } from "../types.js";
 import { logger } from '../logger.js';
 import { TrackData } from "../lib/audiusData.js";
+import { extractGenres, scoreAndRankGenres } from '../tools/multi_step_queries.js';
 
 console.log("process_api_response.ts file loaded");
 
@@ -35,6 +36,14 @@ export async function processApiResponse(state: GraphState): Promise<Partial<Gra
         logger.debug("Processing track query");
         formattedResponse = processTrackQuery(state);
         break;
+      case 'playlist_info':
+        logger.debug("Processing playlist query");
+        formattedResponse = processPlaylistQuery(state);
+        break;
+      case 'search_tracks':
+        logger.debug("Processing search tracks query");
+        formattedResponse = processSearchTracksQuery(state);
+        break;
       // ... other cases
       default:
         logger.warn(`Unsupported query type: ${state.queryType}`);
@@ -55,7 +64,8 @@ export async function processApiResponse(state: GraphState): Promise<Partial<Gra
 }
 
 function processUserQuery(state: GraphState): string {
-  const userInfo = processUserData(state.response.data);
+  const userData = state.response.data;
+  const userInfo = processUserData(userData);
   
   if (state.query.toLowerCase().includes('followers')) {
     return `${userInfo.name} (@${userInfo.handle}) has ${userInfo.followers} followers on Audius.`;
@@ -138,6 +148,11 @@ function findClosestMatch(tracks: TrackData[], trackName: string, artistName: st
 function processPlaylistQuery(state: GraphState): string {
   // Implement playlist query processing similarly
   return "Playlist processing not yet implemented.";
+}
+
+function processSearchTracksQuery(state: GraphState): string {
+  // Implement search tracks query processing similarly
+  return "Search tracks query processing not yet implemented.";
 }
 
 function formatDefaultResponse(data: any): string {

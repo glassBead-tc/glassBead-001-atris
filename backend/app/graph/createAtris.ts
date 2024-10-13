@@ -11,8 +11,17 @@ import { GraphState, NodeNames } from "../types.js";
 import { processApiResponse } from "../tools/process_api_response.js";
 import { handleMultiStepQuery } from "../tools/multi_step_queries.js";
 import { logger } from '../logger.js';
-import { handleEntityQuery, handleError } from './functions/handlerFunctions.js';
-import { classifyQueryWrapper, wrapNodeLogic, logFinalResult } from './functions/creationHelperFunctions.js';
+import { 
+  handle_entity_query, 
+  handle_error, 
+  handle_playlist_info, 
+  handle_search_tracks, 
+  handle_search_playlists,
+  handle_search_users,
+  handle_trending_tracks,
+  handle_search_genres // Newly added handler
+} from './functions/handlerFunctions.js';
+import { classifyQueryWrapper, wrapNodeLogic, log_final_result } from './functions/creationHelperFunctions.js';
 import { verifyParams } from '../tools/verify_params.js';
 
 dotenv.config();
@@ -59,6 +68,10 @@ function createAtrisGraph(): CompiledStateGraph<GraphState, Partial<GraphState>,
         default: () => null,
         reducer: (current, newVal) => newVal || current
       },
+      isEntityQuery: { 
+        default: () => false,
+        reducer: (current, newVal) => newVal !== undefined ? newVal : current
+      },
       multiStepHandled: { 
         default: () => false,
         reducer: (current, newVal) => newVal !== undefined ? newVal : current
@@ -95,16 +108,42 @@ function createAtrisGraph(): CompiledStateGraph<GraphState, Partial<GraphState>,
     .addNode("get_apis", wrapNodeLogic("get_apis", getApis))
     .addNode("select_api", wrapNodeLogic("select_api", selectApi))
     .addNode("handle_multi_step_query", wrapNodeLogic("handle_multi_step_query", handleMultiStepQuery))
-    .addNode("handle_entity_query", wrapNodeLogic("handle_entity_query", handleEntityQuery))
+    .addNode("handle_entity_query", wrapNodeLogic("handle_entity_query", handle_entity_query))
+    .addNode("handle_search_genres", wrapNodeLogic("handle_search_genres", handle_search_genres)) // Newly added node
     .addNode("extract_parameters", wrapNodeLogic("extract_parameters", extractParameters))
     .addNode("verify_params", wrapNodeLogic("verify_params", verifyParams))
     .addNode("create_fetch_request", wrapNodeLogic("create_fetch_request", createFetchRequest))
     .addNode("process_api_response", wrapNodeLogic("process_api_response", processApiResponse))
-    .addNode("handle_error", wrapNodeLogic("handle_error", handleError))
-    .addNode("log_final_result", wrapNodeLogic("log_final_result", logFinalResult))
+    .addNode("handle_error", wrapNodeLogic("handle_error", handle_error))
+    .addNode("log_final_result", wrapNodeLogic("log_final_result", log_final_result))
+    .addNode("handle_playlist_info", wrapNodeLogic("handle_playlist_info", handle_playlist_info))
+    .addNode("handle_search_tracks", wrapNodeLogic("handle_search_tracks", handle_search_tracks))
+    .addNode("handle_search_playlists", wrapNodeLogic("handle_search_playlists", handle_search_playlists))
+    .addNode("handle_search_users", wrapNodeLogic("handle_search_users", handle_search_users))
+    .addNode("handle_trending_tracks", wrapNodeLogic("handle_trending_tracks", handle_trending_tracks))
+    .addNode("handle_search_genres", wrapNodeLogic("handle_search_genres", handle_search_genres)) // Newly added node
     .addConditionalEdges({
       source: "classify_query",
-      path: (state: GraphState) => state.error ? "handle_error" : "extract_category"
+      path: (state: GraphState) => {
+        switch(state.queryType) {
+          case 'genre_info':
+            return "handle_multi_step_query";
+          case 'playlist_info':
+            return "handle_playlist_info";
+          case 'search_tracks':
+            return "handle_search_tracks";
+          case 'search_playlists':
+            return "handle_search_playlists";
+          case 'search_users':
+            return "handle_search_users";
+          case 'trending_tracks':
+            return "handle_trending_tracks";
+          case 'search_genres': // Newly added case
+            return "handle_search_genres";
+          default:
+            return "handle_entity_query"; // Only fallback to handle_entity_query for other types
+        }
+      }
     })
     .addConditionalEdges({
       source: "extract_category",
@@ -149,7 +188,62 @@ function createAtrisGraph(): CompiledStateGraph<GraphState, Partial<GraphState>,
     })
     .addConditionalEdges({
       source: "handle_entity_query",
-      path: (state: GraphState) => state.error ? "handle_error" : "process_api_response"
+      path: (state: GraphState) => {
+        switch(state.queryType) {
+          case 'genre_info':
+            return "handle_multi_step_query";
+          case 'playlist_info':
+            return "handle_playlist_info";
+          case 'search_tracks':
+            return "handle_search_tracks";
+          case 'search_playlists':
+            return "handle_search_playlists";
+          case 'search_users':
+            return "handle_search_users";
+          case 'trending_tracks':
+            return "handle_trending_tracks";
+          case 'search_genres': // Newly added case
+            return "handle_search_genres";
+          default:
+            return "handle_error"; // Changed from "handle_entity_query" to "handle_error" to prevent recursion
+        }
+      }
+    })
+    .addConditionalEdges({
+      source: "handle_playlist_info",
+      path: (state: GraphState) => {
+        return state.error ? "handle_error" : "log_final_result";
+      }
+    })
+    .addConditionalEdges({
+      source: "handle_search_tracks",
+      path: (state: GraphState) => {
+        return state.error ? "handle_error" : "log_final_result";
+      }
+    })
+    .addConditionalEdges({
+      source: "handle_search_playlists",
+      path: (state: GraphState) => {
+        return state.error ? "handle_error" : "log_final_result";
+      }
+    })
+    .addConditionalEdges({
+      source: "handle_search_users",
+      path: (state: GraphState) => {
+        return state.error ? "handle_error" : "log_final_result";
+      }
+    })
+    .addConditionalEdges({
+      source: "handle_trending_tracks",
+      path: (state: GraphState) => {
+        return state.error ? "handle_error" : "log_final_result";
+      }
+    })
+    .addConditionalEdges({
+      source: "handle_search_genres",
+      path: (state: GraphState) => {
+        return state.error ? "handle_error" : "log_final_result";
+      }
     })
     .addEdge("handle_error", "log_final_result")
     .addEdge("log_final_result", END);

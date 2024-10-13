@@ -2,11 +2,22 @@ import { ChatOpenAI } from "@langchain/openai";
 import { createAtris } from "./graph/createAtris.js";
 import { globalAudiusApi } from "./services/audiusApi.js";
 import { logger, logToUser } from "./logger.js";
-import { handleQuery, getTestQueries } from "./modules/queryHandler.js";
+import { handleQuery } from "./modules/queryHandler.js";
 import { checkRequiredEnvVars, getOpenAiApiKey } from "./config.js";
 import { classifyQuery } from "./modules/queryClassifier.js";
 
 logger.level = "debug";
+
+// Define getTestQueries function
+function getTestQueries(): string[] {
+  return [
+    "What are the top trending tracks?",
+    "Who are the most followed artists?",
+    "Find me some electronic music playlists",
+    "What's the most played track by Skrillex?",
+    "Show me the latest uploads in the hip-hop genre"
+  ];
+}
 
 async function main() {
   logger.info("Starting main execution");

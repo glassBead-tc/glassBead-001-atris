@@ -1,0 +1,22 @@
+audius-frontend/
+├── app/
+│   ├── components/
+│   │   ├── Chatbot/
+│   │   │   ├── Chatbot.tsx
+│   │   │   └── ChatMessage.tsx
+│   │   └── Layout.tsx
+│   ├── pages/
+│   │   ├── _app.tsx
+│   │   └── index.tsx
+│   ├── styles/
+│   │   └── globals.css
+│   └── utils/
+│       └── api.ts
+├── public/
+├── tests/
+│   └── Chatbot.test.tsx
+├── .env.local
+├── tailwind.config.js
+├── postcss.config.js
+├── package.json
+└── README.md

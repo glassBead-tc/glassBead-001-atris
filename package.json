@@ -5,6 +5,7 @@
   "author": "Brace Sproul",
   "license": "MIT",
   "workspaces": [
+    "atris-frontend",
     "backend"
   ],
   "scripts": {
@@ -18,7 +19,8 @@
     "turbo": "latest"
   },
   "resolutions": {
-    "@langchain/core": "0.2.6"
+    "@langchain/core": "0.2.6",
+    "web3": "1.5.0"
   },
   "dependencies": {
     "@audius/sdk": "^6.0.1",
@@ -27,7 +29,7 @@
     "@types/react": "^18.3.11",
     "@types/winston": "^2.4.4",
     "joi": "^17.13.3",
-    "web3": "^4.13.0",
-    "winston": "^3.15.0"
+    "winston": "^3.15.0",
+    "dotenv": "^10.0.0"
   }
 }

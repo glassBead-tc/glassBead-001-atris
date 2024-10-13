@@ -1,7 +1,5 @@
 import { classifyQuery } from '../../modules/queryClassifier.js';
-import { GraphState, DatasetSchema, QueryType } from '../../types.js';
-import { selectApi } from '../../tools/select_api.js';
-import { createDefaultGraphState } from '../helpers/createDefaultGraphState.js'; // Assuming you created this helper
+import { ComplexityLevel } from '../../types.js';
 
 describe('queryClassifier', () => {
   test('classifies trending tracks query', () => {
@@ -11,7 +9,7 @@ describe('queryClassifier', () => {
       type: 'trending_tracks',
       message: '',      // Added if required
       entity: null,     // Added if required
-      complexity: 1,    // Added if required
+      complexity: 'simple' as ComplexityLevel,    // Added if required
     });
   });
 
@@ -23,7 +21,7 @@ describe('queryClassifier', () => {
       entity: 'John Doe',
       entityType: 'user',
       message: '',      // Added if required
-      complexity: 2,    // Added if required
+      complexity: 'simple' as ComplexityLevel,    // Added if required
     });
   });
 
@@ -35,7 +33,7 @@ describe('queryClassifier', () => {
       entity: 'Happy',
       entityType: 'track',
       message: '',      // Added if required
-      complexity: 2,    // Added if required
+      complexity: 'simple' as ComplexityLevel,    // Added if required
     });
   });
 

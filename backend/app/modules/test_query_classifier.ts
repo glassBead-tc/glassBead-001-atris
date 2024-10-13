@@ -1,4 +1,5 @@
-import { classifyQuery, QueryClassification } from './queryClassifier.js';
+import { QueryClassification } from '../types.js';
+import { classifyQuery } from './queryClassifier.js';
 
 console.log('Test file execution started');
 
@@ -19,7 +20,7 @@ async function runTests() {
   for (const testCase of testCases) {
     try {
       console.log(`Testing query: "${testCase.query}"`);
-      const result: QueryClassification = classifyQuery(testCase.query);
+      const result: QueryClassification = await classifyQuery(testCase.query);
       console.log(`Result: ${JSON.stringify(result)}`);
       console.log(`Expected: ${JSON.stringify(testCase.expected)}`);
       console.log(`Test ${JSON.stringify(result) === JSON.stringify(testCase.expected) ? 'PASSED' : 'FAILED'}`);

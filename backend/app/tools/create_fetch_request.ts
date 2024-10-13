@@ -35,8 +35,6 @@ export async function executeApiCall(api: DatasetSchema, params: Record<string, 
       case "Get User Following":
         if (!params.user_id) throw new Error("User ID is required for Get User Following API");
         return await globalAudiusApi.getUserFollowing(params.user_id, params.limit);
-      case "Get Trending Genres":
-        return await globalAudiusApi.getTrendingGenres(params.limit);
       default:
         throw new Error(`Unsupported API endpoint: ${api.api_name}`);
     }
