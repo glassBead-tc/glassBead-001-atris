@@ -4,7 +4,7 @@ Atris is a research agent for Audius designed to provide artists, labels, and te
 
 ## Project Overview
 
-Atris is an Audius API integration system using LangGraph.js and Next.js. It processes natural language queries to interact with the Audius API, focusing on trending tracks, playlists, and user profiles.
+Atris is an Audius API integration system using LangGraph.js and Next.js. It processes natural language queries to interact with the Audius API, focusing on trending tracks, playlists, genres, and user profiles.
 
 ## Current Functionality
 
@@ -12,27 +12,30 @@ Atris can now:
 1. Interpret user queries about Audius data.
 2. Extract categories and parameters from queries.
 3. Select and interact with appropriate Audius API endpoints.
-4. Retrieve and process data for trending tracks, including number parsing for limit queries.
+4. Retrieve and process data for trending tracks and genres, including number parsing for limit queries.
 5. Handle basic error scenarios and API rate limiting.
 6. Resolve recursion issues in the query processing flow to ensure stable operations.
 7. Enhance logging mechanisms to avoid exposing backend logic to users.
 8. Successfully handle end-to-end queries without encountering recursion limit errors.
+9. **Limit Results and Sanitize Output**: Restrict responses to a specified number of items (defaulting to 5) and remove sensitive details like scores for cleaner output.
+10. **Default Timeframe Setting**: Automatically default trending data to the last week unless a different timeframe is specified.
 
 ## Development Status
 
 We are currently in Phase 1 of our project roadmap, having completed:
 - Basic query pipeline implementation
-- Trending tracks functionality
+- Trending tracks and genres functionality
 - Number parsing for limit queries
 - Resolved recursion issues in LangGraph flow
 - Enhanced logging to abstract backend logic from user responses
 - Successful end-to-end testing of key functionalities
+- Implemented response sanitization and default timeframe settings
 
 Our next immediate goals are:
 1. Implementing playlist search and retrieval
 2. Developing user profile search and retrieval
 3. Enhancing error handling and system resilience
-4. Expanding the AudiusApi class with new methods for different query types
+4. Expanding the `AudiusApi` class with new methods for different query types
 5. Implementing caching for frequently requested data
 
 ## Running Atris
@@ -53,6 +56,7 @@ For detailed setup instructions, please refer to the documents in the `backend/a
 3. **Audius-Specific Functionality**
 4. **Error Handling and Logging**
 5. **Graph Structure for Query Routing**
+6. **Response Sanitization and Formatting**
 
 ## Technology Stack
 
@@ -68,7 +72,7 @@ For detailed setup instructions, please refer to the documents in the `backend/a
 ## Next Steps
 
 1. Implement query routing functionality
-2. Expand AudiusApi class with new methods for different query types
+2. Expand `AudiusApi` class with new methods for different query types
 3. Develop a custom error handling system
 4. Prepare API routes for future Next.js integration
 5. Implement playlist and user profile search and retrieval
