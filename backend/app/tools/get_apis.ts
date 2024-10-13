@@ -1,11 +1,15 @@
 import fs from "fs";
 import { DatasetSchema, GraphState } from "../types.js";
-import { HIGH_LEVEL_CATEGORY_MAPPING, TRIMMED_CORPUS_PATH } from "../constants.js";
+import { TRIMMED_CORPUS_PATH } from "../constants.js";
 import { logger } from '../logger.js';
 
 export const getApis = async (state: GraphState): Promise<Partial<GraphState>> => {
-    const { categories } = state;
+    let { categories } = state;
     logger.debug(`getApis function called with categories: ${JSON.stringify(categories)}`);
+
+    // Remove duplicates from categories
+    categories = [...new Set(categories)];
+    logger.debug(`Unique categories: ${JSON.stringify(categories)}`);
 
     try {
         logger.debug(`Reading data from TRIMMED_CORPUS_PATH: ${TRIMMED_CORPUS_PATH}`);
@@ -18,24 +22,14 @@ export const getApis = async (state: GraphState): Promise<Partial<GraphState>> =
             logger.warn("No categories provided, returning all APIs");
             apis = allData.endpoints;
         } else {
-            const categorySet = new Set(categories.map(cat => cat.toLowerCase()));
-
-            // Include both high-level and specific categories
-            const relevantCategories = new Set([
-                ...categorySet,
-                ...Object.entries(HIGH_LEVEL_CATEGORY_MAPPING)
-                    .filter(([high, low]) => categorySet.has(high.toLowerCase()))
-                    .flatMap(([_, low]) => low.map(l => l.toLowerCase()))
-            ]);
-
-            logger.debug("Relevant categories:", Array.from(relevantCategories));
-
-            apis = allData.endpoints.filter(api => 
-                relevantCategories.has(api.category_name.toLowerCase())
-            );
+            const categorySet = new Set(categories.map((cat: string) => cat.toLowerCase()));
+            apis = allData.endpoints.filter(api => {
+                const apiCategories = api.category_name.split(',').map((cat: string) => cat.trim().toLowerCase());
+                return apiCategories.some((cat: string) => categorySet.has(cat));
+            });
         }
 
-        logger.info(`Found ${apis.length} APIs matching the categories: ${categories ? categories.join(', ') : 'All'}`);
+        logger.info(`Found ${apis.length} APIs matching the categories: ${categories.join(', ')}`);
         logger.debug(`APIs found: ${JSON.stringify(apis)}`);
 
         if (apis.length === 0) {
@@ -49,7 +43,7 @@ export const getApis = async (state: GraphState): Promise<Partial<GraphState>> =
 
         return { 
             apis,
-            message: `Found ${apis.length} APIs matching the categories: ${categories ? categories.join(', ') : 'All'}.`
+            message: `Found ${apis.length} APIs matching the categories: ${categories.join(', ')}.`
         };
     } catch (error) {
         logger.error("Error in getApis:", error);

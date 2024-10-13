@@ -1,5 +1,6 @@
-import { createGraph } from '../../graph/createGraph.js';
+import { createGraph } from '../../graph/createAtris.js';
 import { GraphState, QueryType } from '../../types.js';
+import { createDefaultGraphState } from '../helpers/createDefaultGraphState.js'; // Assuming you created this helper
 
 describe('createGraph', () => {
   test('creates a valid graph', () => {
@@ -10,20 +11,12 @@ describe('createGraph', () => {
 
   test('graph processes a simple query', async () => {
     const graph = createGraph();
-    const initialState: GraphState = {
+    const initialState: GraphState = createDefaultGraphState({
       query: 'What are the trending tracks?',
-      apis: [],
-      queryType: 'trending_tracks' as QueryType,
-      entityType: undefined,
-      categories: [],
-      isEntityQuery: false,
-      response: null,
+      queryType: 'trending_tracks',
       formattedResponse: '',
-      error: null,
-      llm: {} as any, // Mock LLM object
-      bestApi: null,
-      params: {},
-    };
+      // Add or override other properties if needed
+    });
 
     const result = await graph.invoke(initialState);
     expect(result.bestApi?.api_name).toBe('trending_tracks');

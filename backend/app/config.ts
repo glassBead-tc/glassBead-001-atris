@@ -10,7 +10,7 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 export function getOpenAiApiKey(): string {
   const apiKey = process.env.OPENAI_API_KEY;
-  console.log("API Key:", apiKey); // Add this line for debugging
+  // console.log("API Key:", apiKey); // Add this line for debugging
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY is not defined in the environment variables.');
   }

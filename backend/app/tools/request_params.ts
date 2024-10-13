@@ -1,7 +1,6 @@
 import * as readline from "readline";
 import { DatasetParameters, GraphState } from "../types.js";
 import { findMissingParams } from "../utils.js";
-import { logger } from '../logger.js';
 
 const paramsFormat = `<name>,<value>:::<name>,<value>`;
 

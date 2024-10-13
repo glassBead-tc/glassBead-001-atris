@@ -1,12 +1,13 @@
 import nlp from 'compromise';
-import { QueryType } from '../types.js';
+import { ComplexityLevel } from '../types.js';
 import { logger } from '../logger.js';
 
 export interface QueryClassification {
-  type: QueryType;
+  type: string;
   isEntityQuery: boolean;
-  entityType: 'user' | 'track' | 'playlist' | null;
+  entityType: 'user' | 'track' | 'playlist' | 'genre' | null;
   entity: string | null;
+  complexity: ComplexityLevel;
 }
 
 const contractions: { [key: string]: string } = {
@@ -50,13 +51,27 @@ export function classifyQuery(query: string): QueryClassification {
   const doc = nlp(expandedQuery);
 
   let classification: QueryClassification = {
-    type: 'general',
-    isEntityQuery: false,
-    entityType: null,
-    entity: null
+    type: 'search_tracks',
+    isEntityQuery: true,
+    entityType: 'track',
+    entity: null,
+    complexity: 'simple', // Default complexity
   };
 
   try {
+    // Enhanced patterns to match genre queries
+    if (/what (genres|music styles) are trending/i.test(lowercaseQuery) ||
+        /genres.*trending/i.test(lowercaseQuery) ||
+        /trending.*genres/i.test(lowercaseQuery)) {
+      return {
+        type: 'genre_info',
+        isEntityQuery: true, // Set to true
+        entityType: 'genre', // Set to 'genre'
+        entity: null,        // No specific genre mentioned
+        complexity: 'moderate',
+      };
+    }
+
     // Check for non-entity queries first
     if (lowercaseQuery.includes('what is audius') || 
         lowercaseQuery.includes('when was audius founded') ||
@@ -104,6 +119,45 @@ export function classifyQuery(query: string): QueryClassification {
       classification.entityType = 'track';
     }
 
+    // Identify trending genres queries
+    if (/most popular genres|trending genres/i.test(query)) {
+      classification.type = 'trendingGenres';
+      classification.isEntityQuery = false;
+      classification.entityType = null;
+      classification.entity = null;
+      classification.complexity = 'moderate';
+    }
+
+    // Enhanced regex patterns to match queries like "What genres are trending on Audius this week?"
+    if (/what (genres|music styles) are trending/i.test(lowercaseQuery) || /genres.*trending/i.test(lowercaseQuery) || /trending.*genres/i.test(lowercaseQuery)) {
+      return {
+        type: 'genre_info',
+        isEntityQuery: true,
+        entityType: 'genre',
+        entity: null, // No specific genre mentioned
+        complexity: 'moderate',
+      };
+    }
+
+    // Example: Future complex query
+    if (/comprehensive analysis of genre popularity/i.test(query)) {
+      classification.type = 'genreAnalysis';
+      classification.complexity = 'complex';
+    }
+
+    // Adjust complexity based on query type
+    switch (classification.type) {
+      case 'trendingGenres':
+        classification.complexity = 'moderate';
+        break;
+      case 'genreAnalysis':
+        classification.complexity = 'complex';
+        break;
+      // Add more cases as needed
+      default:
+        classification.complexity = 'simple';
+    }
+
     // Entity detection
     const quotedEntity = expandedQuery.match(/'([^']+)'/);
     if (quotedEntity && quotedEntity[1]) {
@@ -132,13 +186,25 @@ export function classifyQuery(query: string): QueryClassification {
       classification.entityType = 'track';
     }
 
+    // Additional specific cases
+    if (/most followed artists/i.test(lowercaseQuery)) {
+      return {
+        type: 'user_social',
+        isEntityQuery: false,
+        entityType: null,
+        entity: null,
+        complexity: 'moderate',
+      };
+    }
+
   } catch (error) {
     logger.error(`Error in query classification: ${error}`);
     classification = {
       type: 'search_tracks',
       isEntityQuery: true,
       entityType: 'track',
-      entity: null
+      entity: null,
+      complexity: 'simple',
     };
   }
 

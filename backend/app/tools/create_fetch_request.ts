@@ -7,27 +7,23 @@ export { globalAudiusApi };
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
 
-// Add this constant at the top of the file
-const BASE_URL = 'https://discoveryprovider.audius.co/v1';
+function isRetryableError(error: any): boolean {
+  if (axios.isAxiosError(error)) {
+    const status = error.response?.status;
+    return status === 500 || status === 502 || status === 503 || status === 504;
+  }
+  return false;
+}
 
-async function executeApiCall(api: DatasetSchema, params: Record<string, any>, retryCount = 0): Promise<any> {
+export async function executeApiCall(api: DatasetSchema, params: Record<string, any>, retryCount = 0): Promise<any> {
   try {
     switch (api.api_name) {
       case "Search Users":
         return await globalAudiusApi.searchUsers(params.query, params.limit);
-      case "Get User":
-        if (!params.user_id) throw new Error("User ID is required for Get User API");
-        return await globalAudiusApi.getUserById(params.user_id);
       case "Search Tracks":
         return await globalAudiusApi.searchTracks(params.query, params.limit);
-      case "Get Track":
-        if (!params.track_id) throw new Error("Track ID is required for Get Track API");
-        return await globalAudiusApi.getTrackById(params.track_id);
       case "Search Playlists":
         return await globalAudiusApi.searchPlaylists(params.query, params.limit);
-      case "Get Playlist":
-        if (!params.playlist_id) throw new Error("Playlist ID is required for Get Playlist API");
-        return await globalAudiusApi.getPlaylistById(params.playlist_id);
       case "Get Trending Tracks":
         return await globalAudiusApi.getTrendingTracks(params.limit);
       case "Get User Tracks":
@@ -39,6 +35,8 @@ async function executeApiCall(api: DatasetSchema, params: Record<string, any>, r
       case "Get User Following":
         if (!params.user_id) throw new Error("User ID is required for Get User Following API");
         return await globalAudiusApi.getUserFollowing(params.user_id, params.limit);
+      case "Get Trending Genres":
+        return await globalAudiusApi.getTrendingGenres(params.limit);
       default:
         throw new Error(`Unsupported API endpoint: ${api.api_name}`);
     }
@@ -47,17 +45,11 @@ async function executeApiCall(api: DatasetSchema, params: Record<string, any>, r
       logger.warn(`Retrying API call to ${api.api_name} (Attempt ${retryCount + 1})`);
       await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
       return executeApiCall(api, params, retryCount + 1);
+    } else {
+      logger.error(`API call to ${api.api_name} failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
     }
-    throw error;
   }
-}
-
-function isRetryableError(error: unknown): boolean {
-  if (axios.isAxiosError(error) && error.response) {
-    const status = error.response.status;
-    return status === 429 || (status >= 500 && status < 600);
-  }
-  return false;
 }
 
 function validateParams(api: DatasetSchema, params: Record<string, any>): void {

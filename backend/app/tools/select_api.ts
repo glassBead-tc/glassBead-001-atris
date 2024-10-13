@@ -3,7 +3,14 @@ import { logger } from '../logger.js';
 
 const RELEVANCE_THRESHOLD = 0.5;
 
-function calculateRelevance(api: DatasetSchema, query: string, queryType: string, entityType: string | null, categories: string[], isEntityQuery: boolean): number {
+function calculateRelevance(
+  api: DatasetSchema,
+  query: string,
+  queryType: string,
+  entityType: string | null,
+  categories: string[],
+  isEntityQuery?: boolean
+): number {
   let relevance = 0;
   const queryLower = query.toLowerCase();
   const apiDescriptionLower = api.api_description.toLowerCase();
@@ -11,82 +18,76 @@ function calculateRelevance(api: DatasetSchema, query: string, queryType: string
 
   logger.debug(`Calculating relevance for API: ${api.api_name}`);
 
+  // Base relevance based on query type and API category/name
   if (
-    (queryType === 'user_info' && api.category_name === 'Users') ||
-    (queryType === 'track_info' && api.category_name === 'Tracks') ||
-    (queryType === 'playlist_info' && api.category_name === 'Playlists') ||
+    (queryType === 'user_info' && api.category_name.toLowerCase() === 'users') ||
+    (queryType === 'track_info' && api.category_name.toLowerCase() === 'tracks') ||
+    (queryType === 'playlist_info' && api.category_name.toLowerCase() === 'playlists') ||
     (queryType === 'trending_tracks' && (apiNameLower.includes('trending') || apiNameLower.includes('popular'))) ||
     (queryType === 'user_tracks' && apiNameLower.includes('user') && apiNameLower.includes('tracks')) ||
     (queryType === 'user_social' && apiNameLower.includes('user') && (apiNameLower.includes('follow') || apiNameLower.includes('social'))) ||
-    (queryType === 'genre_info' && apiNameLower.includes('genre')) ||
+    (queryType === 'genre_info' && (apiNameLower.includes('trending') || apiNameLower.includes('genre'))) || // Updated condition
     (queryType === 'search_tracks' && apiNameLower.includes('search'))
   ) {
     relevance += 5;
-    logger.debug(`Query type match: +5 relevance`);
+    logger.debug(`Query type and API name/category match: +5 relevance`);
   }
 
+  // Additional relevance based on entity type
   if (isEntityQuery && entityType) {
-    if (apiNameLower.includes(entityType)) {
+    if (apiNameLower.includes(entityType.toLowerCase())) {
       relevance += 4;
       logger.debug(`Entity type match: +4 relevance`);
     }
     if (apiNameLower.includes('search')) {
-      relevance += 3;
-      logger.debug(`Search API for entity query: +3 relevance`);
+      relevance += 1;
+      logger.debug(`API name includes 'search': +1 relevance`);
     }
   }
 
-  categories.forEach(category => {
-    if (api.category_name.toLowerCase().includes(category.toLowerCase())) {
-      relevance += 2;
-      logger.debug(`Category match (${category}): +2 relevance`);
+  // Boost relevance for APIs related to trending tracks in genre_info queries
+  if (
+    queryType === 'genre_info' &&
+    (apiNameLower.includes('trending_tracks') || apiNameLower.includes('genres'))
+  ) {
+    relevance += 10; // Increased boost
+    logger.debug(`Query type match: +10 relevance`);
+  }
+
+  // Decrease relevance for less appropriate APIs
+  if (
+    queryType === 'genre_info' &&
+    apiNameLower.includes('search')
+  ) {
+    relevance -= 5;
+    logger.debug(`Less relevant API for genre_info: -5 relevance`);
+  }
+
+  // Additional relevance based on entity type
+  if (isEntityQuery && entityType) {
+    if (apiNameLower.includes(entityType.toLowerCase())) {
+      relevance += 4;
+      logger.debug(`Entity type match: +4 relevance`);
     }
-  });
 
-  if (apiDescriptionLower.includes(queryLower)) {
-    relevance += 3;
-    logger.debug(`Query found in API description: +3 relevance`);
+    logger.debug(`Less relevant API for genre_info (search): -5 relevance`);
   }
 
-  if (apiNameLower.includes(queryLower)) {
-    relevance += 4;
-    logger.debug(`Query found in API name: +4 relevance`);
-  }
+  // Adjust category matching weight
+  const apiCategories = api.category_name.split(',').map((cat: string) => cat.trim().toLowerCase());
+  const matchingCategories = categories.filter((cat: string) => apiCategories.includes(cat.toLowerCase()));
+  relevance += matchingCategories.length * 0.5;
+  logger.debug(`Matching categories (${matchingCategories.length}): +${matchingCategories.length * 0.5} relevance`);
 
-  logger.debug(`Final relevance score for ${api.api_name}: ${relevance}`);
   return relevance;
 }
 
 export const selectApi = (state: GraphState): Partial<GraphState> => {
-  logger.info("selectApi function called"); // Added log
-  logger.debug("selectApi called with state:", JSON.stringify(state));
-
-  const { query, apis, queryType, entityType, categories, isEntityQuery = false } = state;
-
-  logger.info(`Selecting API for query: ${query} (Type: ${queryType}, Entity: ${entityType}, Categories: ${categories?.join(', ')}, IsEntityQuery: ${isEntityQuery})`);
-  logger.debug(`Full state received in selectApi: ${JSON.stringify(state)}`);
+  const { query, queryType, entityType, categories, isEntityQuery, apis } = state;
 
   if (!apis || apis.length === 0) {
-    logger.error("No APIs available for selection");
-    return {
-      error: "No APIs available",
-      message: "Failed to select an API: No APIs were available for selection."
-    };
-  }
-
-  logger.info(`Total APIs available for selection: ${apis.length}`);
-
-  if (queryType === 'trending_tracks') {
-    const trendingTracksApi = apis.find(api => api.api_name.toLowerCase().includes('trending') && api.api_name.toLowerCase().includes('tracks'));
-    if (trendingTracksApi) {
-      logger.info(`Selected API for trending tracks: ${trendingTracksApi.api_name}`);
-      return {
-        bestApi: trendingTracksApi,
-        error: null
-      };
-    } else {
-      logger.warn("No specific trending tracks API found, falling back to relevance calculation");
-    }
+    logger.warn("No APIs available for selection");
+    return { error: "No APIs available for selection" };
   }
 
   const relevantApis = apis
@@ -95,43 +96,30 @@ export const selectApi = (state: GraphState): Partial<GraphState> => {
       logger.debug(`API: ${api.api_name}, Relevance: ${relevance}`);
       return { api, relevance };
     })
-    .filter(item => item.relevance > RELEVANCE_THRESHOLD)
+    .filter(item => item.relevance >= RELEVANCE_THRESHOLD)
     .sort((a, b) => b.relevance - a.relevance);
 
-  logger.info(`Relevant APIs found: ${relevantApis.length}`);
-
-  if (relevantApis.length > 0) {
-    const bestApi = relevantApis[0].api;
-    logger.info(`Selected API: ${bestApi.api_name} with relevance ${relevantApis[0].relevance}`);
-
-    if (relevantApis.length > 1) {
-      return {
-        bestApi,
-        secondaryApi: relevantApis[1].api,
-        message: `Primary API selected: ${bestApi.api_name}, Secondary API: ${relevantApis[1].api.api_name}`
-      };
-    }
-    
-    return { bestApi, message: `API selected: ${bestApi.api_name}` };
-  }
-
-  logger.warn("No APIs passed the relevance threshold, attempting to find a general API");
-  const generalApi = apis.find(api => 
-    api.api_name.toLowerCase().includes('search') || 
-    api.api_name.toLowerCase().includes('trending') ||
-    api.api_name.toLowerCase().includes('popular')
-  );
-  if (generalApi) {
-    logger.info(`Selected general API: ${generalApi.api_name}`);
+  if (relevantApis.length === 0) {
+    logger.warn("No relevant APIs found based on relevance scores");
     return {
-      bestApi: generalApi,
-      error: null
+      error: "No relevant APIs found",
+      message: "Failed to select an API: No APIs matched the query's relevance criteria."
     };
   }
 
-  logger.error(`No suitable API found for the given query. Query type: ${queryType}, Entity type: ${entityType}, Categories: ${categories.join(', ')}, Query: ${query}`);
+  const selected = relevantApis[0];
+  logger.info(`Selected API: ${selected.api.api_name} with relevance ${selected.relevance}`);
+
+  // Set a default limit if not specified and applicable
+  const parameters = selected.api.default_parameters || {};
+  if (isEntityQuery && !parameters.limit) {
+    parameters.limit = 5;
+    logger.info(`Set default limit to ${parameters.limit}`);
+  }
+
   return {
-    error: "No suitable API found",
-    message: "Failed to select an API: No suitable API was found for the given query. Please try rephrasing your question or providing more specific information."
+    bestApi: selected.api,
+    parameters,
+    error: null
   };
 };

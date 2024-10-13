@@ -1,5 +1,5 @@
 import { logger } from '../logger.js';
-import { GraphState, QueryType } from "../types.js";
+import { GraphState } from "../types.js";
 import { globalAudiusApi } from '../services/audiusApi.js';
 
 export function extractUserName(query: string): string {

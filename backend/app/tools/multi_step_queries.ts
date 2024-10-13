@@ -1,90 +1,102 @@
-import { GraphState, DatasetSchema } from "../types.js";
+import { GraphState } from "../types.js";
 import { logger } from '../logger.js';
-import { parseQuery } from "../utils/searchUtils.js";
-
-interface QueryStep {
-  api: string;
-  params: Record<string, any>;
-}
+import { globalAudiusApi } from "../services/audiusApi.js";
 
 export async function handleMultiStepQuery(state: GraphState): Promise<Partial<GraphState>> {
-  const { query, bestApi } = state;
-  const parsedQuery = parseQuery(query);
-  
-  const steps = identifyQuerySteps(parsedQuery, bestApi?.api_name);
-  
-  if (steps.length === 0) {
-    logger.warn(`No steps identified for query: ${query}`);
+  const { queryType, params } = state;
+
+  if (queryType !== 'genre_info') {
+    logger.warn(`handleMultiStepQuery called with unsupported queryType: ${queryType}`);
+    return { error: "Unsupported query type for multi-step processing." };
+  }
+
+  try {
+    logger.info("Handling multi-step query for trending genres");
+
+    // Set default limit to 5 and default timeframe to 'week' if not specified
+    const limit = params.limit || 5;
+    const timeframe = params.timeframe || 'week';
+
+    // Fetch trending tracks directly using globalAudiusApi
+    const tracks = await globalAudiusApi.getTrendingTracks(100, timeframe);
+
+    if (!tracks || !Array.isArray(tracks)) {
+      throw new Error("No data received from trending tracks endpoint.");
+    }
+
+    logger.debug(`Fetched trending tracks: ${JSON.stringify(tracks)}`);
+
+    const genres = extractGenres(tracks);
+    const topGenres = scoreAndRankGenres(genres);
+    const formattedResponse = formatGenresResponse(topGenres, limit);
+
+    logger.debug(`Processed top genres: ${JSON.stringify(topGenres)}`);
+    logger.debug(`Formatted response: ${formattedResponse}`);
+
+    return {
+      ...state,
+      multiStepHandled: true,
+      response: topGenres, 
+      formattedResponse,
+      message: "Trending genres processed successfully."
+    };
+  } catch (error) {
+    logger.error(`Error in handleMultiStepQuery: ${error instanceof Error ? error.message : String(error)}`);
     return { 
-      error: "Unable to process query. Please try a different question.",
-      message: "The query could not be processed. Please try rephrasing your question."
+      error: error instanceof Error ? error.message : "An error occurred in handleMultiStepQuery." 
     };
   }
-  
-  // For now, we'll just return the first step as the bestApi
-  // In a full implementation, we'd execute each step and combine the results
-  const firstStep = steps[0];
-  const updatedBestApi: DatasetSchema = {
-    id: state.bestApi?.id || `audius_${firstStep.api.replace(/\//g, '_')}`,
-    category_name: state.bestApi?.category_name || 'Audius',
-    tool_name: state.bestApi?.tool_name || `Audius ${firstStep.api}`,
-    api_name: firstStep.api,
-    api_description: state.bestApi?.api_description || `API endpoint for ${firstStep.api}`,
-    required_parameters: state.bestApi?.required_parameters || [],
-    optional_parameters: state.bestApi?.optional_parameters || [],
-    method: state.bestApi?.method || 'GET',
-    api_url: state.bestApi?.api_url || `https://discoveryprovider.audius.co${firstStep.api}`,
-    parameters: firstStep.params
-  };
-
-  logger.info(`Multi-step query processed: ${steps.length} step(s) identified`);
-  return { 
-    bestApi: updatedBestApi,
-    message: `Query processed with ${steps.length} step(s)`
-  };
 }
 
-function identifyQuerySteps(parsedQuery: ReturnType<typeof parseQuery>, selectedApi?: string): QueryStep[] {
-  const steps: QueryStep[] = [];
-  
-  switch (parsedQuery.type) {
-    case 'topTracks':
-    case 'tracks':
-      steps.push({ api: '/v1/tracks/trending', params: { limit: parsedQuery.limit || 3 } });
-      break;
-    case 'mostFollowers':
-    case 'users':
-      steps.push(
-        { api: '/v1/users/search', params: { query: parsedQuery.artist || '', limit: 1 } },
-        { api: '/v1/users/{user_id}', params: {} }
-      );
-      break;
-    case 'followers':
-      steps.push(
-        { api: '/v1/users/search', params: { query: parsedQuery.artist || '', limit: 1 } },
-        { api: '/v1/users/{user_id}', params: {} }
-      );
-      break;
-    case 'genre':
-    case 'trackInfo':
-      steps.push(
-        { api: '/v1/tracks/search', params: { query: `${parsedQuery.title} ${parsedQuery.artist}`.trim(), limit: 10 } },
-      );
-      break;
-    case 'latestReleases':
-      steps.push({ api: '/v1/tracks/trending', params: { limit: 10, time: "week" } });
-      break;
-    case 'trendingGenres':
-      steps.push({ api: '/v1/tracks/trending', params: { limit: 100 } });
-      // We'd need to process the results to extract genres in the API response handling
-      break;
-    default:
-      if (selectedApi) {
-        steps.push({ api: selectedApi, params: {} });
-      } else {
-        logger.warn(`Unhandled query type: ${parsedQuery.type}`);
-      }
+export function extractGenres(tracks: any[]): string[] {
+  return tracks
+    .map(track => track.genre ? track.genre.toLowerCase() : 'unknown')
+    .filter(genre => genre !== 'unknown');
+}
+
+export function scoreAndRankGenres(genres: string[]): { genre: string; score: number }[] {
+  const totalPoints = 10000;
+  // Generate Pareto distribution weights
+  const paretoWeights = generateParetoWeights(genres.length);
+
+  // Map genres to their accumulated scores
+  const genreScores: { [key: string]: number } = {};
+
+  for (let i = 0; i < genres.length; i++) {
+    const genre = genres[i];
+    const points = paretoWeights[i] * totalPoints;
+    genreScores[genre] = (genreScores[genre] || 0) + points;
   }
-  
-  return steps;
+
+  const genreScoresArray = Object.entries(genreScores).map(([genre, score]) => ({
+    genre,
+    score: score
+  }));
+
+  // Sort genres by score in descending order
+  return genreScoresArray.sort((a, b) => b.score - a.score);
+}
+
+export function generateParetoWeights(n: number, alpha: number = 1.16): number[] {
+  // Generate ranks from 1 to n
+  const ranks = Array.from({ length: n }, (_, i) => i + 1);
+
+  // Calculate weights using the Pareto distribution formula
+  const weights = ranks.map(rank => 1 / Math.pow(rank, alpha));
+
+  // Normalize weights so that they sum to 1
+  const sumWeights = weights.reduce((sum, weight) => sum + weight, 0);
+  return weights.map(weight => weight / sumWeights);
+}
+
+export function formatGenresResponse(topGenres: { genre: string; score: number }[], limit: number): string {
+  const formatted = topGenres.slice(0, limit).map((item, index) =>
+    `${index + 1}. ${capitalizeFirstLetter(item.genre)}`
+  ).join('\n');
+
+  return `Here are the top ${limit} genres on Audius based on trending tracks:\n\n${formatted}`;
+}
+
+function capitalizeFirstLetter(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }

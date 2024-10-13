@@ -1,5 +1,14 @@
 import { ChatOpenAI, ChatOpenAICallOptions } from "@langchain/openai";
 
+export type ComplexityLevel = 'simple' | 'moderate' | 'complex' | string;
+export interface QueryClassification {
+  type: string;
+  isEntityQuery: boolean;
+  entityType: string | null;
+  entity: string | null;
+  complexity: ComplexityLevel; // New property
+}
+
 export interface DatasetSchema {
   id: string;
   category_name: string;
@@ -12,6 +21,7 @@ export interface DatasetSchema {
   template_response?: Record<string, any>;
   api_url: string;
   parameters?: Record<string, any>;
+  default_parameters?: { [key: string]: any }; // Made optional
 }
 
 export interface DatasetParameters {
@@ -24,7 +34,7 @@ export interface DatasetParameters {
 export interface GraphState {
   llm: ChatOpenAI<ChatOpenAICallOptions>;
   query: string;
-  queryType: QueryType;
+  queryType: QueryType | string;
   categories: string[];
   apis: DatasetSchema[];
   bestApi: DatasetSchema | null;
@@ -36,8 +46,12 @@ export interface GraphState {
   formattedResponse?: string;
   message: string | null;
   isEntityQuery?: boolean;
-  entityType: 'user' | 'track' | 'playlist' | null;
+  entityType: 'user' | 'track' | 'playlist' | 'genre' | null;
   entity: string | null;
+  parameters?: { [key: string]: any }; // Added 'parameters'
+  complexity: ComplexityLevel | string;
+  multiStepHandled?: boolean;
+  initialState?: GraphState;
 }
 
 export type QueryType =
@@ -53,3 +67,18 @@ export type QueryType =
   | 'playback'
   | 'company_info'  // New type for queries about Audius as a company
   | 'general';
+
+
+  export type NodeNames = 
+  | "extract_category"
+  | "get_apis"
+  | "select_api"
+  | "handle_multi_step_query"
+  | "handle_entity_query"
+  | "extract_parameters"
+  | "verify_params"
+  | "create_fetch_request"
+  | "process_api_response"
+  | "handle_error"
+  | "log_final_result"
+  | "classify_query";

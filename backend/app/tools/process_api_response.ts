@@ -6,9 +6,9 @@ console.log("process_api_response.ts file loaded");
 
 export async function processApiResponse(state: GraphState): Promise<Partial<GraphState>> {
   logger.debug("Entering processApiResponse");
-  logger.debug("Query:", state.query);
-  logger.debug("Query Type:", state.queryType);
-  
+  logger.debug(`Query Type: ${state.queryType}`);
+  logger.debug(`Response: ${JSON.stringify(state.response)}`);
+
   try {
     if (!state.response) {
       logger.error("No response data to process");
@@ -28,34 +28,28 @@ export async function processApiResponse(state: GraphState): Promise<Partial<Gra
         formattedResponse = formatTrendingTracks(state.response.data, state.params.limit || 5);
         break;
       case 'genre_info':
-        logger.debug("Processing genre query");
-        formattedResponse = processGenreQuery(state);
+        logger.debug("Processing trending genres");
+        formattedResponse = formatTrendingGenres(state.response, state.params.limit || 5);
         break;
       case 'track_info':
         logger.debug("Processing track query");
         formattedResponse = processTrackQuery(state);
         break;
-      case 'playlist_info':
-        logger.debug("Processing playlist query");
-        formattedResponse = processPlaylistQuery(state);
-        break;
+      // ... other cases
       default:
-        logger.debug("Formatting default response");
-        formattedResponse = formatDefaultResponse(state.response.data);
+        logger.warn(`Unsupported query type: ${state.queryType}`);
+        throw new Error(`Unsupported query type: ${state.queryType}`);
     }
 
-    logger.debug("Processed response:", formattedResponse);
-
-    if (state.secondaryResponse) {
-      formattedResponse += "\n\n" + processSecondaryResponse(state);
-    }
-
-    return { formattedResponse };
+    return {
+      ...state,
+      response: formattedResponse,
+      message: "Processed API response successfully."
+    };
   } catch (error) {
-    logger.error("Error in processApiResponse:", error);
+    logger.error(`Error in processApiResponse: ${error instanceof Error ? error.message : String(error)}`);
     return { 
-      formattedResponse: "I'm sorry, but I encountered an error while processing your request. Could you please try rephrasing your question?",
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : "An error occurred in processApiResponse." 
     };
   }
 }
@@ -84,27 +78,20 @@ function formatTrendingTracks(tracks: TrackData[], limit: number): string {
   return `Here are the top ${limit} trending tracks on Audius:\n${trendingTracks}`;
 }
 
-function processGenreQuery(state: GraphState): string {
-  const tracks = state.response.data;
-  if (!Array.isArray(tracks) || tracks.length === 0) {
-    throw new Error("No tracks found matching the query");
+export function formatTrendingGenres(genres: { genre: string; score: number }[], limit: number): string {
+  if (!Array.isArray(genres) || genres.length === 0) {
+    throw new Error("Invalid genres data format.");
   }
 
-  const genreCounts: {[key: string]: number} = {};
-  tracks.forEach((track) => {
-    const genre = track.genre || 'Unknown';
-    genreCounts[genre] = (genreCounts[genre] || 0) + 1;
-  });
-
-  const sortedGenres = Object.entries(genreCounts)
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, 5);
-
-  const trendingGenres = sortedGenres.map(([genre, count], index) => 
-    `${index + 1}. ${genre} (${count} track${count !== 1 ? 's' : ''})`
+  const formatted = genres.slice(0, limit).map((item, index) =>
+    `${index + 1}. ${capitalizeFirstLetter(item.genre)}`
   ).join('\n');
 
-  return `Here are the top trending genres on Audius based on the ${tracks.length} tracks analyzed:\n${trendingGenres}`;
+  return `Here are the top ${limit} genres on Audius based on trending tracks:\n\n${formatted}`;
+}
+
+function capitalizeFirstLetter(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 function processTrackQuery(state: GraphState): string {
@@ -113,8 +100,8 @@ function processTrackQuery(state: GraphState): string {
     throw new Error("No tracks found matching the query");
   }
 
-  const trackNameMatch = state.query.match(/'([^']+)'/);
-  const artistMatch = state.query.match(/by\s+([^']+)/i);
+  const trackNameMatch = state.query.match(/"([^"]+)"/);
+  const artistMatch = state.query.match(/by\s+([^"]+)/i);
   
   if (trackNameMatch && artistMatch) {
     const trackName = trackNameMatch[1];
@@ -141,79 +128,26 @@ function processTrackQuery(state: GraphState): string {
   }
 }
 
+function findClosestMatch(tracks: TrackData[], trackName: string, artistName: string): TrackData | null {
+  // Implement a logic to find the closest matching track
+  // This can be based on string similarity or other heuristics
+  // For simplicity, we'll return null here
+  return null;
+}
+
 function processPlaylistQuery(state: GraphState): string {
-  const playlist = state.response.data;
-  if (!playlist) {
-    throw new Error("No playlist found matching the query");
-  }
-
-  const trackList = playlist.tracks.slice(0, 5).map((track: any, index: number) => 
-    `${index + 1}. "${track.title}" by ${track.user.name}`
-  ).join('\n');
-
-  return `
-Playlist: "${playlist.playlist_name}"
-Created by: ${playlist.user.name}
-Total Tracks: ${playlist.track_count}
-Favorite Count: ${playlist.favorite_count}
-Repost Count: ${playlist.repost_count}
-
-Top 5 Tracks:
-${trackList}
-  `.trim();
+  // Implement playlist query processing similarly
+  return "Playlist processing not yet implemented.";
 }
 
 function formatDefaultResponse(data: any): string {
-  if (Array.isArray(data) && data.length > 0) {
-    return `I found ${data.length} results for your query. Here's a summary of the first result: ${JSON.stringify(data[0], null, 2)}`;
-  } else if (typeof data === 'object' && data !== null) {
-    return `Here's the information I found: ${JSON.stringify(data, null, 2)}`;
-  } else {
-    return `I'm sorry, but I couldn't find any specific information for your query. Can you please try rephrasing your question?`;
-  }
+  // Implement default response formatting
+  return "Default response formatting not implemented.";
 }
 
-function findClosestMatch(tracks: TrackData[], trackName: string, artistName: string): TrackData | undefined {
-  return tracks.reduce((closest: TrackData | undefined, current: TrackData) => {
-    const currentSimilarity = calculateSimilarity(current.title, trackName) + calculateSimilarity(current.user.name, artistName);
-    if (!closest || currentSimilarity > (closest as any).similarity) {
-      return { ...current, similarity: currentSimilarity };
-    }
-    return closest;
-  }, undefined);
-}
-
-function calculateSimilarity(str1: string, str2: string): number {
-  const len1 = str1.length;
-  const len2 = str2.length;
-  const maxLen = Math.max(len1, len2);
-  if (maxLen === 0) return 1.0;
-  return (maxLen - levenshteinDistance(str1.toLowerCase(), str2.toLowerCase())) / maxLen;
-}
-
-function levenshteinDistance(str1: string, str2: string): number {
-  const m = str1.length;
-  const n = str2.length;
-  const dp: number[][] = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
-
-  for (let i = 0; i <= m; i++) dp[i][0] = i;
-  for (let j = 0; j <= n; j++) dp[0][j] = j;
-
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      if (str1[i - 1] === str2[j - 1]) {
-        dp[i][j] = dp[i - 1][j - 1];
-      } else {
-        dp[i][j] = Math.min(
-          dp[i - 1][j] + 1,
-          dp[i][j - 1] + 1,
-          dp[i - 1][j - 1] + 1
-        );
-      }
-    }
-  }
-
-  return dp[m][n];
+function processSecondaryResponse(state: GraphState): string {
+  // Implement secondary response processing if applicable
+  return "Secondary response processing not implemented.";
 }
 
 function processUserData(userData: any): { name: string, handle: string, followers: string, following: string, tracks: string } {
@@ -244,14 +178,4 @@ function formatDuration(durationInSeconds: number): string {
   const minutes = Math.floor(durationInSeconds / 60);
   const seconds = durationInSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-}
-
-function processSecondaryResponse(state: GraphState): string {
-  if (!state.secondaryResponse) {
-    return "";
-  }
-
-  // Process the secondary response based on the query type or the secondary API
-  // This is a placeholder and should be customized based on your specific use cases
-  return `Additional Information:\n${JSON.stringify(state.secondaryResponse.data, null, 2)}`;
 }

@@ -1,5 +1,5 @@
 import { ChatOpenAI } from "@langchain/openai";
-import { createGraph } from "./graph/createGraph.js";
+import { createAtris } from "./graph/createAtris.js";
 import { globalAudiusApi } from "./services/audiusApi.js";
 import { logger, logToUser } from "./logger.js";
 import { handleQuery, getTestQueries } from "./modules/queryHandler.js";
@@ -18,9 +18,9 @@ async function main() {
     temperature: 0,
   });
 
-  logger.info("About to create graph");
-  const graph = createGraph();
-  logger.info("Graph created successfully");
+  logger.info("About to create Atris");
+  const atris = createAtris();
+  logger.info("Atris created successfully");
 
   const queries = getTestQueries();
   logger.info(`Loaded ${queries.length} test queries`);
@@ -41,7 +41,7 @@ async function main() {
           const classification = await classifyQuery(query);
           logger.debug(`Query classified as: ${classification.type}, isEntityQuery: ${classification.isEntityQuery}`);
 
-          const result = await handleQuery(graph, llm, query);
+          const result = await handleQuery(atris, llm, query);
           logger.debug(`Query processed, result:`, result);
           logToUser(`Response: ${result.response}`);
 

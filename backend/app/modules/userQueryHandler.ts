@@ -4,7 +4,6 @@ import { GraphState } from "../types.js";
 import { logger } from '../logger.js';
 import { extractUserName } from './nameExtractor.js';
 import { formatUserResponse } from './responseFormatter.js';
-import { instanceOfRequestManagerNotification } from "@audius/sdk/dist/sdk/api/generated/full/index.js";
 
 export interface QueryResult {
   response: string;
