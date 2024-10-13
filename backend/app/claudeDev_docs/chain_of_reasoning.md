@@ -40,7 +40,7 @@ After implementing the initial changes, it became apparent that there were still
 ### Next Steps
 To address these remaining issues, we need to:
 1. Review and update the logging mechanism to ensure that detailed API responses are not displayed to the user.
-2. Modify the createGraph.ts file to remove or hide internal processing steps from the user-facing output.
+2. Modify the  createGraph.ts file to remove or hide internal processing steps from the user-facing output.
 3. Implement a more robust response filtering system in process_api_response.ts to ensure only relevant, user-friendly information is returned.
 
 By continuing to focus on abstracting away technical details and providing clear, concise responses, we can create a more seamless and user-friendly interface to the Audius API.

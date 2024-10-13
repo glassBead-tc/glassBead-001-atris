@@ -1,96 +1,137 @@
 import { GraphState, DatasetSchema } from "../types.js";
 import { logger } from '../logger.js';
-import { calculateRelevance } from '../utils/relevanceCalculations.js';
-import { apiConfig } from "../audiusApiConfig.js";
 
-const RELEVANCE_THRESHOLD = 0.3; // Minimum relevance score to consider an API
+const RELEVANCE_THRESHOLD = 0.5;
 
-export async function selectApi(state: GraphState): Promise<GraphState> {
-  const { query } = state;
-  const lowercaseQuery = query.toLowerCase();
+function calculateRelevance(api: DatasetSchema, query: string, queryType: string, entityType: string | null, categories: string[], isEntityQuery: boolean): number {
+  let relevance = 0;
+  const queryLower = query.toLowerCase();
+  const apiDescriptionLower = api.api_description.toLowerCase();
+  const apiNameLower = api.api_name.toLowerCase();
 
-  let selectedApi: DatasetSchema | null = null;
+  logger.debug(`Calculating relevance for API: ${api.api_name}`);
 
-  // First, try to match based on specific keywords
-  selectedApi = keywordBasedSelection(lowercaseQuery);
-
-  // If no specific match was found, calculate relevance for each API
-  if (!selectedApi) {
-    selectedApi = relevanceBasedSelection(query);
+  if (
+    (queryType === 'user_info' && api.category_name === 'Users') ||
+    (queryType === 'track_info' && api.category_name === 'Tracks') ||
+    (queryType === 'playlist_info' && api.category_name === 'Playlists') ||
+    (queryType === 'trending_tracks' && (apiNameLower.includes('trending') || apiNameLower.includes('popular'))) ||
+    (queryType === 'user_tracks' && apiNameLower.includes('user') && apiNameLower.includes('tracks')) ||
+    (queryType === 'user_social' && apiNameLower.includes('user') && (apiNameLower.includes('follow') || apiNameLower.includes('social'))) ||
+    (queryType === 'genre_info' && apiNameLower.includes('genre')) ||
+    (queryType === 'search_tracks' && apiNameLower.includes('search'))
+  ) {
+    relevance += 5;
+    logger.debug(`Query type match: +5 relevance`);
   }
 
-  if (selectedApi) {
-    logger.debug(`Selected API: ${selectedApi.api_name}, Query: "${query}"`);
-    return { ...state, bestApi: selectedApi };
-  } else {
-    logger.warn(`No suitable API found for query: "${query}"`);
-    return { ...state, error: "I'm sorry, but I couldn't find a suitable API to answer your question. Could you please rephrase or provide more details?" };
-  }
-}
-
-function keywordBasedSelection(lowercaseQuery: string): DatasetSchema | null {
-  const apiEndpoint = findApiEndpoint(lowercaseQuery);
-  return apiEndpoint ? createDatasetSchema(apiEndpoint) : null;
-}
-
-function relevanceBasedSelection(query: string): DatasetSchema | null {
-  let selectedApiEndpoint: string | null = null;
-  let highestRelevance = -1;
-
-  for (const apiEndpoint of Object.keys(apiConfig)) {
-    const relevance = calculateRelevance(query, apiEndpoint);
-    if (relevance > highestRelevance && relevance >= RELEVANCE_THRESHOLD) {
-      highestRelevance = relevance;
-      selectedApiEndpoint = apiEndpoint;
+  if (isEntityQuery && entityType) {
+    if (apiNameLower.includes(entityType)) {
+      relevance += 4;
+      logger.debug(`Entity type match: +4 relevance`);
+    }
+    if (apiNameLower.includes('search')) {
+      relevance += 3;
+      logger.debug(`Search API for entity query: +3 relevance`);
     }
   }
 
-  return selectedApiEndpoint ? createDatasetSchema(selectedApiEndpoint) : null;
-}
+  categories.forEach(category => {
+    if (api.category_name.toLowerCase().includes(category.toLowerCase())) {
+      relevance += 2;
+      logger.debug(`Category match (${category}): +2 relevance`);
+    }
+  });
 
-function findApiEndpoint(lowercaseQuery: string): string | null {
-  if (lowercaseQuery.includes('trending') || lowercaseQuery.includes('top') || lowercaseQuery.includes('popular')) {
-    return '/v1/tracks/trending';
-  } else if (lowercaseQuery.includes('most followers') || lowercaseQuery.includes('most followed') || lowercaseQuery.includes('popular artist')) {
-    return '/v1/users/search';
-  } else if (lowercaseQuery.includes('genre') || lowercaseQuery.includes('track') || lowercaseQuery.includes('song')) {
-    return '/v1/tracks/search';
-  } else if (lowercaseQuery.includes('latest releases') || lowercaseQuery.includes('new music')) {
-    return '/v1/tracks/trending';
-  } else if (lowercaseQuery.includes('playlist')) {
-    return '/v1/playlists/search';
-  } else if (lowercaseQuery.includes('favorite') || lowercaseQuery.includes('liked')) {
-    return '/v1/users/{user_id}/favorites';
-  } else if (lowercaseQuery.includes('repost')) {
-    return '/v1/users/{user_id}/reposts';
-  } else if (lowercaseQuery.includes('underground')) {
-    return '/v1/tracks/trending/underground';
+  if (apiDescriptionLower.includes(queryLower)) {
+    relevance += 3;
+    logger.debug(`Query found in API description: +3 relevance`);
   }
-  return null;
+
+  if (apiNameLower.includes(queryLower)) {
+    relevance += 4;
+    logger.debug(`Query found in API name: +4 relevance`);
+  }
+
+  logger.debug(`Final relevance score for ${api.api_name}: ${relevance}`);
+  return relevance;
 }
 
-function createDatasetSchema(apiEndpoint: string): DatasetSchema {
-  const config = apiConfig[apiEndpoint];
+export const selectApi = (state: GraphState): Partial<GraphState> => {
+  logger.info("selectApi function called"); // Added log
+  logger.debug("selectApi called with state:", JSON.stringify(state));
+
+  const { query, apis, queryType, entityType, categories, isEntityQuery = false } = state;
+
+  logger.info(`Selecting API for query: ${query} (Type: ${queryType}, Entity: ${entityType}, Categories: ${categories?.join(', ')}, IsEntityQuery: ${isEntityQuery})`);
+  logger.debug(`Full state received in selectApi: ${JSON.stringify(state)}`);
+
+  if (!apis || apis.length === 0) {
+    logger.error("No APIs available for selection");
+    return {
+      error: "No APIs available",
+      message: "Failed to select an API: No APIs were available for selection."
+    };
+  }
+
+  logger.info(`Total APIs available for selection: ${apis.length}`);
+
+  if (queryType === 'trending_tracks') {
+    const trendingTracksApi = apis.find(api => api.api_name.toLowerCase().includes('trending') && api.api_name.toLowerCase().includes('tracks'));
+    if (trendingTracksApi) {
+      logger.info(`Selected API for trending tracks: ${trendingTracksApi.api_name}`);
+      return {
+        bestApi: trendingTracksApi,
+        error: null
+      };
+    } else {
+      logger.warn("No specific trending tracks API found, falling back to relevance calculation");
+    }
+  }
+
+  const relevantApis = apis
+    .map(api => {
+      const relevance = calculateRelevance(api, query, queryType, entityType, categories, isEntityQuery);
+      logger.debug(`API: ${api.api_name}, Relevance: ${relevance}`);
+      return { api, relevance };
+    })
+    .filter(item => item.relevance > RELEVANCE_THRESHOLD)
+    .sort((a, b) => b.relevance - a.relevance);
+
+  logger.info(`Relevant APIs found: ${relevantApis.length}`);
+
+  if (relevantApis.length > 0) {
+    const bestApi = relevantApis[0].api;
+    logger.info(`Selected API: ${bestApi.api_name} with relevance ${relevantApis[0].relevance}`);
+
+    if (relevantApis.length > 1) {
+      return {
+        bestApi,
+        secondaryApi: relevantApis[1].api,
+        message: `Primary API selected: ${bestApi.api_name}, Secondary API: ${relevantApis[1].api.api_name}`
+      };
+    }
+    
+    return { bestApi, message: `API selected: ${bestApi.api_name}` };
+  }
+
+  logger.warn("No APIs passed the relevance threshold, attempting to find a general API");
+  const generalApi = apis.find(api => 
+    api.api_name.toLowerCase().includes('search') || 
+    api.api_name.toLowerCase().includes('trending') ||
+    api.api_name.toLowerCase().includes('popular')
+  );
+  if (generalApi) {
+    logger.info(`Selected general API: ${generalApi.api_name}`);
+    return {
+      bestApi: generalApi,
+      error: null
+    };
+  }
+
+  logger.error(`No suitable API found for the given query. Query type: ${queryType}, Entity type: ${entityType}, Categories: ${categories.join(', ')}, Query: ${query}`);
   return {
-    id: `audius_${apiEndpoint.replace(/\//g, '_')}`,
-    category_name: 'Audius',
-    tool_name: `Audius ${apiEndpoint}`,
-    api_name: apiEndpoint,
-    api_description: `API endpoint for ${apiEndpoint}`,
-    required_parameters: config.required.map(param => ({
-      name: param,
-      type: 'string',
-      description: `Required parameter: ${param}`,
-      default: ''
-    })),
-    optional_parameters: config.optional.map(param => ({
-      name: param,
-      type: 'string',
-      description: `Optional parameter: ${param}`,
-      default: ''
-    })),
-    method: 'GET',
-    api_url: `https://discoveryprovider.audius.co${apiEndpoint}`,
-    parameters: {}
+    error: "No suitable API found",
+    message: "Failed to select an API: No suitable API was found for the given query. Please try rephrasing your question or providing more specific information."
   };
-}
+};

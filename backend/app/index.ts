@@ -1,54 +1,83 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { createGraph } from "./graph/createGraph.js";
-import { globalAudiusApi } from "./tools/create_fetch_request.js";
-import { logger, logToUser } from './logger.js';
-import { handleQuery, getTestQueries } from './modules/queryHandler.js';
+import { globalAudiusApi } from "./services/audiusApi.js";
+import { logger, logToUser } from "./logger.js";
+import { handleQuery, getTestQueries } from "./modules/queryHandler.js";
+import { checkRequiredEnvVars, getOpenAiApiKey } from "./config.js";
+import { classifyQuery } from "./modules/queryClassifier.js";
 
-// Set this before any other code that uses the logger
-logger.level = 'debug';
+logger.level = "debug";
 
 async function main() {
+  logger.info("Starting main execution");
+  checkRequiredEnvVars();
+
   const llm = new ChatOpenAI({
+    openAIApiKey: getOpenAiApiKey(),
     modelName: "gpt-3.5-turbo",
     temperature: 0,
   });
 
-  console.log("About to create graph");
-  const graph = createGraph(llm);
-  console.log("Graph created");
+  logger.info("About to create graph");
+  const graph = createGraph();
+  logger.info("Graph created successfully");
 
   const queries = getTestQueries();
+  logger.info(`Loaded ${queries.length} test queries`);
 
   try {
     const isConnected = await globalAudiusApi.testConnection();
     if (isConnected) {
       logger.info("API connection successful.");
-      for (const query of queries) {
-        logToUser(`Query: ${query}`);
+      let successfulQueries = 0;
+      let failedQueries = 0;
+
+      for (let i = 0; i < queries.length; i++) {
+        const query = queries[i];
+        logToUser(`Query ${i + 1}/${queries.length}: ${query}`);
+
         try {
-          console.log(`Processing query: ${query}`);
+          logger.debug(`Processing query: ${query}`);
+          const classification = await classifyQuery(query);
+          logger.debug(`Query classified as: ${classification.type}, isEntityQuery: ${classification.isEntityQuery}`);
+
           const result = await handleQuery(graph, llm, query);
-          console.log(`Query processed, result:`, result);
+          logger.debug(`Query processed, result:`, result);
           logToUser(`Response: ${result.response}`);
+
           if (result.error) {
             logToUser(`Error: ${result.error}`);
+            failedQueries++;
+          } else {
+            successfulQueries++;
           }
         } catch (queryError) {
-          console.error(`Error in query processing:`, queryError);
+          logger.error(`Error in query processing:`, queryError);
           logToUser(`Error processing query: ${queryError instanceof Error ? queryError.message : String(queryError)}`);
+          failedQueries++;
         }
+
         logToUser("--------------------");
+        if (i < queries.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
+
+      logger.info(`Test summary: ${successfulQueries} successful queries, ${failedQueries} failed queries`);
+      logToUser(`Test summary: ${successfulQueries} successful queries, ${failedQueries} failed queries`);
     } else {
-      logToUser('API connection test failed. Please check your internet connection and try again later.');
+      logger.error("API connection test failed");
+      logToUser("API connection test failed. Please check your internet connection and try again later.");
     }
   } catch (error) {
-    console.error(`Unexpected error in main:`, error);
+    logger.error(`Unexpected error in main:`, error);
     logToUser(`An unexpected error occurred: ${error instanceof Error ? error.message : String(error)}`);
   }
+
+  logger.info("Main execution completed");
 }
 
-main().catch((error) => {
-  console.error(`Unhandled error in main:`, error);
+main().catch(error => {
+  logger.error(`Unhandled error in main:`, error);
   logToUser(`Unhandled error: ${error instanceof Error ? error.message : String(error)}`);
 });

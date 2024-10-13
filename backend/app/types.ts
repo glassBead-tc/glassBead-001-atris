@@ -24,12 +24,32 @@ export interface DatasetParameters {
 export interface GraphState {
   llm: ChatOpenAI<ChatOpenAICallOptions>;
   query: string;
+  queryType: QueryType;
   categories: string[];
   apis: DatasetSchema[];
   bestApi: DatasetSchema | null;
+  secondaryApi?: DatasetSchema | null;
   params: Record<string, any>;
   response: any;
+  secondaryResponse?: any;  // Add only this line
   error?: string | null;
   formattedResponse?: string;
-  message?: string; // Add this line to include the 'message' property
+  message: string | null;
+  isEntityQuery?: boolean;
+  entityType: 'user' | 'track' | 'playlist' | null;
+  entity: string | null;
 }
+
+export type QueryType =
+  | 'trending_tracks'
+  | 'search_tracks'
+  | 'user_social'
+  | 'user_info'
+  | 'user_tracks'
+  | 'user_playlists'
+  | 'playlist_info'
+  | 'track_info'
+  | 'genre_info'
+  | 'playback'
+  | 'company_info'  // New type for queries about Audius as a company
+  | 'general';

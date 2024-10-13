@@ -54,7 +54,16 @@ function identifyQuerySteps(parsedQuery: ReturnType<typeof parseQuery>, selected
       break;
     case 'mostFollowers':
     case 'users':
-      steps.push({ api: '/v1/users/search', params: { limit: parsedQuery.limit || 5, sort_by: "follower_count", order_by: "desc" } });
+      steps.push(
+        { api: '/v1/users/search', params: { query: parsedQuery.artist || '', limit: 1 } },
+        { api: '/v1/users/{user_id}', params: {} }
+      );
+      break;
+    case 'followers':
+      steps.push(
+        { api: '/v1/users/search', params: { query: parsedQuery.artist || '', limit: 1 } },
+        { api: '/v1/users/{user_id}', params: {} }
+      );
       break;
     case 'genre':
     case 'trackInfo':

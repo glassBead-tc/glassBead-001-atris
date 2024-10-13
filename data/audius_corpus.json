@@ -28,7 +28,7 @@
             "play_count": "number"
           }
         },
-        "api_url": "/v1/tracks/{track_id}"
+        "api_url": "/tracks/{track_id}"
       },
       {
         "id": "2",
@@ -73,7 +73,7 @@
             }
           ]
         },
-        "api_url": "/v1/tracks/search"
+        "api_url": "/tracks/search"
       },
       {
         "id": "3",
@@ -123,7 +123,7 @@
             }
           ]
         },
-        "api_url": "/v1/tracks/trending"
+        "api_url": "/tracks/trending"
       },
       {
         "id": "4",
@@ -150,7 +150,7 @@
             "following_count": "number"
           }
         },
-        "api_url": "/v1/users/{user_id}"
+        "api_url": "/users/{user_id}"
       },
       {
         "id": "5",
@@ -192,7 +192,7 @@
             }
           ]
         },
-        "api_url": "/v1/users/search"
+        "api_url": "/users/search"
       },
       {
         "id": "6",
@@ -221,7 +221,7 @@
             "track_count": "number"
           }
         },
-        "api_url": "/v1/playlists/{playlist_id}"
+        "api_url": "/playlists/{playlist_id}"
       },
       {
         "id": "7",
@@ -265,7 +265,7 @@
             }
           ]
         },
-        "api_url": "/v1/playlists/search"
+        "api_url": "/playlists/search"
       },
       {
         "id": "9",
@@ -315,7 +315,7 @@
     
           ]
         },
-        "api_url": "/v1/tracks"
+        "api_url": "/tracks"
       },
       {
         "id": "11",
@@ -345,7 +345,7 @@
         
           ]
         },
-        "api_url": "/v1/tracks/search"
+        "api_url": "/tracks/search"
       },
       {
         "id": "12",
@@ -374,7 +374,7 @@
           
           ]
         },
-        "api_url": "/v1/tracks/trending"
+        "api_url": "/tracks/trending"
       },
       {
         "id": "13",
@@ -409,7 +409,7 @@
            
           ]
         },
-        "api_url": "/v1/tracks/trending/underground"
+        "api_url": "/tracks/trending/underground"
       },
       {
         "id": "14",
@@ -430,7 +430,7 @@
         "template_response": {
        
         },
-        "api_url": "/v1/tracks/{track_id}/stream"
+        "api_url": "/tracks/{track_id}/stream"
       },
       {
         "id": "15",
@@ -453,7 +453,7 @@
            
           }
         },
-        "api_url": "/v1/users/{user_id}"
+        "api_url": "/users/{user_id}"
       },
       {
         "id": "16",
@@ -476,7 +476,7 @@
             "user_id": "string"
           }
         },
-        "api_url": "/v1/users/id"
+        "api_url": "/users/id"
       },
       {
         "id": "17",
@@ -499,7 +499,7 @@
         
           ]
         },
-        "api_url": "/v1/users/search"
+        "api_url": "/users/search"
       },
       {
         "id": "18",
@@ -522,7 +522,7 @@
         
           ]
         },
-        "api_url": "/v1/users/{user_id}/favorites"
+        "api_url": "/users/{user_id}/favorites"
       },
       {
         "id": "19",
@@ -545,7 +545,7 @@
     
           ]
         },
-        "api_url": "/v1/users/{user_id}/reposts"
+        "api_url": "/users/{user_id}/reposts"
       },
       {
         "id": "20",
@@ -575,7 +575,7 @@
      
           ]
         },
-        "api_url": "/v1/users/{user_id}/tags"
+        "api_url": "/users/{user_id}/tags"
       },
       {
         "id": "21",
@@ -598,7 +598,7 @@
      
           }
         },
-        "api_url": "/v1/playlists/{playlist_id}"
+        "api_url": "/playlists/{playlist_id}"
       },
       {
         "id": "22",
@@ -621,7 +621,7 @@
        
           ]
         },
-        "api_url": "/v1/playlists/search"
+        "api_url": "/playlists/search"
       },
       {
         "id": "23",
@@ -650,7 +650,7 @@
           
           ]
         },
-        "api_url": "/v1/playlists/trending"
+        "api_url": "/playlists/trending"
       },
       {
         "id": "24",
@@ -686,7 +686,7 @@
     
           ]
         },
-        "api_url": "/v1/tips"
+        "api_url": "/tips"
       }
     ]
   }

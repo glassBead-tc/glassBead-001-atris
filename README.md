@@ -67,4 +67,3 @@ For detailed setup instructions, please refer to the documents in the `backend/a
 8. Implement caching for frequent queries
 9. Optimize performance and API call batching
 10. Develop comprehensive unit tests
-

@@ -5,52 +5,89 @@ import { TrackData } from "../lib/audiusData.js";
 console.log("process_api_response.ts file loaded");
 
 export async function processApiResponse(state: GraphState): Promise<Partial<GraphState>> {
-  console.log("1. Entering processApiResponse");
-  console.log("2. Query:", state.query);
+  logger.debug("Entering processApiResponse");
+  logger.debug("Query:", state.query);
+  logger.debug("Query Type:", state.queryType);
   
   try {
-    console.log("3. Checking state.response");
-    if (!state.response || !Array.isArray(state.response.data)) {
-      console.log("4. State response:", JSON.stringify(state.response, null, 2));
+    if (!state.response) {
+      logger.error("No response data to process");
       throw new Error("No response data to process");
     }
 
-    console.log("5. Casting tracks");
-    const tracks = state.response.data as TrackData[];
-    console.log("6. Number of tracks:", tracks.length);
-
     let formattedResponse: string;
 
-    console.log("7. Checking query type");
-    if (state.query.toLowerCase().includes('trending') && state.query.toLowerCase().includes('genre')) {
-      console.log("8. Formatting trending genres");
-      formattedResponse = formatTrendingGenres(tracks, tracks.length);
-    } else if (state.query.toLowerCase().includes('genre of')) {
-      console.log("9. Processing genre query");
-      formattedResponse = processGenreQuery(state.query, tracks);
-    } else {
-      console.log("10. Formatting default response");
-      formattedResponse = formatDefaultResponse(tracks);
+    switch (state.queryType) {
+      case 'user_info':
+      case 'user_social':
+        logger.debug("Processing user query");
+        formattedResponse = processUserQuery(state);
+        break;
+      case 'trending_tracks':
+        logger.debug("Formatting trending tracks");
+        formattedResponse = formatTrendingTracks(state.response.data, state.params.limit || 5);
+        break;
+      case 'genre_info':
+        logger.debug("Processing genre query");
+        formattedResponse = processGenreQuery(state);
+        break;
+      case 'track_info':
+        logger.debug("Processing track query");
+        formattedResponse = processTrackQuery(state);
+        break;
+      case 'playlist_info':
+        logger.debug("Processing playlist query");
+        formattedResponse = processPlaylistQuery(state);
+        break;
+      default:
+        logger.debug("Formatting default response");
+        formattedResponse = formatDefaultResponse(state.response.data);
     }
 
-    console.log("11. Processed response:", formattedResponse);
+    logger.debug("Processed response:", formattedResponse);
 
-    return { ...state, formattedResponse, error: null };
+    if (state.secondaryResponse) {
+      formattedResponse += "\n\n" + processSecondaryResponse(state);
+    }
+
+    return { formattedResponse };
   } catch (error) {
-    console.error("12. Error in processApiResponse:", error);
-    console.error("13. Error stack:", (error as Error).stack);
-    console.error("14. State at error:", JSON.stringify(state, null, 2));
+    logger.error("Error in processApiResponse:", error);
     return { 
-      ...state, 
-      formattedResponse: "I'm sorry, but I encountered an error while processing the API response. Could you please try your question again?",
+      formattedResponse: "I'm sorry, but I encountered an error while processing your request. Could you please try rephrasing your question?",
       error: error instanceof Error ? error.message : String(error)
     };
   }
 }
 
-function formatTrendingGenres(tracks: TrackData[], limit: number): string {
+function processUserQuery(state: GraphState): string {
+  const userInfo = processUserData(state.response.data);
+  
+  if (state.query.toLowerCase().includes('followers')) {
+    return `${userInfo.name} (@${userInfo.handle}) has ${userInfo.followers} followers on Audius.`;
+  } else if (state.query.toLowerCase().includes('following')) {
+    return `${userInfo.name} (@${userInfo.handle}) is following ${userInfo.following} users on Audius.`;
+  } else {
+    return `User: ${userInfo.name} (@${userInfo.handle})\nFollowers: ${userInfo.followers}\nFollowing: ${userInfo.following}\nTracks: ${userInfo.tracks}`;
+  }
+}
+
+function formatTrendingTracks(tracks: TrackData[], limit: number): string {
   if (!Array.isArray(tracks) || tracks.length === 0) {
     throw new Error("No trending tracks found or invalid data");
+  }
+
+  const trendingTracks = tracks.slice(0, limit).map((track, index) => 
+    `${index + 1}. "${track.title}" by ${track.user.name}`
+  ).join('\n');
+
+  return `Here are the top ${limit} trending tracks on Audius:\n${trendingTracks}`;
+}
+
+function processGenreQuery(state: GraphState): string {
+  const tracks = state.response.data;
+  if (!Array.isArray(tracks) || tracks.length === 0) {
+    throw new Error("No tracks found matching the query");
   }
 
   const genreCounts: {[key: string]: number} = {};
@@ -67,16 +104,17 @@ function formatTrendingGenres(tracks: TrackData[], limit: number): string {
     `${index + 1}. ${genre} (${count} track${count !== 1 ? 's' : ''})`
   ).join('\n');
 
-  return `Here are the top trending genres on Audius this week based on the top ${limit} trending tracks:\n${trendingGenres}`;
+  return `Here are the top trending genres on Audius based on the ${tracks.length} tracks analyzed:\n${trendingGenres}`;
 }
 
-function processGenreQuery(query: string, tracks: TrackData[]): string {
+function processTrackQuery(state: GraphState): string {
+  const tracks = state.response.data;
   if (!Array.isArray(tracks) || tracks.length === 0) {
     throw new Error("No tracks found matching the query");
   }
 
-  const trackNameMatch = query.match(/'([^']+)'/);
-  const artistMatch = query.match(/by\s+([^']+)/i);
+  const trackNameMatch = state.query.match(/'([^']+)'/);
+  const artistMatch = state.query.match(/by\s+([^']+)/i);
   
   if (trackNameMatch && artistMatch) {
     const trackName = trackNameMatch[1];
@@ -101,6 +139,28 @@ function processGenreQuery(query: string, tracks: TrackData[]): string {
   } else {
     return "I'm having trouble understanding your query. Can you please provide both the track name (in quotes) and the artist name?";
   }
+}
+
+function processPlaylistQuery(state: GraphState): string {
+  const playlist = state.response.data;
+  if (!playlist) {
+    throw new Error("No playlist found matching the query");
+  }
+
+  const trackList = playlist.tracks.slice(0, 5).map((track: any, index: number) => 
+    `${index + 1}. "${track.title}" by ${track.user.name}`
+  ).join('\n');
+
+  return `
+Playlist: "${playlist.playlist_name}"
+Created by: ${playlist.user.name}
+Total Tracks: ${playlist.track_count}
+Favorite Count: ${playlist.favorite_count}
+Repost Count: ${playlist.repost_count}
+
+Top 5 Tracks:
+${trackList}
+  `.trim();
 }
 
 function formatDefaultResponse(data: any): string {
@@ -154,4 +214,44 @@ function levenshteinDistance(str1: string, str2: string): number {
   }
 
   return dp[m][n];
+}
+
+function processUserData(userData: any): { name: string, handle: string, followers: string, following: string, tracks: string } {
+  if (Array.isArray(userData)) {
+    userData = userData[0];
+  }
+  
+  if (userData) {
+    return {
+      name: userData.name || 'Unknown',
+      handle: userData.handle || 'Unknown',
+      followers: userData.follower_count !== undefined ? userData.follower_count.toString() : 'Unknown',
+      following: userData.followee_count !== undefined ? userData.followee_count.toString() : 'Unknown',
+      tracks: userData.track_count !== undefined ? userData.track_count.toString() : 'Unknown'
+    };
+  }
+  
+  return {
+    name: 'Unknown',
+    handle: 'Unknown',
+    followers: 'Unknown',
+    following: 'Unknown',
+    tracks: 'Unknown'
+  };
+}
+
+function formatDuration(durationInSeconds: number): string {
+  const minutes = Math.floor(durationInSeconds / 60);
+  const seconds = durationInSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function processSecondaryResponse(state: GraphState): string {
+  if (!state.secondaryResponse) {
+    return "";
+  }
+
+  // Process the secondary response based on the query type or the secondary API
+  // This is a placeholder and should be customized based on your specific use cases
+  return `Additional Information:\n${JSON.stringify(state.secondaryResponse.data, null, 2)}`;
 }

@@ -39,6 +39,11 @@
 36. Aligned searchUtils.ts with multi_step_queries.ts for consistent query handling
 37. Expanded parseQuery function to recognize more query types
 38. Implemented structured logging across all modules
+39. Refactored graph structure to use both main flow and conditional error handling edges
+40. Improved error propagation throughout the graph
+41. Enhanced user-facing responses by abstracting backend logic
+42. Implemented more robust API selection process
+43. Created queryClassifier.ts to improve query type identification and routing
 
 ## Next Steps
 1. Implement caching for frequently requested data
@@ -54,6 +59,18 @@
 11. Implement better handling of genre-related queries
 12. Improve handling of queries about latest releases and trending genres
 13. Develop a more sophisticated multi-step query execution system
+14. Implement multi-step query processing for user-specific queries
+15. Enhance API selection logic to better match queries with appropriate endpoints
+16. Improve error handling and user feedback for failed queries
+17. Implement user search functionality before fetching user details
+18. Refine response formatting for user-specific queries
+19. Improve user name extraction for complex artist names
+20. Enhance error messages to provide more specific feedback about user queries
+21. Implement fuzzy matching for user searches to handle slight variations in names
+22. Expand queryClassifier.ts to handle more query types and edge cases
+22. Improve user name extraction in query processing
+23. Enhance error handling for user search queries
+24. Refine API selection process for user-related queries
 
 ## Known Issues
 1. Some complex queries may still not extract all necessary parameters automatically

@@ -1,26 +1,17 @@
 {
-  "extends": "@tsconfig/recommended",
   "compilerOptions": {
-    "outDir": "dist",
-    "lib": [
-      "ES2021",
-      "ES2022.Object",
-      "DOM"
-    ],
-    "target": "ES2021",
+    "target": "ES2022",
     "module": "NodeNext",
-    "sourceMap": true,
-    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "NodeNext",
     "esModuleInterop": true,
-    "jsx": "preserve", // Added this line
-    "baseUrl": "./src",
-    "declaration": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUnusedParameters": true,
-    "useDefineForClassFields": true,
-    "strictPropertyInitialization": false
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist",
+    "rootDir": "./",
+    "types": ["node", "jest"],
+    "resolveJsonModule": true
   },
-  "include": ["app/**/*"],
-  "exclude": ["node_modules", "dist", "tests"]
+  "include": ["src/**/*", "app/**/*", "test/**/*"],
+  "exclude": ["node_modules"]
 }

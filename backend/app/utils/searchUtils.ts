@@ -1,4 +1,4 @@
-import { globalAudiusApi } from '../tools/create_fetch_request.js';
+import { globalAudiusApi } from '../services/audiusApi.js';
 import { TrackData, UserData } from '../lib/audiusData.js';
 import { formatTrendingTracks, formatPlaylistResults, formatUserResults, formatDetailedTrackInfo } from './formatResults.js';
 import { logger } from '../logger.js';
