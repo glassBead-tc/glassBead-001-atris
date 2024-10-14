@@ -22,6 +22,7 @@
   "author": "Brace Sproul",
   "license": "MIT",
   "dependencies": {
+    "@audius/sdk": "^6.0.1",
     "@langchain/community": "^0.2.9",
     "@langchain/core": "^0.2.6",
     "@langchain/langgraph": "^0.0.22",

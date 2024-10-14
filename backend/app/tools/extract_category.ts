@@ -25,6 +25,7 @@ export async function extractCategory(state: GraphState): Promise<Partial<GraphS
     }
 
     const query = state.query.toLowerCase();
+    logger.debug(`Processing query: "${query}"`);
     const categories: string[] = [];
     let entityType: "playlist" | "track" | "user" | undefined = undefined;
     let entity: string | undefined = undefined;
@@ -80,7 +81,7 @@ export async function extractCategory(state: GraphState): Promise<Partial<GraphS
           entityType = "user";
         } else if (categories.includes('Playlists')) {
           entityType = "playlist";
-        }
+        } 
       }
     }
 
@@ -88,17 +89,31 @@ export async function extractCategory(state: GraphState): Promise<Partial<GraphS
       categories.push('General');
     }
 
-    logger.debug(`Extracted categories: ${categories}`);
-    logger.debug(`Extracted entity: ${entityType ? `${entityType}: ${entity}` : 'None'}`);
+    let queryType: string = 'general';
+
+    if (categories.includes('Trending') && categories.includes('Tracks')) {
+      queryType = 'trending_tracks';
+    } else if (categories.includes('Tracks')) {
+      queryType = 'search_tracks';
+    } else if (categories.includes('Users')) {
+      queryType = 'search_users';
+    } else if (categories.includes('Playlists')) {
+      queryType = 'search_playlists';
+    } else if (categories.includes('Genres')) {
+      queryType = 'search_genres';
+    }
+
+    logger.debug(`extractCategory result - categories: ${categories.join(', ')}, queryType: ${queryType}, entityType: ${entityType}, entity: ${entity}`);
 
     return {
       ...state,
       categories,
       entityType,
       entity,
-      isEntityQuery: !!entityType
+      isEntityQuery: !!entityType,
+      queryType
     };
-  } catch (error) {
+  } catch (error) { 
     logger.error(`Error in extractCategory: ${error instanceof Error ? error.message : String(error)}`);
     return {
       ...state,

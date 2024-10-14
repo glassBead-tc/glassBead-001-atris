@@ -1,16 +1,26 @@
-import dotenv from 'dotenv';
-import { CompiledStateGraph, StateGraph } from "@langchain/langgraph";
-import { ChatOpenAI } from "@langchain/openai";
-import { END, START } from "@langchain/langgraph";
-import { extractCategory } from "../tools/extract_category.js";
-import { getApis } from "../tools/get_apis.js";
-import { selectApi } from "../tools/select_api.js";
-import { extractParameters } from "../tools/extract_parameters.js";
-import { createFetchRequest } from "../tools/create_fetch_request.js";
-import { GraphState, NodeNames } from "../types.js";
-import { processApiResponse } from "../tools/process_api_response.js";
-import { handleMultiStepQuery } from "../tools/multi_step_queries.js";
-import { logger } from '../logger.js';
+import dotenv from 'dotenv'; // Manage environment variables
+import { CompiledStateGraph, StateGraph } from "@langchain/langgraph"; // LangGraph classes for state graph creation
+import { ChatOpenAI } from "@langchain/openai"; // Language model interactions
+import { END, START } from "@langchain/langgraph"; // Constants for graph flow control
+
+// Importing custom utility functions for various tasks within the graph
+import { extractCategory } from "../tools/extract_category.js"; // Extracts category information from queries
+import { getApis } from "../tools/get_apis.js"; // Retrieves available APIs based on query
+import { selectApi } from "../tools/select_api.js"; // Selects the most suitable API for the query
+import { extractParameters } from "../tools/extract_parameters.js"; // Extracts necessary parameters from user queries
+import { createFetchRequest } from "../tools/create_fetch_request.js"; // Creates API fetch requests
+
+// Importing custom types for GraphState and NodeNames
+import { GraphState, NodeNames } from "../types.js"; // Defines the shape of the graph's state and node names
+
+// Importing additional tools for processing API responses and handling multi-step queries
+import { processApiResponse } from "../tools/process_api_response.js"; // Processes responses received from APIs
+import { handleMultiStepQuery } from "../tools/multi_step_queries.js"; // Handles multi-step queries requiring additional processing
+
+// Importing a custom logger for logging purposes
+import { logger } from '../logger.js'; // Logs information and errors for debugging
+
+// Importing various handler functions responsible for different query types
 import { 
   handle_entity_query, 
   handle_error, 
@@ -19,204 +29,164 @@ import {
   handle_search_playlists,
   handle_search_users,
   handle_trending_tracks,
-  handle_search_genres // Newly added handler
-} from './functions/handlerFunctions.js';
-import { classifyQueryWrapper, wrapNodeLogic, log_final_result } from './functions/creationHelperFunctions.js';
-import { verifyParams } from '../tools/verify_params.js';
+  handle_search_genres // Newly added handler for genre searches
+} from './functions/handlerFunctions.js'; // Handles specific types of queries
 
-dotenv.config();
+// Importing helper functions for query classification and node logic wrapping
+import { classifyQueryWrapper, wrapNodeLogic, log_final_result } from './functions/creationHelperFunctions.js'; // Assists in classifying queries and wrapping node logic
 
-// Integrated createAtrisGraph function
+// Importing a function to verify parameters passed in queries
+import { verifyParams } from '../tools/verify_params.js'; // Verifies the integrity of extracted parameters
+
+// Configuring dotenv to load environment variables from a .env file
+dotenv.config(); // Loads environment variables for configuration
+
+/**
+ * Creates and compiles the Atris StateGraph.
+ * @returns {CompiledStateGraph<GraphState, Partial<GraphState>, NodeNames>} The compiled state graph ready for execution.
+ */
 function createAtrisGraph(): CompiledStateGraph<GraphState, Partial<GraphState>, NodeNames> {
+  // Initializing the ChatOpenAI instance with specified model and API key from environment variables
   const llm = new ChatOpenAI({ 
     model: 'gpt-3.5-turbo', 
     temperature: 0, 
-    apiKey: process.env.OPENAI_API_KEY 
+    apiKey: process.env.OPENAI_API_KEY // OpenAI API key from environment variables
   });
 
+  // Creating a new StateGraph instance with defined state channels, their default values, and reducers
   const atris = new StateGraph<GraphState, Partial<GraphState>, NodeNames>({
     channels: {
       llm: { 
-        default: () => llm,
-        reducer: (current, newVal) => newVal || current
+        default: () => llm, 
+        reducer: (current, newVal) => newVal || current 
       },
       query: { 
-        default: () => "",
-        reducer: (current, newVal) => newVal || current
+        default: () => "", 
+        reducer: (current, newVal) => newVal !== "" ? newVal : current 
       },
       queryType: { 
-        default: () => "general",
-        reducer: (current, newVal) => newVal || current
+        default: () => "general", 
+        reducer: (current, newVal) => newVal || current 
       },
       categories: { 
-        default: () => [],
-        reducer: (current, newVal) => newVal.length > 0 ? newVal : current
+        default: () => [], 
+        reducer: (current, newVal) => newVal.length ? newVal : current 
       },
       apis: { 
-        default: () => [],
-        reducer: (current, newVal) => newVal.length > 0 ? newVal : current
+        default: () => [], 
+        reducer: (current, newVal) => newVal.length ? newVal : current 
+      },
+      bestApi: { 
+        default: () => null, 
+        reducer: (current, newVal) => newVal || current 
+      },
+      params: { 
+        default: () => ({}), 
+        reducer: (current, newVal) => ({ ...current, ...newVal }) 
       },
       response: { 
-        default: () => "",
-        reducer: (current, newVal) => newVal || current
+        default: () => null, 
+        reducer: (current, newVal) => newVal !== null ? newVal : current 
       },
-      formattedResponse: { 
-        default: () => "",
-        reducer: (current, newVal) => newVal || current
-      },
-      error: { 
+      secondaryApi: {
         default: () => null,
         reducer: (current, newVal) => newVal || current
       },
-      isEntityQuery: { 
+      secondaryResponse: {
+        default: () => null,
+        reducer: (current, newVal) => newVal !== null ? newVal : current
+      },
+      error: {
+        default: () => null,
+        reducer: (current, newVal) => newVal || current
+      },
+      formattedResponse: {
+        default: () => "",
+        reducer: (current, newVal) => newVal || current
+      },
+      message: {
+        default: () => null,
+        reducer: (current, newVal) => newVal || current
+      },
+      isEntityQuery: {
         default: () => false,
         reducer: (current, newVal) => newVal !== undefined ? newVal : current
       },
-      multiStepHandled: { 
-        default: () => false,
-        reducer: (current, newVal) => newVal !== undefined ? newVal : current
+      entityType: {
+        default: () => null,
+        reducer: (current, newVal) => newVal || current
       },
-      complexity: { 
+      entity: {
+        default: () => null,
+        reducer: (current, newVal) => newVal || current
+      },
+      parameters: {
+        default: () => ({}),
+        reducer: (current, newVal) => ({ ...current, ...newVal })
+      },
+      complexity: {
         default: () => "simple",
         reducer: (current, newVal) => newVal || current
       },
-      message: { 
-        default: () => null,
-        reducer: (current, newVal) => newVal || current
+      multiStepHandled: {
+        default: () => false,
+        reducer: (current, newVal) => newVal !== undefined ? newVal : current
       },
-      bestApi: { 
-        default: () => null,
-        reducer: (current, newVal) => newVal || current
-      },
-      params: { 
-        default: () => ({}),
-        reducer: (current, newVal) => (Object.keys(newVal).length > 0) ? newVal : current
-      },
-      entityType: { 
-        default: () => null,
-        reducer: (current, newVal) => newVal || current
-      },
-      entity: { 
-        default: () => null,
+      initialState: {
+        default: () => undefined,
         reducer: (current, newVal) => newVal || current
       }
-      // Add other necessary state properties here
     }
-  })
+  });
+
+  // Building the graph by adding nodes and defining their logic
+  atris
     .addNode("classify_query", wrapNodeLogic("classify_query", classifyQueryWrapper))
-    .addNode("extract_category", wrapNodeLogic("extract_category", extractCategory))
-    .addNode("get_apis", wrapNodeLogic("get_apis", getApis))
-    .addNode("select_api", wrapNodeLogic("select_api", selectApi))
-    .addNode("handle_multi_step_query", wrapNodeLogic("handle_multi_step_query", handleMultiStepQuery))
-    .addNode("handle_entity_query", wrapNodeLogic("handle_entity_query", handle_entity_query))
-    .addNode("handle_search_genres", wrapNodeLogic("handle_search_genres", handle_search_genres)) // Newly added node
-    .addNode("extract_parameters", wrapNodeLogic("extract_parameters", extractParameters))
-    .addNode("verify_params", wrapNodeLogic("verify_params", verifyParams))
-    .addNode("create_fetch_request", wrapNodeLogic("create_fetch_request", createFetchRequest))
-    .addNode("process_api_response", wrapNodeLogic("process_api_response", processApiResponse))
-    .addNode("handle_error", wrapNodeLogic("handle_error", handle_error))
-    .addNode("log_final_result", wrapNodeLogic("log_final_result", log_final_result))
-    .addNode("handle_playlist_info", wrapNodeLogic("handle_playlist_info", handle_playlist_info))
     .addNode("handle_search_tracks", wrapNodeLogic("handle_search_tracks", handle_search_tracks))
+    .addNode("handle_trending_tracks", wrapNodeLogic("handle_trending_tracks", handle_trending_tracks))
     .addNode("handle_search_playlists", wrapNodeLogic("handle_search_playlists", handle_search_playlists))
     .addNode("handle_search_users", wrapNodeLogic("handle_search_users", handle_search_users))
-    .addNode("handle_trending_tracks", wrapNodeLogic("handle_trending_tracks", handle_trending_tracks))
-    .addNode("handle_search_genres", wrapNodeLogic("handle_search_genres", handle_search_genres)) // Newly added node
+    .addNode("handle_search_genres", wrapNodeLogic("handle_search_genres", handle_search_genres))
+    .addNode("handle_entity_query", wrapNodeLogic("handle_entity_query", handle_entity_query))
+    .addNode("handle_playlist_info", wrapNodeLogic("handle_playlist_info", handle_playlist_info))
+    .addNode("handle_multi_step_query", wrapNodeLogic("handle_multi_step_query", handleMultiStepQuery))
+    .addNode("handle_error", wrapNodeLogic("handle_error", handle_error))
+    .addNode("log_final_result", wrapNodeLogic("log_final_result", log_final_result))
+
+    // Defining transitions from 'classify_query' node based on the classification result
     .addConditionalEdges({
       source: "classify_query",
       path: (state: GraphState) => {
-        switch(state.queryType) {
-          case 'genre_info':
-            return "handle_multi_step_query";
-          case 'playlist_info':
-            return "handle_playlist_info";
+        logger.debug(`Determining next node based on queryType: ${state.queryType}`);
+        switch (state.queryType) {
           case 'search_tracks':
             return "handle_search_tracks";
+          case 'trending_tracks':
+            return "handle_trending_tracks";
           case 'search_playlists':
             return "handle_search_playlists";
           case 'search_users':
             return "handle_search_users";
-          case 'trending_tracks':
-            return "handle_trending_tracks";
-          case 'search_genres': // Newly added case
+          case 'search_genres':
             return "handle_search_genres";
-          default:
-            return "handle_entity_query"; // Only fallback to handle_entity_query for other types
-        }
-      }
-    })
-    .addConditionalEdges({
-      source: "extract_category",
-      path: (state: GraphState) => state.error ? "handle_error" : "get_apis"
-    })
-    .addConditionalEdges({
-      source: "get_apis",
-      path: (state: GraphState) => state.error ? "handle_error" : "select_api"
-    })
-    .addConditionalEdges({
-      source: "select_api",
-      path: (state: GraphState) => state.error ? "handle_error" : "extract_parameters"
-    })
-    .addConditionalEdges({
-      source: "extract_parameters",
-      path: (state: GraphState) => state.error ? "handle_error" : "verify_params"
-    })
-    .addConditionalEdges({
-      source: "verify_params",
-      path: (state: GraphState) => state.error ? "handle_error" : "create_fetch_request"
-    })
-    .addConditionalEdges({
-      source: "create_fetch_request",
-      path: (state: GraphState) => state.error ? "handle_error" : "process_api_response"
-    })
-    .addConditionalEdges({
-      source: "process_api_response",
-      path: (state: GraphState) => {
-        logger.debug(`process_api_response - multiStepHandled: ${state.multiStepHandled}`);
-        if (state.error) return "handle_error";
-        if (state.complexity === 'simple') return "log_final_result";
-        if (!state.multiStepHandled) return "handle_multi_step_query";
-        return "log_final_result"; // Terminate after handling multi-step
-      }
-    })
-    .addConditionalEdges({
-      source: "handle_multi_step_query",
-      path: (state: GraphState) => {
-        logger.debug(`handle_multi_step_query - Current State: ${JSON.stringify(state)}`);
-        return state.error ? "handle_error" : "process_api_response";
-      }
-    })
-    .addConditionalEdges({
-      source: "handle_entity_query",
-      path: (state: GraphState) => {
-        switch(state.queryType) {
-          case 'genre_info':
-            return "handle_multi_step_query";
+          case 'entity_query':
+            return "handle_entity_query";
           case 'playlist_info':
             return "handle_playlist_info";
-          case 'search_tracks':
-            return "handle_search_tracks";
-          case 'search_playlists':
-            return "handle_search_playlists";
-          case 'search_users':
-            return "handle_search_users";
-          case 'trending_tracks':
-            return "handle_trending_tracks";
-          case 'search_genres': // Newly added case
-            return "handle_search_genres";
           default:
-            return "handle_error"; // Changed from "handle_entity_query" to "handle_error" to prevent recursion
+            return "handle_error";
         }
       }
     })
+    // Defining transitions from each handler node based on error presence
     .addConditionalEdges({
-      source: "handle_playlist_info",
+      source: "handle_search_tracks",
       path: (state: GraphState) => {
         return state.error ? "handle_error" : "log_final_result";
       }
     })
     .addConditionalEdges({
-      source: "handle_search_tracks",
+      source: "handle_trending_tracks",
       path: (state: GraphState) => {
         return state.error ? "handle_error" : "log_final_result";
       }
@@ -234,34 +204,50 @@ function createAtrisGraph(): CompiledStateGraph<GraphState, Partial<GraphState>,
       }
     })
     .addConditionalEdges({
-      source: "handle_trending_tracks",
-      path: (state: GraphState) => {
-        return state.error ? "handle_error" : "log_final_result";
-      }
-    })
-    .addConditionalEdges({
       source: "handle_search_genres",
       path: (state: GraphState) => {
         return state.error ? "handle_error" : "log_final_result";
       }
     })
+    .addConditionalEdges({
+      source: "handle_entity_query",
+      path: (state: GraphState) => {
+        return state.error ? "handle_error" : "log_final_result";
+      }
+    })
+    .addConditionalEdges({
+      source: "handle_playlist_info",
+      path: (state: GraphState) => {
+        return state.error ? "handle_error" : "log_final_result";
+      }
+    })
+    .addConditionalEdges({
+      source: "handle_multi_step_query",
+      path: (state: GraphState) => {
+        return state.error ? "handle_error" : "log_final_result";
+      }
+    })
+    // Directly connecting error handling to logging the final result
     .addEdge("handle_error", "log_final_result")
+    // Connecting the final logging node to the END node to terminate the graph flow
     .addEdge("log_final_result", END);
 
-  // Connect START to the first node
+  // Connecting the START node to the 'classify_query' node to initiate query processing
   atris.addEdge(START, "classify_query");
 
-  // Compile the graph before returning
+  // Compiling the defined state graph into a format ready for execution
   return atris.compile();
 }
 
-export function createAtris() {
-  logger.info("====== CREATING atris WITH LATEST CHANGES ======");
-
+/**
+ * Creates the Atris StateGraph and logs the creation process.
+ * @returns {CompiledStateGraph<GraphState, Partial<GraphState>, NodeNames>} The compiled state graph ready for use.
+ */
+export function createAtris(): CompiledStateGraph<GraphState, Partial<GraphState>, NodeNames> {
+  logger.info("====== CREATING ATRIS WITH LATEST CHANGES ======");
   const atris = createAtrisGraph();
-
   return atris;
 }
 
-// If you need to export it as createGraph:
+// Exporting 'createAtris' as 'createGraph' to ensure compatibility with LangGraph Studio
 export { createAtris as createGraph };

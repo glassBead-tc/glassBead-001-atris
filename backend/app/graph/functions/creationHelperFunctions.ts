@@ -1,6 +1,6 @@
 import { GraphState } from "../../types.js";
 import { logger } from "../../logger.js";
-import { classifyQuery } from "../../modules/queryClassifier.js";
+import { extractCategory } from "../../tools/extract_category.js";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
@@ -10,15 +10,15 @@ const TIMEOUT = 30000; // 30 seconds
  * Wraps the classifyQuery function to update the GraphState.
  */
 export const classifyQueryWrapper = async (state: GraphState): Promise<Partial<GraphState>> => {
-    const classification = await classifyQuery(state.query);
-    const entityType = classification.entityType as 'user' | 'track' | 'playlist' | 'genre' | null;
-    return {
-        queryType: classification.type,
-        isEntityQuery: classification.isEntityQuery,
-        entityType: entityType,
-        entity: classification.entity,
-        complexity: classification.complexity,
+    logger.debug(`State before extractCategory: ${JSON.stringify(state)}`);
+    const extractedInfo = await extractCategory(state);
+    const newState = {
+        ...state,
+        ...extractedInfo,
+        queryType: extractedInfo.queryType
     };
+    logger.debug(`State after extractCategory: ${JSON.stringify(newState)}`);
+    return newState;
 };
 
 /**

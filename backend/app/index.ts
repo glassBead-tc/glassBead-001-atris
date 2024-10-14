@@ -1,7 +1,7 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { createAtris } from "./graph/createAtris.js";
 import { globalAudiusApi } from "./services/audiusApi.js";
-import { logger, logToUser } from "./logger.js";
+import { logger } from "./logger.js";
 import { handleQuery } from "./modules/queryHandler.js";
 import { checkRequiredEnvVars, getOpenAiApiKey } from "./config.js";
 import { classifyQuery } from "./modules/queryClassifier.js";
@@ -11,12 +11,16 @@ logger.level = "debug";
 // Define getTestQueries function
 function getTestQueries(): string[] {
   return [
-    "What are the top trending tracks?",
-    "Who are the most followed artists?",
-    "Find me some electronic music playlists",
-    "What's the most played track by Skrillex?",
-    "Show me the latest uploads in the hip-hop genre"
+    "What are the top trending tracks?"
+    // "Who are the most followed artists?",
+    // "Find me some electronic music playlists",
+    // "What's the most played track by Skrillex?",
+    // "Show me the latest uploads in the hip-hop genre"
   ];
+}
+
+function logToUser(message: string): void {
+  console.log(message);
 }
 
 async function main() {
@@ -43,9 +47,8 @@ async function main() {
       let successfulQueries = 0;
       let failedQueries = 0;
 
-      for (let i = 0; i < queries.length; i++) {
-        const query = queries[i];
-        logToUser(`Query ${i + 1}/${queries.length}: ${query}`);
+      for (const query of queries) {
+        logToUser(`Query: ${query}`);
 
         try {
           logger.debug(`Processing query: ${query}`);
@@ -57,8 +60,9 @@ async function main() {
           logToUser(`Response: ${result.response}`);
 
           if (result.error) {
-            logToUser(`Error: ${result.error}`);
             failedQueries++;
+            logger.error(`Query failed: ${query}`);
+            logger.error(`Error: ${result.error}`);
           } else {
             successfulQueries++;
           }
@@ -69,9 +73,6 @@ async function main() {
         }
 
         logToUser("--------------------");
-        if (i < queries.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
       }
 
       logger.info(`Test summary: ${successfulQueries} successful queries, ${failedQueries} failed queries`);

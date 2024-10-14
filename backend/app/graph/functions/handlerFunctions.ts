@@ -57,7 +57,7 @@ export const handle_search_genres = async (state: GraphState): Promise<Partial<G
 
   try {
     // Assuming there's a searchGenres method in AudiusApi
-    const searchResponse = await globalAudiusApi.searchGenres(state.entity, state.params.limit || 5);
+    const searchResponse = await globalAudiusApi.getGenres(state.params.limit || 5);
     logger.debug(`Search genres response: ${JSON.stringify(searchResponse.data)}`);
 
     if (!searchResponse.data || searchResponse.data.length === 0) {
@@ -196,7 +196,7 @@ export const handle_search_tracks = async (state: GraphState): Promise<Partial<G
             params: { limit: state.params.limit || 5 },
         };
     } catch (error: unknown) {
-        logger.error(`Failed to handle search_tracks query:`, error);
+        logger.error(`Failed to handle search_tracks query:`, error instanceof Error ? error.message : 'Unknown error');
         return { 
             error: error instanceof Error ? error.message : 'Failed to search tracks.' 
         };
@@ -253,20 +253,16 @@ export const handle_trending_tracks = async (state: GraphState): Promise<Partial
   logger.info(`Handling trending_tracks query`);
 
   try {
-    const trendingTracks = await globalAudiusApi.getTrendingTracks(state.params.limit || 5, state.params.timeframe || 'week');
-    logger.debug(`Fetched trending tracks: ${JSON.stringify(trendingTracks)}`);
-
-    if (!trendingTracks || trendingTracks.length === 0) {
-      logger.warn("No trending tracks found.");
-      return { 
-        error: "No trending tracks found." 
-      };
+    const trendingTracksResponse = await globalAudiusApi.getTrendingTracks();
+    
+    if (!trendingTracksResponse || !trendingTracksResponse.data) {
+      throw new Error("Failed to retrieve trending tracks data");
     }
 
-    const formattedResponse = format_trending_tracks(trendingTracks, state.params.limit || 5);
+    const formattedResponse = format_trending_tracks(trendingTracksResponse.data, state.params.limit || 5);
 
     return {
-      response: trendingTracks,
+      response: trendingTracksResponse.data,
       formattedResponse,
       message: "Trending tracks processed successfully."
     };
@@ -283,12 +279,23 @@ export const handle_trending_tracks = async (state: GraphState): Promise<Partial
  * @param state - The current state of the GraphState.
  * @returns A partial GraphState with a formatted error message.
  */
-export const handle_error = async (state: GraphState): Promise<Partial<GraphState>> => {
-  logger.error(`Handling error for state: ${state.error}`);
+export const handle_error = (state: GraphState): Partial<GraphState> => {
+  const errorMessage = state.error || 'An unknown error occurred.';
+  logger.error(`Handling error for state: ${errorMessage}`);
+
+  let userFriendlyMessage = 'I apologize, but I encountered an issue while processing your request.';
+
+  if (state.queryType === 'trending_tracks' && errorMessage.includes('Failed to retrieve trending tracks')) {
+    userFriendlyMessage = "I'm sorry, but I couldn't fetch the trending tracks at the moment. This might be due to a temporary issue with the Audius API. Please try again later.";
+  } else if (state.queryType === 'search_tracks' && errorMessage.includes('No track name provided')) {
+    userFriendlyMessage = "I'm sorry, but I need a specific track name to search for. Could you please provide the name of the track you're looking for?";
+  }
+  // Add more specific error handling cases as needed
 
   return {
-    formattedResponse: `An error occurred: ${state.error}`,
-    message: "Error handled successfully."
+    formattedResponse: userFriendlyMessage,
+    error: errorMessage,
+    message: 'Error handled with user-friendly message.',
   };
 };
 

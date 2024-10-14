@@ -1,7 +1,3 @@
-|...
-
-
-
 ## Task Overview
 
 This task involves implementing the functionality to handle the query "What are the most popular genres on Audius?" within our Audius API integration system. This query is classified as a moderate complexity query because it requires additional processing beyond a single API call. The goal is to extract genre information from the trending tracks endpoint, determine the most popular genres based on the frequency of occurrence, limit the results to a specified number (defaulting to 5), and clean up the output by removing score details. Additionally, ensure the default timeframe is set to "week" unless specified otherwise.
@@ -16,6 +12,7 @@ This task involves implementing the functionality to handle the query "What are 
 
 3. **Multi-Step Query Handling:**
    - Implement the logic in `multi_step_queries.ts` to:
+     - Connect to Audius discovery nodes via the SDK.
      - Fetch data from the `/v1/tracks/trending` endpoint with a default timeframe of 'week'.
      - Extract genres from the fetched tracks.
      - Score and rank genres based on their frequency using Pareto distribution.
