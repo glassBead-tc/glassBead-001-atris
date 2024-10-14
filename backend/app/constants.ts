@@ -130,3 +130,4 @@ export enum StemCategory {
   BASS = 'BASS',
   OTHER = 'OTHER'
 }
+

@@ -27,7 +27,7 @@ const contractions: { [key: string]: string } = {
  * @param name - The entity name to normalize.
  * @returns The normalized entity name.
  */
-function normalizeName(name: string): string {
+export function normalizeName(name: string): string {
   return name.replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
 }
 
@@ -40,17 +40,17 @@ export async function classifyQuery(query: string): Promise<QueryClassification>
     complexity: 'simple',
   };
 
-  const lowerQuery = query.toLowerCase();
+  let normalizedQuery = query.toLowerCase();
 
   // Expand contractions
   Object.keys(contractions).forEach((contraction: string) => {
     const regex = new RegExp(`\\b${contraction}\\b`, 'gi');
-    query = query.replace(regex, contractions[contraction]);
+    normalizedQuery = normalizedQuery.replace(regex, contractions[contraction]);
   });
 
-  const doc = nlp(query);
+  const doc = nlp(normalizedQuery);
 
-  logger.debug(`Processing query: "${query}"`);
+  logger.debug(`Processing query: "${normalizedQuery}"`);
 
   // Enhanced entity extraction using NLP
   const people: string[] = doc.people().out('array');
@@ -63,17 +63,18 @@ export async function classifyQuery(query: string): Promise<QueryClassification>
 
   // Attempt to detect entity type based on detected entities
   if (allEntities.length > 0) {
-    const entity: string = allEntities[0]; // Taking the first detected entity
+    const rawEntity: string = allEntities[0]; // Taking the first detected entity
+    const entity = normalizeName(rawEntity); // Normalize the entity name
     let detectedEntityType: 'user' | 'track' | 'playlist' | 'genre' | null = null;
 
     // Simplified entity type detection based on query content
-    if (/artist|user|profile/i.test(lowerQuery)) {
+    if (/artist|user|profile/i.test(normalizedQuery)) {
       detectedEntityType = 'user';
-    } else if (/track|song/i.test(lowerQuery)) {
+    } else if (/track|song/i.test(normalizedQuery)) {
       detectedEntityType = 'track';
-    } else if (/playlist/i.test(lowerQuery)) {
+    } else if (/playlist/i.test(normalizedQuery)) {
       detectedEntityType = 'playlist';
-    } else if (/genre/i.test(lowerQuery)) {
+    } else if (/genre/i.test(normalizedQuery)) {
       detectedEntityType = 'genre';
     }
 
@@ -82,7 +83,7 @@ export async function classifyQuery(query: string): Promise<QueryClassification>
         type: `search_${detectedEntityType}s`,
         isEntityQuery: true,
         entityType: detectedEntityType,
-        entity: entity.trim(),
+        entity: entity,
         complexity: 'simple',
       };
       logger.debug(`Entity identified: ${classification.type}`);
@@ -90,13 +91,13 @@ export async function classifyQuery(query: string): Promise<QueryClassification>
     }
   }
 
-  // Specific pattern checks for test queries
-  // Example: "What are the top 5 trending tracks on Audius right now?"
-  if (/\b(trending|most followed|popular)\b.*\b(tracks|artists|playlists|genres)\b/i.test(lowerQuery)) {
-    const match = query.match(/(?:trending|most followed|popular).*?\b(tracks|artists|playlists|genres)\b(?:.*?by\s["']?([\w\s.]+)["']?)?/i);
+  // Specific pattern checks for complex queries
+  if (/\b(trending|most followed|popular)\b.*\b(tracks|artists|playlists|genres)\b/i.test(normalizedQuery)) {
+    const match = normalizedQuery.match(/(?:trending|most followed|popular).*?\b(tracks|artists|playlists|genres)\b(?:.*?by\s["']?([\w\s.]+)["']?)?/i);
     if (match) {
       const detectedPluralEntityType = match[1].toLowerCase();
-      const entity = match[2] ? match[2].trim() : null;
+      const rawEntity = match[2] ? match[2].trim() : null;
+      const entity = rawEntity ? normalizeName(rawEntity) : null;
 
       let mappedEntityType: 'user' | 'track' | 'playlist' | 'genre' | null = null;
       switch (detectedPluralEntityType) {
@@ -123,7 +124,7 @@ export async function classifyQuery(query: string): Promise<QueryClassification>
       if (mappedEntityType) {
         classification = {
           type: `search_${mappedEntityType}s`,
-          isEntityQuery: true, // Ensure isEntityQuery is true for search types
+          isEntityQuery: true,
           entityType: mappedEntityType,
           entity: entity,
           complexity: 'simple',
@@ -134,7 +135,8 @@ export async function classifyQuery(query: string): Promise<QueryClassification>
     }
   }
 
-  if (/trending|popular|top tracks/i.test(lowerQuery)) {
+  // Default classification for trending tracks
+  if (/trending|popular|top tracks/i.test(normalizedQuery)) {
     classification = {
       type: 'trending_tracks',
       isEntityQuery: false,
@@ -146,53 +148,7 @@ export async function classifyQuery(query: string): Promise<QueryClassification>
     return classification;
   }
 
-  // Line 144
-  // Specific pattern checks for test queries
-  // Example: "What are the top 5 trending tracks on Audius right now?"
-  if (/\b(trending|most followed|popular)\b.*\b(tracks|artists|playlists|genres)\b/i.test(lowerQuery)) {
-    const match = query.match(/(?:trending|most followed|popular).*?\b(tracks|artists|playlists|genres)\b(?:.*?by\s["']?([\w\s.]+)["']?)?/i);
-    if (match) {
-      const detectedPluralEntityType = match[1].toLowerCase();
-      const entity = match[2] ? match[2].trim() : null;
-
-      let mappedEntityType: 'user' | 'track' | 'playlist' | 'genre' | null = null;
-      switch (detectedPluralEntityType) {
-        case 'tracks':
-        case 'track':
-          mappedEntityType = 'track';
-          break;
-        case 'artists':
-        case 'artist':
-          mappedEntityType = 'user';
-          break;
-        case 'playlists':
-        case 'playlist':
-          mappedEntityType = 'playlist';
-          break;
-        case 'genres':
-        case 'genre':
-          mappedEntityType = 'genre';
-          break;
-        default:
-          break;
-      }
-
-      if (mappedEntityType) {
-        classification = {
-          type: `search_${mappedEntityType}s`,
-          isEntityQuery: true, // Ensure isEntityQuery is true for search types
-          entityType: mappedEntityType,
-          entity: entity,
-          complexity: 'simple',
-        };
-        logger.debug(`Pattern-based classification: ${classification.type}, isEntityQuery: ${classification.isEntityQuery}`);
-        return classification;
-      }
-    }
-  }
-
-  // Line 190 (approximate)
-  // Default return at the end of the function
+  // Final default return
   logger.debug(`Default classification: ${classification.type}`);
   return classification;
 }

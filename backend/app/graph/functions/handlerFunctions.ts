@@ -1,44 +1,6 @@
-import { GraphState } from "../../types.js";
+import { GraphState, TrackEntity } from "../../types.js";
 import { logger } from "../../logger.js";
 import { globalAudiusApi } from "../../services/audiusApi.js";
-
-/**
- * Handles playlist search queries.
- * @param state - The current state of the GraphState.
- * @returns A partial GraphState with the search results or an error message.
- */
-export const handle_search_playlists = async (state: GraphState): Promise<Partial<GraphState>> => {
-  logger.info(`Handling search_playlists query for: ${state.entity}`);
-
-  if (!state.entity) {
-    logger.warn("No playlist name provided in search_playlists query.");
-    return { 
-      error: "No playlist name provided for search." 
-    };
-  }
-
-  try {
-    const searchResponse = await globalAudiusApi.searchPlaylists(state.entity, state.params.limit || 5);
-    logger.debug(`Search playlists response: ${JSON.stringify(searchResponse.data)}`);
-
-    if (!searchResponse.data || searchResponse.data.length === 0) {
-      logger.warn(`No playlists found matching "${state.entity}".`);
-      return { 
-        error: `No playlists found matching "${state.entity}".` 
-      };
-    }
-
-    return {
-      response: searchResponse.data,
-      params: { limit: state.params.limit || 5 },
-    };
-  } catch (error: unknown) {
-    logger.error("Failed to handle search_playlists query:", error);
-    return { 
-      error: error instanceof Error ? error.message : 'Failed to search playlists.' 
-    };
-  }
-};
 
 /**
  * Handles genre search queries.
@@ -56,14 +18,14 @@ export const handle_search_genres = async (state: GraphState): Promise<Partial<G
   }
 
   try {
-    // Assuming there's a searchGenres method in AudiusApi
-    const searchResponse = await globalAudiusApi.getGenres(state.params.limit || 5);
+    // Assuming there's a searchGenres method in Audius
+    const searchResponse = await globalAudiusApi.searchGenres(state.query, state.params.limit || 5);
     logger.debug(`Search genres response: ${JSON.stringify(searchResponse.data)}`);
 
     if (!searchResponse.data || searchResponse.data.length === 0) {
-      logger.warn(`No genres found matching "${state.entity}".`);
+      logger.warn(`No genres found matching "${state.query}".`);
       return { 
-        error: `No genres found matching "${state.entity}".` 
+        error: `No genres found matching "${state.query}".` 
       };
     }
 
@@ -100,7 +62,7 @@ export const handle_entity_query = async (state: GraphState): Promise<GraphState
     }
 
     const entityType = state.entityType;
-    const entity = state.entity;
+    const entityName = state.entityName;
 
     if (!entityType) {
         logger.warn("No entity type extracted from the query");
@@ -110,29 +72,63 @@ export const handle_entity_query = async (state: GraphState): Promise<GraphState
         };
     }
 
-    // If we have an entityType but no specific entity, handle accordingly
-    if (!entity) {
-        logger.info(`No specific entity extracted, but entityType is ${entityType}`);
-      
-        // For types that don't require a specific entity
-        if (state.queryType === 'trending_tracks' || state.queryType === 'genre_info') {
-            return {
-                ...state,
-                params: { limit: 5 }, // Default limit
-                complexity: 'moderate'
-            };
-        }
-
-        // For other entity types that require an entity, return an error
+    if (!entityName) {
+        logger.warn(`No entity name provided for entityType ${entityType}`);
         return {
             ...state,
-            error: `No specific ${entityType} provided in the query.`
+            error: `No entity name provided for ${entityType}.`
         };
     }
 
-    // Additional handling based on entityType can be added here
+    try {
+        let entityData: any = null;
+        switch(entityType) {
+            case 'track':
+                const trackResponse = await globalAudiusApi.searchTracks(entityName, 1);
+                if (trackResponse.data && trackResponse.data.length > 0) {
+                    entityData = trackResponse.data[0];
+                }
+                break;
+            case 'user':
+                const userResponse = await globalAudiusApi.searchUsers(entityName, 1);
+                if (userResponse.data && userResponse.data.length > 0) {
+                    entityData = userResponse.data[0];
+                }
+                break;
+            case 'playlist':
+                const playlistResponse = await globalAudiusApi.searchPlaylists(entityName, 1);
+                if (playlistResponse.data && playlistResponse.data.length > 0) {
+                    entityData = playlistResponse.data[0];
+                }
+                break;
+            // Add more cases as necessary
+            default:
+                logger.warn(`Unhandled entity type: ${entityType}`);
+                return {
+                    ...state,
+                    error: `Unhandled entity type: ${entityType}.`
+                };
+        }
 
-    return state;
+        if (entityData) {
+            return {
+                ...state,
+                entity: entityData,
+                message: `${entityType} data retrieved successfully.`,
+            };
+        } else {
+            return {
+                ...state,
+                error: `No ${entityType} found matching "${entityName}".`,
+            };
+        }
+    } catch (error: any) {
+        logger.error(`Failed to fetch entity data for ${entityType}:`, error);
+        return { 
+            ...state, 
+            error: error instanceof Error ? error.message : 'Failed to fetch entity data.' 
+        };
+    }
 };
 
 /**
@@ -141,20 +137,20 @@ export const handle_entity_query = async (state: GraphState): Promise<GraphState
  * @returns A partial GraphState with either the playlist data or an error message.
  */
 export const handle_playlist_info = async (state: GraphState): Promise<Partial<GraphState>> => {
-    logger.info(`Handling playlist_info query for: ${state.entity}`);
+    logger.info(`Handling playlist_info query for: ${state.query}`);
 
-    if (!state.entity) {
+    if (!state.query) {
         logger.warn("No playlist name provided in playlist_info query.");
         throw new Error("No playlist name provided.");
     }
 
     try {
-        const playlistResponse = await globalAudiusApi.searchPlaylists(state.entity, state.params.limit || 5);
+        const playlistResponse = await globalAudiusApi.searchPlaylists(state.query, state.params.limit || 5);
         logger.debug(`Search playlists response: ${JSON.stringify(playlistResponse.data)}`);
 
         if (!playlistResponse.data || playlistResponse.data.length === 0) {
-            logger.warn(`No playlists found matching "${state.entity}".`);
-            throw new Error(`No playlists found matching "${state.entity}".`);
+            logger.warn(`No playlists found matching "${state.query}".`);
+            throw new Error(`No playlists found matching "${state.query}".`);
         }
 
         return {
@@ -175,30 +171,41 @@ export const handle_playlist_info = async (state: GraphState): Promise<Partial<G
  * @returns A partial GraphState with either the response data or an error message.
  */
 export const handle_search_tracks = async (state: GraphState): Promise<Partial<GraphState>> => {
-    logger.info(`Handling search_tracks query for: ${state.entity}`);
+    logger.info(`Handling search_tracks query for: ${state.entity ? state.entity.name : 'null'}`);
 
     try {
         if (!state.entity) {
-            logger.warn("No track name provided in search_tracks query.");
-            throw new Error("No track name provided.");
+            logger.warn("No entity provided in search_tracks query.");
+            throw new Error("No entity provided.");
         }
 
-        const searchResponse = await globalAudiusApi.searchTracks(state.entity, state.params.limit || 5);
-        logger.debug(`Search tracks response: ${JSON.stringify(searchResponse.data)}`);
-
-        if (!searchResponse.data || searchResponse.data.length === 0) {
-            logger.warn(`No tracks found matching "${state.entity}".`);
-            throw new Error(`No tracks found matching "${state.entity}".`);
+        if (state.entity.entityType !== 'track') {
+            logger.warn(`Invalid entity type for search_tracks: ${state.entity.entityType}`);
+            throw new Error(`Expected a track entity, but got ${state.entity.entityType}.`);
         }
+
+        const track = state.entity as TrackEntity;
+
+        const playCountResponse = await globalAudiusApi.getTrackPlayCount(track.id);
+
+        if (!playCountResponse || typeof playCountResponse.play_count !== 'number') {
+            logger.warn(`Unable to retrieve play count for track ID "${track.id}".`);
+            throw new Error(`Unable to retrieve play count for track "${track.title}".`);
+        }
+
+        const playCount = playCountResponse.play_count;
+
+        const formattedResponse = `The track "${track.title}" by ${track.user.name} has been played ${playCount} times on Audius.`;
 
         return {
-            response: searchResponse.data,
-            params: { limit: state.params.limit || 5 },
+            response: playCount,
+            formattedResponse,
+            message: "Track play count retrieved successfully."
         };
     } catch (error: unknown) {
         logger.error(`Failed to handle search_tracks query:`, error instanceof Error ? error.message : 'Unknown error');
         return { 
-            error: error instanceof Error ? error.message : 'Failed to search tracks.' 
+            error: error instanceof Error ? error.message : 'Failed to retrieve track play count.' 
         };
     }
 };
@@ -209,9 +216,9 @@ export const handle_search_tracks = async (state: GraphState): Promise<Partial<G
  * @returns A partial GraphState with the search results or an error message.
  */
 export const handle_search_users = async (state: GraphState): Promise<Partial<GraphState>> => {
-  logger.info(`Handling search_users query for: ${state.entity}`);
+  logger.info(`Handling search_users query for: ${state.query}`);
 
-  if (!state.entity) {
+  if (!state.query) {
     logger.warn("No user name provided in search_users query.");
     return { 
       error: "No user name provided for search." 
@@ -219,13 +226,13 @@ export const handle_search_users = async (state: GraphState): Promise<Partial<Gr
   }
 
   try {
-    const searchResponse = await globalAudiusApi.searchUsers(state.entity, state.params.limit || 5);
+    const searchResponse = await globalAudiusApi.searchUsers(state.query, state.params.limit || 5);
     logger.debug(`Search users response: ${JSON.stringify(searchResponse.data)}`);
 
     if (!searchResponse.data || searchResponse.data.length === 0) {
-      logger.warn(`No users found matching "${state.entity}".`);
+      logger.warn(`No users found matching "${state.query}".`);
       return { 
-        error: `No users found matching "${state.entity}".` 
+        error: `No users found matching "${state.query}".` 
       };
     }
 
@@ -244,6 +251,39 @@ export const handle_search_users = async (state: GraphState): Promise<Partial<Gr
   }
 };
 
+export const handle_search_playlists = async (state: GraphState): Promise<Partial<GraphState>> => {
+  logger.info(`Handling search_playlists query for: ${state.query}`);
+
+  if (!state.query) {
+    logger.warn("No playlist name provided in search_playlists query.");
+    return { 
+      error: "No playlist name provided for search." 
+    };
+    }
+
+  try {
+    const searchResponse = await globalAudiusApi.searchPlaylists(state.query, state.params.limit || 5);
+    logger.debug(`Search playlists response: ${JSON.stringify(searchResponse.data)}`);
+
+    if (!searchResponse.data || searchResponse.data.length === 0) {
+      logger.warn(`No playlists found matching "${state.query}".`);
+      return { 
+        error: `No playlists found matching "${state.query}".` 
+      };
+    }
+
+    return {
+      response: searchResponse.data,
+      params: { limit: state.params.limit || 5 },
+    };
+  } catch (error: unknown) {
+    logger.error(`Failed to handle search_playlists query:`, error);
+    return { 
+      error: error instanceof Error ? error.message : 'Failed to search playlists.' 
+    };
+  }
+};
+
 /**
  * Handles trending tracks queries.
  * @param state - The current state of the GraphState.
@@ -253,7 +293,7 @@ export const handle_trending_tracks = async (state: GraphState): Promise<Partial
   logger.info(`Handling trending_tracks query`);
 
   try {
-    const trendingTracksResponse = await globalAudiusApi.getTrendingTracks();
+    const trendingTracksResponse = await globalAudiusApi.getTrendingTracks(state.params.timeframe || 'week');
     
     if (!trendingTracksResponse || !trendingTracksResponse.data) {
       throw new Error("Failed to retrieve trending tracks data");

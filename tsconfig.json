@@ -9,7 +9,7 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "./",
     "types": ["jest", "node"]
   },
   "include": ["src/**/*", "tests/**/*"],

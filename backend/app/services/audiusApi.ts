@@ -1,189 +1,364 @@
-import { sdk, AudiusSdk } from '@audius/sdk';
-import { logger } from '../logger.js';
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import {
-  GetTrendingTracksRequest,
+import { 
+  GetUserRequest,
+  TrackResponse, 
+  UserResponse,
+  PlaylistResponse,
+  sdk, // Factory function
+  SearchUsersRequest,
   SearchTracksRequest,
   SearchPlaylistsRequest,
-  SearchUsersRequest,
-} from '@audius/sdk';
-import { GetTrendingTracksTimeEnum } from '@audius/sdk';
+  GetTrendingTracksRequest,
+  GetFollowersRequest,
+  GetFollowingRequest,
+  Track,
+  User,
+  Playlist,
+  DiscoveryNodeSelectorService,
+  StorageNodeSelectorService,
+  Genre,
+  DiscoveryNodeSelector,
+  StorageNodeSelector,
+  AuthService,
+  StorageNode,
+  TransactionData,
+} from '@audius/sdk'; // Named imports
+import { GroupedGenres } from '../types.js';
+import axios, { AxiosInstance } from 'axios';
+import { logger } from '../logger.js'; // Correct import without '.js'
+import { ApiResponse as CustomApiResponse } from '../types.js'; // Correct import
 
-// Define the acceptable timeframes based on the SDK's expectations
-type TrendingTimeframe = 'week' | 'month' | 'allTime';
+import { z } from 'zod';
+import dotenv from 'dotenv';
+import { getAudiusApiKey, getAudiusApiSecret } from '../config.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Load environment variables
+dotenv.config({ path: '.env' });
 
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+// Define a schema for environment variables using Zod
+const envSchema = z.object({
+  AUDIUS_API_KEY: z.string().nonempty(),
+  AUDIUS_APP_NAME: z.string().nonempty(),
+  AUDIUS_DISCOVERY_PROVIDER: z.string().nonempty(),
+  AUDIUS_CREATOR_NODE_ENDPOINT: z.string().nonempty(),
+  AUDIUS_ENVIRONMENT: z.enum(['development', 'staging', 'production']),
+});
 
-const API_KEY = process.env.AUDIUS_API_KEY!;
-const API_SECRET = process.env.AUDIUS_API_SECRET!;
+// Validate environment variables
+const env = envSchema.safeParse(process.env);
 
-if (!API_KEY) {
-  throw new Error('AUDIUS_API_KEY is not defined in the environment variables.');
+if (!env.success) {
+  logger.error('❌ Invalid environment variables:', env.error.format());
+  process.exit(1); // Exit the application if validation fails
 }
 
-if (!API_SECRET) {
-  throw new Error('AUDIUS_API_SECRET is not defined in the environment variables.');
+const { AUDIUS_API_KEY, AUDIUS_APP_NAME, AUDIUS_DISCOVERY_PROVIDER, AUDIUS_CREATOR_NODE_ENDPOINT, AUDIUS_ENVIRONMENT } = env.data;
+
+interface SearchTracksRequestLimited extends SearchTracksRequest {
+  limit?: number;
 }
 
-interface ApiResponse<T> {
-  data: T;
-  nextCursor?: string;
+interface SearchUsersRequestLimited extends SearchUsersRequest {
+  limit?: number;
 }
 
-class AudiusSdkWrapper {
-  private audiusSdk: AudiusSdk;
+interface SearchPlaylistsRequestLimited extends SearchPlaylistsRequest {
+  limit?: number;
+}
 
-  constructor(apiKey: string, apiSecret: string) {
-    this.audiusSdk = sdk({
-      apiKey,
-      apiSecret
-    });
+interface GetTrendingTracksRequestLimited extends GetTrendingTracksRequest {
+  limit?: number;
+}
+
+interface GetFollowersRequestLimited extends GetFollowersRequest {
+  limit?: number;
+}
+
+interface GetFollowingRequestLimited extends GetFollowingRequest {
+  limit?: number;
+}
+
+interface SearchGenresRequest {
+  genre: Genre;
+  query: string;
+  limit?: number;
+
+}
+
+// Create the discoveryNodeSelector
+const discoveryNodeSelector = new DiscoveryNodeSelector({
+  initialSelectedNode: AUDIUS_DISCOVERY_PROVIDER,
+});
+
+// Create an object that implements the AuthService interface
+const authService: AuthService = {
+  getSharedSecret: async (publicKey: string | Uint8Array) => new Uint8Array(),
+  sign: async (data: string | Uint8Array) => [new Uint8Array(), 0],
+  hashAndSign: async (data: string) => '',
+  signTransaction: async (data: TransactionData) => '',
+  getAddress: async () => '',
+};
+
+// Create the storageNodeSelector
+const storageNodeSelector = new StorageNodeSelector({
+  auth: authService,
+  discoveryNodeSelector,
+});
+
+export class AudiusApiService {
+  private audiusSdk: ReturnType<typeof sdk>;
+
+  constructor(audiusSdk: ReturnType<typeof sdk>) { // Appropriate type
+    this.audiusSdk = audiusSdk;
   }
 
-  async getTrendingTracks(timeframe: TrendingTimeframe = 'week'): Promise<any> {
+  /**
+   * Tests the connection to the Audius API.
+   * @returns A boolean indicating the success of the connection.
+   */
+  async testConnection(): Promise<boolean> {
     try {
-      const params: GetTrendingTracksRequest = { time: timeframe };
-      const response = await this.audiusSdk.tracks.getTrendingTracks(params);
-      logger.debug(`Trending tracks response: ${JSON.stringify(response)}`);
-      return response;
+      logger.debug('Starting API connection test');
+      logger.debug('Preparing request to getTrack');
+      
+      const trackId = 'gWgbP1d'; // Example track ID, replace with a known valid ID
+      logger.debug(`Request parameters: trackId=${trackId}`);
+      
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('API request timed out')), 5000)
+      );
+      
+      logger.debug('Sending request to getTrack');
+      const responsePromise = this.audiusSdk.tracks.getTrack({ trackId });
+      
+      const response: any = await Promise.race([responsePromise, timeoutPromise]);
+      
+      logger.debug(`API response received`);
+      if (response && response.data) {
+        logger.info('Audius SDK connection successful.');
+        return true;
+      } else {
+        logger.warn('API connection test returned unexpected response');
+        return false;
+      }
     } catch (error) {
-      logger.error('Failed to retrieve trending tracks:', error);
-      throw new Error('Failed to retrieve trending tracks.');
+      logger.error('Failed to test Audius SDK connection:', error instanceof Error ? error.message : String(error));
+      return false;
     }
   }
 
-  async searchTracks(query: string): Promise<ApiResponse<any[]>> {
+  /**
+ * Retrieves a user's tracks.
+ * @param userId - The ID of the user.
+ * @param limit - The number of tracks to retrieve.
+ * @returns An ApiResponse containing an array of tracks.
+ */
+  // Example correction if 'getTrack' is the correct method
+  async getUserTracks(userId: string, limit: number): Promise<CustomApiResponse<TrackResponse[]>> {
     try {
-      const params: SearchTracksRequest = { query };
-      const response = await this.audiusSdk.tracks.searchTracks(params);
-      return { data: response.data || [] };
-    } catch (error) {
+      const request: SearchTracksRequestLimited = { query: userId, limit: 5 };
+      const response = await this.audiusSdk.tracks.searchTracks(request);
+      logger.debug('getUserTracks response:', response);
+      const tracks = response.data?.map((track: Track) => track.title) || [];
+      const trackResponse = tracks.map((track: string) => ({ title: track })) as TrackResponse[];
+      return { data: trackResponse };
+    } catch (error: any) {
+      logger.error('Failed to get user tracks:', error);
+      throw new Error('Failed to get user tracks.');
+    }
+  }
+
+  /**
+   * Searches for genres based on the provided query and limit.
+   * @param query - The search query string.
+   * @param limit - The number of genres to retrieve.
+   * @returns An ApiResponse containing an array of genre names.
+   */
+  async searchGenres(query: string, limit: number): Promise<CustomApiResponse<string[]>> {
+    try {
+      const allGenres = Object.entries(GroupedGenres).flatMap(([key, value]) => {
+        if (typeof value === 'string') {
+          return value;
+        } else if (typeof value === 'object') {
+          return Object.values(value);
+        }
+        return [];
+      });
+
+      const matchedGenres = allGenres.filter(genre =>
+        genre.toLowerCase().includes(query.toLowerCase())
+      );
+
+      const limitedGenres = matchedGenres.slice(0, limit);
+
+      logger.debug('searchGenres response:', limitedGenres);
+
+      return { data: limitedGenres };
+    } catch (error: any) {
+      logger.error('Failed to search genres:', error);
+      throw new Error('Failed to search genres.');
+    }
+  }
+
+  /**
+   * Retrieves tracks matching the search criteria.
+   * @param query - The search query string.
+   * @param limit - The number of tracks to retrieve.
+   * @returns An ApiResponse containing an array of tracks.
+   */
+  async searchTracks(query: string, limit: number): Promise<CustomApiResponse<TrackResponse[]>> {
+    try {
+      const request: SearchTracksRequestLimited = { query, limit: 5 };
+      const response = await this.audiusSdk.tracks.searchTracks(request);
+      logger.debug('searchTracks response:', response);
+      const tracks = response.data?.map((track: Track) => track.title) || [];
+      const trackResponse = tracks.map((track: string) => ({ title: track })) as TrackResponse[];
+      return { data: trackResponse };
+    } catch (error: any) {
       logger.error('Failed to search tracks:', error);
       throw new Error('Failed to search tracks.');
     }
   }
 
-  async searchPlaylists(query: string): Promise<ApiResponse<any[]>> {
+  /**
+   * Retrieves users matching the search criteria.
+   * @param query - The search query string.
+   * @param limit - The number of users to retrieve.
+   * @returns An ApiResponse containing an array of users.
+   */
+  /**
+   * Retrieves users matching the search criteria.
+   * @param query - The search query string.
+   * @param limit - The number of users to retrieve.
+   * @returns An ApiResponse containing an array of users.
+   */
+  async searchUsers(query: string, limit: number): Promise<CustomApiResponse<UserResponse[]>> {
     try {
-      const params: SearchPlaylistsRequest = { query };
-      const response = await this.audiusSdk.playlists.searchPlaylists(params);
-      return { data: response.data || [] };
-    } catch (error) {
-      logger.error('Failed to search playlists:', error);
-      throw new Error('Failed to search playlists.');
-    }
-  }
-
-  async searchUsers(query: string): Promise<ApiResponse<any[]>> {
-    try {
-      const params: SearchUsersRequest = { query };
-      const response = await this.audiusSdk.users.searchUsers(params);
-      return { data: response.data || [] };
-    } catch (error) {
+      const request: SearchUsersRequestLimited = { query, limit };
+      const response = await this.audiusSdk.users.searchUsers(request);
+      logger.debug('searchUsers response:', response);
+      const users = response.data?.map((user: User) => user.name) || [];
+      const userResponse = users.map((user: string) => ({ name: user })) as UserResponse[];
+      return { data: userResponse };
+    } catch (error: any) {
       logger.error('Failed to search users:', error);
       throw new Error('Failed to search users.');
     }
   }
 
-  /**
-   * Aggregates genres from a set of tracks.
-   * @param limit - The number of tracks to fetch for aggregation.
-   * @returns An array of genres with their popularity scores.
+    /**
+   * Retrieves playlists matching the search criteria.
+   * @param query - The search query string.
+   * @param limit - The number of playlists to retrieve.
+   * @returns An ApiResponse containing an array of playlists.
    */
-  async getGenres(limit: number = 100): Promise<ApiResponse<{ name: string; popularity: number }[]>> {
-    try {
-      // Fetch a set of tracks without a specific query to get a broad sample
-      const params: SearchTracksRequest = { query: '' };
-      const response = await this.audiusSdk.tracks.searchTracks(params);
-
-      if (!response.data) {
-        throw new Error('No data returned from searchTracks.');
+    async searchPlaylists(query: string, limit: number): Promise<CustomApiResponse<PlaylistResponse[]>> {
+      try {
+        const request: SearchPlaylistsRequestLimited = { query, limit };
+        const response = await this.audiusSdk.playlists.searchPlaylists(request);
+        logger.debug('searchPlaylists response:', response);
+        const playlists = response.data?.map((playlist: Playlist) => playlist.playlistName) || [];
+        const playlistResponse = playlists.map((playlist: string) => ({ playlistName: playlist })) as PlaylistResponse[];
+        return { data: playlistResponse };
+      } catch (error: any) {
+        logger.error('Failed to search playlists:', error);
+        throw new Error('Failed to search playlists.');
       }
-
-      const genresMap: { [genre: string]: number } = {};
-
-      // Limit the number of tracks to process
-      const limitedTracks = response.data.slice(0, limit);
-
-      limitedTracks.forEach((track: any) => {
-        const genre = track.genre;
-        if (genre) {
-          genresMap[genre] = (genresMap[genre] || 0) + 1;
-        }
-      });
-
-      const aggregatedGenres = Object.entries(genresMap)
-        .map(([name, popularity]) => ({ name, popularity }))
-        .sort((a, b) => b.popularity - a.popularity);
-
-      return { data: aggregatedGenres };
-    } catch (error) {
-      logger.error('Failed to retrieve genres:', error);
-      throw new Error('Failed to retrieve genres.');
     }
-  }
 
-  // Additional SDK methods can be added here as needed
-}
-
-export class AudiusApi {
-  private sdkWrapper: AudiusSdkWrapper;
-  timeframe: TrendingTimeframe = 'week';
-
-  constructor() {
-    this.sdkWrapper = new AudiusSdkWrapper(API_KEY, API_SECRET);
-  }
-
-  public async testConnection(): Promise<boolean> {
+  /**
+   * Retrieves trending tracks.
+   * @param limit - The number of trending tracks to retrieve.
+   * @returns An ApiResponse containing an array of trending tracks.
+   */
+  async getTrendingTracks(limit: number): Promise<CustomApiResponse<TrackResponse[]>> {
     try {
-      await this.sdkWrapper.getTrendingTracks(this.timeframe);
-      logger.info('✓ Successfully connected to Audius API.');
-      return true;
-    } catch (error) {
-      logger.error('🔴 Failed to connect to Audius API:', error);
-      throw new Error('Failed to connect to Audius API.');
+      const response = await this.audiusSdk.tracks.getTrendingTracks();
+      logger.debug('getTrendingTracks response:', response);
+      const tracks = response.data?.slice(0, limit).map((track: Track) => track.title) || [];
+      const trackResponse = tracks.map((track: string) => ({ title: track })) as TrackResponse[];
+      return { data: trackResponse };
+    } catch (error: any) {
+      logger.error('Failed to get trending tracks:', error);
+      throw new Error('Failed to get trending tracks.');
     }
   }
 
-  public async searchTracks(query: string, limit: number = 10): Promise<ApiResponse<any[]>> {
-    const response = await this.sdkWrapper.searchTracks(query);
-    return { data: response.data.slice(0, limit) };
-  }
-
-  public async searchPlaylists(query: string, limit: number = 10): Promise<ApiResponse<any[]>> {
-    const response = await this.sdkWrapper.searchPlaylists(query);
-    return { data: response.data.slice(0, limit) };
-  }
-
-  public async searchUsers(query: string, limit: number = 10): Promise<ApiResponse<any[]>> {
-    const response = await this.sdkWrapper.searchUsers(query);
-    return { data: response.data.slice(0, limit) };
+  /**
+   * Retrieves followers of a user.
+   * @param userId - The ID of the user.
+   * @param limit - The number of followers to retrieve.
+   * @returns An ApiResponse containing an array of followers.
+   */
+  async getUserFollowers(userId: string, limit: number): Promise<CustomApiResponse<UserResponse[]>> {
+    try {
+      const request: GetFollowersRequestLimited = { id: userId, limit };
+      const response = await this.audiusSdk.users.getFollowers(request);
+      logger.debug('getUserFollowers response:', response);
+      const followers = response.data?.map((user: User) => user.name) || [];
+      const followerResponse = followers.map((user: string) => ({ name: user })) as UserResponse[];
+      return { data: followerResponse };
+    } catch (error: any) {
+      logger.error('Failed to get user followers:', error);
+      throw new Error('Failed to get user followers.');
+    }
   }
 
   /**
-   * Retrieves trending tracks based on the specified timeframe.
-   * @param timeframe - The timeframe for trending tracks.
-   * @returns The trending tracks data.
+   * Retrieves users that a specific user is following.
+   * @param userId - The ID of the user.
+   * @param limit - The number of following users to retrieve.
+   * @returns An ApiResponse containing an array of users.
    */
-  public async getTrendingTracks(timeframe: TrendingTimeframe = 'week'): Promise<any> {
-    return this.sdkWrapper.getTrendingTracks(timeframe);
+  async getUserFollowing(userId: string, limit: number): Promise<CustomApiResponse<UserResponse[]>> {
+    try {
+      const request: GetFollowingRequest = { id: userId, limit };
+      const response = await this.audiusSdk.users.getFollowing(request);
+      logger.debug('getUserFollowing response:', response);
+      const following = response.data?.map((user: User) => user.name) || [];
+      const followingResponse = following.map((user: string) => ({ name: user })) as UserResponse[];
+      return { data: followingResponse };
+    } catch (error: any) {
+      logger.error('Failed to get user following:', error);
+      throw new Error('Failed to get user following.');
+    }
   }
 
   /**
-   * Retrieves aggregated genres based on a sample of tracks.
-   * @param limit - The number of tracks to sample for genre aggregation.
-   * @returns An array of genres with their popularity scores.
+   * Retrieves the play count for a specific track.
+   * @param trackId - The ID of the track.
+   * @returns The play count of the track.
    */
-  public async getGenres(limit: number = 100): Promise<ApiResponse<{ name: string; popularity: number }[]>> {
-    return this.sdkWrapper.getGenres(limit);
-  }
+  async getTrackPlayCount(trackId: string): Promise<{ play_count: number }> {
+    try {
+      logger.info(`Fetching play count for track ID: ${trackId}`);
+      const track = await this.audiusSdk.tracks.getTrack({ trackId });
 
-  // Additional SDK methods can be exposed here as needed
+      if (track && track.data && typeof track.data.playCount === 'number') {
+        logger.debug(`Play count for track ID ${trackId}: ${track.data.playCount}`);
+        return { play_count: track.data.playCount };
+      } else {
+        logger.warn(`Play count not found for track ID: ${trackId}`);
+        throw new Error("Play count data is unavailable.");
+      }
+    } catch (error: unknown) {
+      logger.error(`Error fetching play count for track ID ${trackId}:`, error);
+      throw new Error("Failed to retrieve play count from Audius API.");
+    }
+  }
 }
 
-export const globalAudiusApi = new AudiusApi();
+
+// Initialize the Audius SDK instance with proper configuration
+const audiusSdkInstance = sdk({
+  apiKey: getAudiusApiKey(),
+  apiSecret: getAudiusApiSecret(),
+  appName: AUDIUS_APP_NAME,
+  services: {
+    discoveryNodeSelector,
+    storageNodeSelector,
+  },
+  environment: AUDIUS_ENVIRONMENT as "development" | "staging" | "production",
+});
+
+// Export the singleton instance
+export const globalAudiusApi = new AudiusApiService(audiusSdkInstance);

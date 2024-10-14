@@ -1,7 +1,8 @@
-import { GraphState } from "../types.js";
+import { GraphState, TrackData } from "../types.js";
 import { logger } from '../logger.js';
-import { TrackData } from "../lib/audiusData.js";
-import { extractGenres, scoreAndRankGenres } from '../tools/multi_step_queries.js';
+import { calculateGenrePopularity } from './utils/calculateGenrePopularity.js'; // Corrected import
+import { formatGenrePopularity } from './utils/formatGenrePopularity.js';
+import { isTrackData, isUserData } from "./utils/typeGuards.js";
 
 console.log("process_api_response.ts file loaded");
 
@@ -18,36 +19,40 @@ export async function processApiResponse(state: GraphState): Promise<Partial<Gra
 
     let formattedResponse: string;
 
-    switch (state.queryType) {
-      case 'user_info':
-      case 'user_social':
-        logger.debug("Processing user query");
-        formattedResponse = processUserQuery(state);
-        break;
-      case 'trending_tracks':
-        logger.debug("Formatting trending tracks");
-        formattedResponse = formatTrendingTracks(state.response.data, state.params.limit || 5);
-        break;
-      case 'genre_info':
-        logger.debug("Processing trending genres");
-        formattedResponse = formatTrendingGenres(state.response, state.params.limit || 5);
-        break;
-      case 'track_info':
-        logger.debug("Processing track query");
-        formattedResponse = processTrackQuery(state);
-        break;
-      case 'playlist_info':
-        logger.debug("Processing playlist query");
-        formattedResponse = processPlaylistQuery(state);
-        break;
-      case 'search_tracks':
-        logger.debug("Processing search tracks query");
-        formattedResponse = processSearchTracksQuery(state);
-        break;
-      // ... other cases
-      default:
-        logger.warn(`Unsupported query type: ${state.queryType}`);
-        throw new Error(`Unsupported query type: ${state.queryType}`);
+    if (state.queryType === 'genre_info') {
+      // Ensure that tracks data is available
+      const tracks: TrackData[] = state.response.data.tracks; // Adjust based on actual response structure
+      if (!tracks || !Array.isArray(tracks)) {
+        throw new Error("Invalid or missing tracks data for genre_info");
+      }
+
+      // Check calculation method
+      if (state.params.calculationMethod === 'pareto') {
+        const genrePopularity = calculateGenrePopularity(tracks, state.params.pointsPool);
+        formattedResponse = formatGenrePopularity(genrePopularity, state.params.limit);
+      } else {
+        throw new Error(`Unsupported calculation method: ${state.params.calculationMethod}`);
+      }
+    } else if (state.entity && state.entity.entityType === 'user') {
+      logger.debug("Processing user query based on entityType");
+      const userData = state.response.data;
+
+      // Extract user ID and store it in the state
+      if (userData && userData.id) {
+        state.entity.id = userData.id; // Store the user ID for potential later use
+      }
+
+      formattedResponse = processUserQuery(state);
+    } else if (isTrackData(state.response.data)) {
+      // Handle track data
+      formattedResponse = `Track: ${state.response.data.title} by ${state.response.data.artist}`;
+    } else if (isUserData(state.response.data)) {
+      // Handle artist data
+      formattedResponse = `Artist: ${state.response.data.name} with ${state.response.data.followerCount} followers.`;
+    } else {
+      // Handle other cases
+      logger.warn(`Unsupported query type: ${state.queryType}`);
+      throw new Error(`Unsupported query type: ${state.queryType}`);
     }
 
     return {
@@ -55,11 +60,14 @@ export async function processApiResponse(state: GraphState): Promise<Partial<Gra
       response: formattedResponse,
       message: "Processed API response successfully."
     };
-  } catch (error) {
-    logger.error(`Error in processApiResponse: ${error instanceof Error ? error.message : String(error)}`);
-    return { 
-      error: error instanceof Error ? error.message : "An error occurred in processApiResponse." 
-    };
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.error(`Error in processApiResponse: ${error.message}`, { stack: error.stack });
+      return { ...state, error: error.message };
+    } else {
+      logger.error('Unknown error in processApiResponse');
+      return { ...state, error: 'An unknown error occurred' };
+    }
   }
 }
 

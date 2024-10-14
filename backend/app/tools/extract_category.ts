@@ -1,5 +1,6 @@
-import { GraphState } from "../types.js";
+import { GraphState, PlaylistData, TrackData, UserData } from "../types.js";
 import { logger } from '../logger.js';
+import { normalizeName } from '../modules/queryClassifier.js';
 
 interface CategoryKeywords {
   [key: string]: string[];
@@ -44,13 +45,13 @@ export async function extractCategory(state: GraphState): Promise<Partial<GraphS
 
     if (artistMatch) {
       entityType = "user";
-      entity = artistMatch[1].trim();
+      entity = normalizeName(artistMatch[1].trim());
     } else if (trackMatch) {
       entityType = "track";
-      entity = trackMatch[1].trim();
+      entity = normalizeName(trackMatch[1].trim());
     } else if (playlistMatch) {
       entityType = "playlist";
-      entity = playlistMatch[1].trim();
+      entity = normalizeName(playlistMatch[1].trim());
     }
 
     // Handle specific query types
@@ -74,7 +75,7 @@ export async function extractCategory(state: GraphState): Promise<Partial<GraphS
     if (!entity) {
       const quotedMatch = query.match(/['"]([^'"]+)['"]/);
       if (quotedMatch) {
-        entity = quotedMatch[1];
+        entity = normalizeName(quotedMatch[1]);
         if (categories.includes('Tracks')) {
           entityType = "track";
         } else if (categories.includes('Users')) {
@@ -108,8 +109,8 @@ export async function extractCategory(state: GraphState): Promise<Partial<GraphS
     return {
       ...state,
       categories,
-      entityType,
-      entity,
+      entityName: entity || null, // Store the normalized entity name
+      entity: null, // Initialize entity data as null; to be populated later
       isEntityQuery: !!entityType,
       queryType
     };

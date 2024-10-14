@@ -1,0 +1,11 @@
+services:
+  glassbead:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    ports:
+      - "8123:8123"
+    env_file:
+      - .env  # Reference to your .env file
+    environment:
+      - NODE_VERSION=20  # Ensure consistency with Node.js version

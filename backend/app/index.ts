@@ -11,7 +11,7 @@ logger.level = "debug";
 // Define getTestQueries function
 function getTestQueries(): string[] {
   return [
-    "What are the top trending tracks?"
+    "How many plays does the track Lost My Mind (instrumental) have?",
     // "Who are the most followed artists?",
     // "Find me some electronic music playlists",
     // "What's the most played track by Skrillex?",
@@ -25,7 +25,13 @@ function logToUser(message: string): void {
 
 async function main() {
   logger.info("Starting main execution");
-  checkRequiredEnvVars();
+  try {
+    checkRequiredEnvVars();
+  } catch (envError) {
+    logger.error(`Environment configuration error: ${envError instanceof Error ? envError.message : String(envError)}`);
+    logToUser(`Environment configuration error: ${envError instanceof Error ? envError.message : String(envError)}`);
+    process.exit(1);
+  }
 
   const llm = new ChatOpenAI({
     openAIApiKey: getOpenAiApiKey(),
@@ -33,30 +39,30 @@ async function main() {
     temperature: 0,
   });
 
-  logger.info("About to create Atris");
+  logger.info("Creating Atris agent...");
   const atris = createAtris();
-  logger.info("Atris created successfully");
+  logger.info("Atris agent created successfully");
 
   const queries = getTestQueries();
   logger.info(`Loaded ${queries.length} test queries`);
 
   try {
+    logger.info("Testing API connection...");
     const isConnected = await globalAudiusApi.testConnection();
+    logger.info(`API connection test result: ${isConnected}`);
+
     if (isConnected) {
       logger.info("API connection successful.");
       let successfulQueries = 0;
       let failedQueries = 0;
 
       for (const query of queries) {
-        logToUser(`Query: ${query}`);
+        logToUser(`\nQuery: ${query}`);
 
         try {
           logger.debug(`Processing query: ${query}`);
-          const classification = await classifyQuery(query);
-          logger.debug(`Query classified as: ${classification.type}, isEntityQuery: ${classification.isEntityQuery}`);
-
-          const result = await handleQuery(atris, llm, query);
-          logger.debug(`Query processed, result:`, result);
+          const result = await atris.invoke({ query });
+          logger.debug("Query processed, result:", result);
           logToUser(`Response: ${result.response}`);
 
           if (result.error) {
@@ -66,10 +72,10 @@ async function main() {
           } else {
             successfulQueries++;
           }
-        } catch (queryError) {
+        } catch (queryError: any) {
+          failedQueries++;
           logger.error(`Error in query processing:`, queryError);
           logToUser(`Error processing query: ${queryError instanceof Error ? queryError.message : String(queryError)}`);
-          failedQueries++;
         }
 
         logToUser("--------------------");
@@ -78,11 +84,11 @@ async function main() {
       logger.info(`Test summary: ${successfulQueries} successful queries, ${failedQueries} failed queries`);
       logToUser(`Test summary: ${successfulQueries} successful queries, ${failedQueries} failed queries`);
     } else {
-      logger.error("API connection test failed");
+      logger.error("API connection test failed.");
       logToUser("API connection test failed. Please check your internet connection and try again later.");
     }
-  } catch (error) {
-    logger.error(`Unexpected error in main:`, error);
+  } catch (error: any) {
+    logger.error(`Unexpected error in main execution:`, error);
     logToUser(`An unexpected error occurred: ${error instanceof Error ? error.message : String(error)}`);
   }
 

@@ -1,64 +1,7 @@
-import { TrackArtwork, ProfilePicture, CoverPhoto, Track, Playlist, User } from '@audius/sdk';
+import { TrackArtwork, Track, Playlist, User } from '@audius/sdk';
 import { logger } from '../logger.js';
+import { TrackData} from '../types.js';
 
-// Export the AudiusData type
-export type TrackData = {
-  id: string;
-  title: string;
-  artwork: TrackArtwork;
-  description: string | null;
-  genre: string;
-  mood: string | null;
-  releaseDate: string | null;
-  remixOf: TrackData | null;
-  repostCount: number;
-  favoriteCount: number;
-  commentCount: number;
-  tags: string[] | null;
-  user: User;
-  duration: number;
-  isDownloadable: boolean;
-  playCount: number;
-  permalink: string;
-  isStreamable: boolean;
-};
-
-export type UserData = {
-  id: string;
-  name: string;
-  handle: string;
-  bio: string | null;
-  followerCount: number;
-  followeeCount: number;
-  trackCount: number;
-  playlistCount: number;
-  albumCount: number;
-  isVerified: boolean;
-  profilePicture: ProfilePicture;
-  coverPhoto: CoverPhoto;
-  twitterHandle: string | null;
-  instagramHandle: string | null;
-  tiktokHandle: string | null;
-  website: string | null;
-  location: string | null;
-  isDeactivated: boolean;
-  isAvailable: boolean;
-  supporterCount: number;
-  supportingCount: number;
-  totalAudioBalance: number;
-};
-
-export type PlaylistData = {
-  id: string;
-  playlistName: string;
-  creator: string;
-  trackCount: number;
-  totalPlayCount: number;
-  repostCount: number;
-  favoriteCount: number;
-  isAlbum: boolean;
-  description: string | null;
-};
 
 export type PopularTrackData = {
   rank: number;
@@ -69,7 +12,7 @@ export type PopularTrackData = {
   mood?: string;
   releaseDate?: string;
 };
-
+  
 export type NoMatchData = {
   searchedTrack: string;
   searchedArtist: string;
@@ -180,6 +123,7 @@ async function searchRemixes(query: string): Promise<AudiusData | null> {
           artist: remix.user.name,
           remixOf: {
             id: originalTrack.data.id,
+            type: 'track',
             title: originalTrack.data.title,
             artwork: originalTrack.data.artwork,
             description: originalTrack.data.description || null,

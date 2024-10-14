@@ -1,7 +1,13 @@
 import { GraphState } from "../types.js";
 import { logger } from '../logger.js';
 import { globalAudiusApi } from "../services/audiusApi.js";
+import { TrackResponse } from '@audius/sdk';
 
+/**
+ * Handles multi-step queries based on the query type.
+ * @param state - The current state of the graph.
+ * @returns A partial update to the graph state.
+ */
 export async function handleMultiStepQuery(state: GraphState): Promise<Partial<GraphState>> {
   const { queryType, params } = state;
 
@@ -18,15 +24,15 @@ export async function handleMultiStepQuery(state: GraphState): Promise<Partial<G
     const timeframe = params.timeframe || 'week';
 
     // Fetch trending tracks directly using globalAudiusApi
-    const tracks = await globalAudiusApi.getTrendingTracks(100, timeframe);
+    const tracksData = await globalAudiusApi.getTrendingTracks(limit);
 
-    if (!tracks || !Array.isArray(tracks)) {
+    if (!tracksData || !Array.isArray(tracksData.data)) {
       throw new Error("No data received from trending tracks endpoint.");
     }
 
-    logger.debug(`Fetched trending tracks: ${JSON.stringify(tracks)}`);
+    logger.debug(`Fetched trending tracks: ${JSON.stringify(tracksData.data)}`);
 
-    const genres = extractGenres(tracks);
+    const genres = extractGenres(tracksData.data);
     const topGenres = scoreAndRankGenres(genres);
     const formattedResponse = formatGenresResponse(topGenres, limit);
 
@@ -40,55 +46,54 @@ export async function handleMultiStepQuery(state: GraphState): Promise<Partial<G
       formattedResponse,
       message: "Trending genres processed successfully."
     };
-  } catch (error) {
-    logger.error(`Error in handleMultiStepQuery: ${error instanceof Error ? error.message : String(error)}`);
-    return { 
-      error: error instanceof Error ? error.message : "An error occurred in handleMultiStepQuery." 
-    };
+  } catch (error: any) {
+    logger.error(`Error handling multi-step query:`, error);
+    return { error: error.message || "An error occurred during multi-step query processing." };
   }
 }
 
-export function extractGenres(tracks: any[]): string[] {
-  return tracks
-    .map(track => track.genre ? track.genre.toLowerCase() : 'unknown')
-    .filter(genre => genre !== 'unknown');
+/**
+ * Extracts genres from a list of tracks.
+ * @param tracks - An array of track data.
+ * @returns An array of genres.
+ */
+function extractGenres(tracks: TrackResponse[]): string[] {
+  // Implement genre extraction logic based on track data
+  const genres: string[] = [];
+  tracks.forEach(track => {
+    if (track.data?.genre) {
+      genres.push(track.data.genre.toLowerCase());
+    }
+  });
+  return genres;
 }
 
-export function scoreAndRankGenres(genres: string[]): { genre: string; score: number }[] {
-  const totalPoints = 10000;
-  // Generate Pareto distribution weights
-  const paretoWeights = generateParetoWeights(genres.length);
+/**
+ * Scores and ranks genres based on their frequency.
+ * @param genres - An array of genres.
+ * @returns An array of genres with scores.
+ */
+function scoreAndRankGenres(genres: string[]): { genre: string; score: number }[] {
+  const genreCount: { [key: string]: number } = {};
+  genres.forEach(genre => {
+    genreCount[genre] = (genreCount[genre] || 0) + 1;
+  });
 
-  // Map genres to their accumulated scores
-  const genreScores: { [key: string]: number } = {};
-
-  for (let i = 0; i < genres.length; i++) {
-    const genre = genres[i];
-    const points = paretoWeights[i] * totalPoints;
-    genreScores[genre] = (genreScores[genre] || 0) + points;
-  }
-
-  const genreScoresArray = Object.entries(genreScores).map(([genre, score]) => ({
+  const genreScores = Object.entries(genreCount).map(([genre, count]) => ({
     genre,
-    score: score
+    score: count,
   }));
 
   // Sort genres by score in descending order
-  return genreScoresArray.sort((a, b) => b.score - a.score);
+  return genreScores.sort((a, b) => b.score - a.score);
 }
 
-export function generateParetoWeights(n: number, alpha: number = 1.16): number[] {
-  // Generate ranks from 1 to n
-  const ranks = Array.from({ length: n }, (_, i) => i + 1);
-
-  // Calculate weights using the Pareto distribution formula
-  const weights = ranks.map(rank => 1 / Math.pow(rank, alpha));
-
-  // Normalize weights so that they sum to 1
-  const sumWeights = weights.reduce((sum, weight) => sum + weight, 0);
-  return weights.map(weight => weight / sumWeights);
-}
-
+/**
+ * Formats the top genres into a readable string.
+ * @param topGenres - An array of genres with scores.
+ * @param limit - The number of top genres to include.
+ * @returns A formatted string listing the top genres.
+ */
 export function formatGenresResponse(topGenres: { genre: string; score: number }[], limit: number): string {
   const formatted = topGenres.slice(0, limit).map((item, index) =>
     `${index + 1}. ${capitalizeFirstLetter(item.genre)}`
@@ -97,6 +102,11 @@ export function formatGenresResponse(topGenres: { genre: string; score: number }
   return `Here are the top ${limit} genres on Audius based on trending tracks:\n\n${formatted}`;
 }
 
+/**
+ * Capitalizes the first letter of a given string.
+ * @param text - The string to capitalize.
+ * @returns The capitalized string.
+ */
 function capitalizeFirstLetter(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
