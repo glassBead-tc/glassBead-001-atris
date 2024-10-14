@@ -4,7 +4,7 @@ Atris is a research agent for Audius designed to provide artists, labels, and te
 
 ## Project Overview
 
-Atris is an Audius API integration system using LangGraph.js and Next.js. It processes natural language queries to interact with the Audius API, focusing on trending tracks, playlists, genres, and user profiles.
+Atris is an Audius API integration system using LangGraph.js and Next.js. It processes natural language queries to interact with the Audius API, focusing on trending tracks, playlists, genres, and user profiles. We have resolved compiler errors and are now focusing on connecting to the Audius discovery nodes via the SDK.
 
 ## Current Functionality
 
@@ -22,21 +22,67 @@ Atris can now:
 
 ## Development Status
 
-We are currently in Phase 1 of our project roadmap, having completed:
-- Basic query pipeline implementation
-- Trending tracks and genres functionality
-- Number parsing for limit queries
-- Resolved recursion issues in LangGraph flow
-- Enhanced logging to abstract backend logic from user responses
-- Successful end-to-end testing of key functionalities
-- Implemented response sanitization and default timeframe settings
+We are currently in **Phase 2: Front-end MVP** of our project roadmap, having completed Phase 1 as follows:
+- Developed core LangGraph.js agent.
+- Implemented basic query pipeline.
+- Implemented trending tracks and genres functionality.
+- Number parsing for limit queries.
+- Resolved recursion issues in LangGraph flow.
+- Enhanced logging to abstract backend logic from user responses.
+- Successful end-to-end testing of key functionalities.
+- Implemented response sanitization and default timeframe settings.
 
-Our next immediate goals are:
-1. Implementing playlist search and retrieval
-2. Developing user profile search and retrieval
-3. Enhancing error handling and system resilience
-4. Expanding the `AudiusApi` class with new methods for different query types
-5. Implementing caching for frequently requested data
+### Current Progress in Phase 2:
+- Connecting to Audius discovery nodes via the SDK.
+- Developing the basic user interface with Next.js.
+
+## Development Phases
+
+1. **Phase 1: Agent MVP** *(Completed)*
+   - Developed the core LangGraph.js agent to handle basic queries.
+   - Implemented basic query pipeline.
+   - Trending tracks and genres functionality.
+   - Number parsing for limit queries.
+   - Resolved recursion issues in LangGraph flow.
+   - Enhanced logging to abstract backend logic from user responses.
+   - Successful end-to-end testing of key functionalities.
+   - Implemented response sanitization and default timeframe settings.
+
+2. **Phase 2: Front-end MVP** *(In Progress)*
+   - Create a basic user interface using Next.js for interaction.
+   - Connect to Audius discovery nodes via the SDK.
+   - Develop frontend components to display fetched data.
+
+3. **Phase 3: Design Implementation** *(Pending)*
+   - Implement detailed design elements and enhance user experience.
+
+4. **Phase 4: Code Cleaning and Documentation** *(Upcoming)*
+   - Refine the codebase for efficiency and maintain comprehensive documentation.
+
+5. **Phase 5: Deployment to Production on Vercel** *(Planned)*
+   - Deploy the application to production using Vercel for scalability and reliability.
+
+## Next Steps
+
+1. **Phase 2: Front-end MVP**
+   - Complete connection to Audius discovery nodes via the SDK.
+   - Develop the basic user interface with Next.js.
+
+2. **Phase 3: Design Implementation**
+   - Implement detailed design elements and enhance user experience.
+
+3. **Phase 4: Code Cleaning and Documentation**
+   - Refine the codebase for efficiency and maintain comprehensive documentation.
+
+4. **Phase 5: Deployment to Production on Vercel**
+   - Deploy the application to production using Vercel for scalability and reliability.
+
+5. **Additional Goals:**
+   - Implement playlist search and retrieval.
+   - Develop user profile search and retrieval.
+   - Enhance error handling and system resilience.
+   - Expand the `AudiusApi` class with new methods for different query types.
+   - Implement caching for frequently requested data.
 
 ## Running Atris
 
@@ -68,22 +114,6 @@ For detailed setup instructions, please refer to the documents in the `backend/a
 - Version Control: Git
 - Package Management: Yarn
 - Environment Management: dotenv
-
-## Next Steps
-
-1. Implement query routing functionality
-2. Expand `AudiusApi` class with new methods for different query types
-3. Develop a custom error handling system
-4. Prepare API routes for future Next.js integration
-5. Implement playlist and user profile search and retrieval
-6. Develop advanced track search capabilities
-7. Create a user-friendly CLI interface
-8. Implement caching for frequent queries
-9. Optimize performance and API call batching
-10. Develop comprehensive unit tests
-11. Enhance logging to further abstract backend processes from user interfaces
-12. Improve handling of complex and multi-step queries
-13. Expand documentation to cover new features and components
 
 ## Error Handling and Logging
 
