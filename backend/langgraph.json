@@ -1,9 +1,9 @@
 {
-  "docker_compose_file": "./backend/docker-compose.yml",
+  "docker_compose_file": "../docker-compose.yml",
   "dockerfile_lines": [],
   "graphs": 
     {
-    "atris": "./backend/app/graph/createAtris.ts:graph"
+    "atris": "./app/graph/createAtris.ts:graph"
     },
   "env": [
     "../.env"

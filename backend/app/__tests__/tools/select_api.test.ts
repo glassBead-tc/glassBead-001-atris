@@ -40,15 +40,15 @@ describe('selectApi', () => {
     apis: mockApis,
     queryType: 'unknown' as QueryType,
     entityType: null,
-    entity: null, // Ensure this line is present
+    entity: null,
     categories: [],
     isEntityQuery: false,
     response: null,
     formattedResponse: '',
-    error: null,
-    message: null, // Ensure this line is present
-    complexity: 'simple' as ComplexityLevel, // Added this line
-    llm: {} as any, // Mock LLM object
+    error: false,
+    message: null,
+    complexity: 'simple' as ComplexityLevel,
+    llm: {} as any,
     bestApi: null,
     params: {},
     ...overrides
@@ -81,7 +81,7 @@ describe('selectApi', () => {
       categories: []
     });
     const result = selectApi(state);
-    expect(result.error).toBe('No suitable API found');
+    expect(result.error).toBe(true);
   });
 
   // Add more test cases for other API selections

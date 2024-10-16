@@ -3,7 +3,6 @@ import { CompiledStateGraph, StateGraph, LangGraphRunnableConfig, StateType, Sta
 import { ChatOpenAI } from "@langchain/openai";
 import { END, START } from "@langchain/langgraph";
 import { GraphState, NodeNames } from "../types.js"; // Updated import
-import { handleMultiStepQuery } from "../tools/node_tools/multi_step_queries.js";
 import { logger } from '../logger.js';
 import { 
   handle_entity_query, 
@@ -14,17 +13,19 @@ import {
   handle_trending_tracks,
   handle_search_genres // Newly added handler for genre searches
 } from './nodes/handlerFunctions.js';
-import { classifyQueryWrapper, log_final_result, wrapNodeLogic } from './functions/creationHelperFunctions.js';
+import { log_final_result } from './functions/creationHelperFunctions.js';
+import { classifyQuery as classify_query } from '../modules/queryClassifier.js';
 import {
   extract_category,
   create_fetch_request,
   process_api_response,
   verify_params,
-  processEntityQueries,
+  process_entity_queries,
   get_apis,
   extract_parameters,
-  extract_high_level_categories
-} from './nodes/handlerFunctions.js';
+  extract_high_level_categories,
+  handle_multi_step_query
+} from '../tools/node_tools/index.js';
 
 dotenv.config();
 
@@ -109,7 +110,7 @@ function createAtrisGraph(): CompiledStateGraph<GraphState, GraphState> {
       }
     }
   })
-  .addNode("classify_query", classifyQueryWrapper)
+  .addNode("classify_query", classify_query)
   .addNode("extract_category", extract_category)
   .addNode("get_apis", get_apis)
   .addNode("extract_parameters", extract_parameters)
@@ -117,7 +118,7 @@ function createAtrisGraph(): CompiledStateGraph<GraphState, GraphState> {
   .addNode("create_fetch_request", create_fetch_request)
   .addNode("process_api_response", process_api_response)
   .addNode("log_final_result", log_final_result)
-  .addNode("processEntityQueries", processEntityQueries)
+  .addNode("process_entity_queries", process_entity_queries)
   .addNode("extract_high_level_categories", extract_high_level_categories)
   .addNode("handle_search_tracks", handle_search_tracks)
   .addNode("handle_trending_tracks", handle_trending_tracks)
@@ -126,7 +127,7 @@ function createAtrisGraph(): CompiledStateGraph<GraphState, GraphState> {
   .addNode("handle_search_genres", handle_search_genres)
   .addNode("handle_entity_query", handle_entity_query)
   .addNode("handle_playlist_info", handle_playlist_info)
-  .addNode("handle_multi_step_query", handleMultiStepQuery);
+  .addNode("handle_multi_step_query", handle_multi_step_query);
 
   // Defining conditional transitions based on queryType
   graph.addConditionalEdges({

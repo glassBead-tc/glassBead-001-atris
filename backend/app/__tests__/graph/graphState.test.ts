@@ -1,5 +1,5 @@
 import { createGraph } from '../../graph/createAtris.js';
-import { GraphState, QueryType } from '../../types.js';
+import { GraphState } from '../../types.js';
 import { createDefaultGraphState } from '../helpers/createDefaultGraphState.js'; // Assuming you created this helper
 
 describe('createGraph', () => {
@@ -15,13 +15,12 @@ describe('createGraph', () => {
       query: 'What are the trending tracks?',
       queryType: 'trending_tracks',
       formattedResponse: '',
-      // Add or override other properties if needed
     });
 
     const result = await graph.invoke(initialState);
     expect(result.bestApi?.api_name).toBe('trending_tracks');
     expect(result.formattedResponse).toBeTruthy();
-    expect(result.error).toBeNull();
+    expect(result.error).toBeFalsy();
   });
 
   // Add more test cases for different query types and error scenarios

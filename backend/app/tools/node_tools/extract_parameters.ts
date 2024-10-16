@@ -10,6 +10,7 @@ import { extractUserParameters } from '../utils/extractionUtils/extractUserParam
 import { extractPlaylistParameters } from '../utils/extractionUtils/extractPlaylistParameters.js';
 import { extractTrackParameters } from '../utils/extractionUtils/extractTrackParameters.js';
 import { isTrackData, isUserData, isPlaylistData } from '../utils/typeGuards.js';
+
 /**
  * Extracts parameters from the GraphState based on the query type and entity.
  * @param state - The current state of the GraphState.

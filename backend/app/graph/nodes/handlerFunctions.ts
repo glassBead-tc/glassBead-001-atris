@@ -544,36 +544,6 @@ export const processEntityQueries = async (state: GraphState): Promise<GraphStat
 };
 
 /**
- * Retrieves available APIs based on the state.
- * @param state - The current state of the GraphState.
- * @returns A partial GraphState with available APIs or an error message.
- */
-export const get_apis = async (state: GraphState): Promise<GraphState> => {
-  try {
-    const response = await globalAudiusApi.getAvailableApis();
-    if (!response || !response.data) {
-      return { 
-        ...state,
-        error: true,
-        message: "No APIs available."
-      };
-    }
-    return { 
-      ...state,
-      apis: response.data,
-      message: "APIs retrieved successfully."
-    };
-  } catch (error: unknown) {
-    logger.error("Failed to get APIs:", error);
-    return { 
-      ...state,
-      error: true,
-      message: error instanceof Error ? error.message : 'Failed to get APIs.' 
-    };
-  }
-};
-
-/**
  * Extracts parameters from the state.
  * @param state - The current state of the GraphState.
  * @returns A partial GraphState with extracted parameters or an error message.

@@ -1,10 +1,10 @@
 import { jest, describe, beforeEach, test, expect } from '@jest/globals';
 import { createGraph } from '../../graph/createAtris.js';
-import { GraphState, DatasetSchema, ComplexityLevel } from '../../types.js';
+import { GraphState, ComplexityLevel } from '../../types.js';
 import * as queryClassifier from '../../modules/queryClassifier.js';
 import * as extractCategory from '../../tools/node_tools/extract_category.js';
 import * as getApis from '../../tools/node_tools/get_apis.js';
-import { createDefaultGraphState } from '../helpers/createDefaultGraphState.js'; // Assuming you created this helper
+import { createDefaultGraphState } from '../helpers/createDefaultGraphState.js';
 
 jest.mock('../../modules/queryClassifier.js');
 jest.mock('../../tools/extract_category.js');
@@ -44,9 +44,9 @@ describe('createGraph', () => {
 
   test('should handle errors gracefully', async () => {
     const mockedExtractCategory = jest.mocked(extractCategory.extractCategory);
-    mockedExtractCategory.mockImplementation(async (state: GraphState): Promise<Partial<GraphState>> => ({
+    mockedExtractCategory.mockImplementation(async (state: GraphState): Promise<GraphState> => ({
       ...state,
-      error: 'Test Error',
+      error: true,
       categories: ['General'],
       isEntityQuery: false
     }));
@@ -61,8 +61,7 @@ describe('createGraph', () => {
     const result = await graph.invoke(initialState);
 
     expect(mockedExtractCategory).toHaveBeenCalled();
-    expect(result.error).toBeDefined();
-    expect(result.error).toContain('Test Error');
+    expect(result.error).toBe(true);
     expect(result.formattedResponse).toContain('an error occurred');
   });
 });

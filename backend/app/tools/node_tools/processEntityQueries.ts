@@ -6,7 +6,7 @@ import { logger } from '../../logger.js';
  * @param state - The current state of the GraphState.
  * @returns A formatted string with user information.
  */
-export async function processUserQuery(state: GraphState): Promise<string> {
+async function processUserQuery(state: GraphState): Promise<string> {
     const user = state.entity as UserData | null;
     if (!user) {
         logger.warn("User data is missing in state.");
@@ -30,7 +30,7 @@ export async function processUserQuery(state: GraphState): Promise<string> {
  * @param state - The current state of the GraphState.
  * @returns A formatted string with track information.
  */
-export async function processTrackQuery(state: GraphState): Promise<string> {
+async function processTrackQuery(state: GraphState): Promise<string> {
     const track = state.entity as TrackData | null;
     if (!track) {
         logger.warn("Track data is missing in state.");
@@ -53,7 +53,7 @@ export async function processTrackQuery(state: GraphState): Promise<string> {
  * @param state - The current state of the GraphState.
  * @returns A formatted string with playlist information.
  */
-export async function processPlaylistQuery(state: GraphState): Promise<string> {
+async function processPlaylistQuery(state: GraphState): Promise<string> {
     const playlist = state.entity as PlaylistData | null;
     if (!playlist) {
         logger.warn("Playlist data is missing in state.");
@@ -81,3 +81,10 @@ function formatDuration(durationSeconds: number): string {
     const seconds = durationSeconds % 60;
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
+
+export {
+    processUserQuery,
+    processTrackQuery,
+    processPlaylistQuery,
+    formatDuration
+};

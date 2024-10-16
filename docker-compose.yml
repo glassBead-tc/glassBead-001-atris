@@ -1,10 +1,12 @@
+version: '3.8'  # Specify the version of Docker Compose
+
 services:
   glassbead:
     build:
-      context: .
-      dockerfile: backend/app/Dockerfile
+      context: ./backend  # Set context to the backend directory
+      dockerfile: app/Dockerfile  # Specify the path to the Dockerfile
     ports:
-      - "8123:8123"
+      - "8123:3000"  # Updated to expose the correct application port
     env_file:
       - .env  # Reference to your .env file
     environment:

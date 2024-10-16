@@ -7,9 +7,9 @@ describe('queryClassifier', () => {
     expect(result).toEqual({
       isEntityQuery: false,
       type: 'trending_tracks',
-      message: '',      // Added if required
-      entity: null,     // Added if required
-      complexity: 'simple' as ComplexityLevel,    // Added if required
+      message: '',
+      entity: null,
+      complexity: 'simple' as ComplexityLevel,
     });
   });
 
@@ -20,8 +20,8 @@ describe('queryClassifier', () => {
       type: 'user_info',
       entity: 'John Doe',
       entityType: 'user',
-      message: '',      // Added if required
-      complexity: 'simple' as ComplexityLevel,    // Added if required
+      message: '',
+      complexity: 'simple' as ComplexityLevel,
     });
   });
 
@@ -32,8 +32,8 @@ describe('queryClassifier', () => {
       type: 'track_info',
       entity: 'Happy',
       entityType: 'track',
-      message: '',      // Added if required
-      complexity: 'simple' as ComplexityLevel,    // Added if required
+      message: '',
+      complexity: 'simple' as ComplexityLevel,
     });
   });
 

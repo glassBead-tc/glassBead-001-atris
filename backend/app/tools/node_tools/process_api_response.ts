@@ -1,7 +1,7 @@
-import { logger } from "../logger.js";
-import { isTrackData } from "../tools/utils/typeGuards.js";
-import { isUserData } from "../tools/utils/typeGuards.js";
-import { GraphState, TrackData } from "../types.js";
+import { logger } from "../../logger.js";
+import { isTrackData } from "../utils/typeGuards.js";
+import { isUserData } from "../utils/typeGuards.js";
+import { GraphState, TrackData } from "../../types.js";
 
 export async function processApiResponse(state: GraphState): Promise<GraphState> {
   logger.debug("Entering processApiResponse");
@@ -87,7 +87,7 @@ function formatTrendingTracks(tracks: TrackData[], limit: number): string {
   return `Here are the top ${limit} trending tracks on Audius:\n${trendingTracks}`;
 }
 
-function formatTrendingGenres(tracks: TrackData[], limit: number): string {
+export function formatTrendingGenres(tracks: TrackData[], limit: number): string {
   if (!Array.isArray(tracks) || tracks.length === 0) {
     throw new Error("Invalid tracks data format.");
   }

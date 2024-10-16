@@ -3,7 +3,7 @@ import { GraphState, QueryType, ComplexityLevel } from '../../types.js';
 import { ChatOpenAI } from "@langchain/openai";
 
 export const createDefaultGraphState = (overrides: Partial<GraphState> = {}): GraphState => ({
-  llm: {} as ChatOpenAI, // Mock LLM object
+  llm: {} as ChatOpenAI,
   query: '',
   queryType: 'general' as QueryType,
   categories: [],
@@ -13,7 +13,7 @@ export const createDefaultGraphState = (overrides: Partial<GraphState> = {}): Gr
   params: {},
   response: null,
   secondaryResponse: null,
-  error: null,
+  error: false,
   formattedResponse: '',
   message: '',
   isEntityQuery: false,

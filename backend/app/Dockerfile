@@ -5,11 +5,11 @@ FROM node:20-alpine
 WORKDIR /backend/app
 
 # Install build dependencies and enable Corepack
-RUN apk add --no-cache python3 make g++ gcc && \
+RUN apk add --no-cache python3 make g++ gcc libc-dev && \
     corepack enable
 
-# Copy package.json and langgraph.json files
-COPY package.json langgraph.json ./
+# Copy package.json and langgraph.json files from the backend directory
+COPY ../package.json ../langgraph.json ./
 
 # Install dependencies
 RUN yarn install
