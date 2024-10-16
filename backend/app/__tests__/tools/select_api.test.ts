@@ -1,5 +1,5 @@
 import { GraphState, DatasetSchema, QueryType, ComplexityLevel } from '../../types.js';
-import { selectApi } from '../../tools/select_api.js';
+import { selectApi } from '../../tools/node_tools/select_api.js';
 
 describe('selectApi', () => {
   const mockApis: DatasetSchema[] = [

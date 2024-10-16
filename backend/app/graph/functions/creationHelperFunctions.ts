@@ -1,56 +1,57 @@
-import { GraphState } from "../../types.js";
+import { Entity, GraphState, NodeNames } from "../../types.js";
 import { logger } from "../../logger.js";
-import { extractCategory } from "../../tools/extract_category.js";
+import { classifyQuery } from "../../modules/queryClassifier.js";
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000; // 1 second
-const TIMEOUT = 30000; // 30 seconds
 
 /**
  * Wraps the classifyQuery function to update the GraphState.
  */
-export const classifyQueryWrapper = async (state: GraphState): Promise<Partial<GraphState>> => {
-    logger.debug(`State before extractCategory: ${JSON.stringify(state)}`);
-    const extractedInfo = await extractCategory(state);
-    const newState = {
+export const classifyQueryWrapper = async (state: GraphState): Promise<GraphState> => {
+    const classification = await classifyQuery(state.query);
+    
+    if (classification.type === 'general') {
+        return {
+            ...state,
+            queryType: classification.type,
+            error: true,
+            formattedResponse: "I'm sorry, but I couldn't understand your query. Could you please rephrase it or provide more specific information about what you're looking for on Audius?"
+        };
+    }
+
+    return {
         ...state,
-        ...extractedInfo,
-        queryType: extractedInfo.queryType
-    };
-    logger.debug(`State after extractCategory: ${JSON.stringify(newState)}`);
-    return newState;
+        queryType: classification.type,
+        entityType: classification.entityType,
+        entity: classification.entity as Entity | null,
+        isEntityQuery: classification.isEntityQuery,
+        complexity: classification.complexity
+      };
 };
 
 /**
  * Wraps node logic with retry and timeout mechanisms.
  */
-export const wrapNodeLogic = (
-    nodeName: string, 
-    logic: (state: GraphState) => Promise<Partial<GraphState>> | Partial<GraphState>
-) => {
+export function wrapNodeLogic(
+    nodeName: NodeNames, 
+    logic: (state: GraphState) => Promise<GraphState>
+  ): (state: GraphState) => Promise<GraphState> {
     return async (state: GraphState): Promise<GraphState> => {
-        logger.debug(`Entering ${nodeName} node`);
-        try {
-            const result = await withTimeout(
-                withRetry(async () => {
-                    const logicResult = logic(state);
-                    return logicResult instanceof Promise ? await logicResult : logicResult;
-                }, MAX_RETRIES, RETRY_DELAY), 
-                TIMEOUT
-            );
-            
-            const newState = { ...state, ...result };
-            logger.debug(`State after ${nodeName}: ${JSON.stringify(newState)}`);
-            return newState;
-        } catch (error) {
-            logger.error(`Error in ${nodeName}: ${error instanceof Error ? error.message : String(error)}`);
-            return { 
-                ...state, 
-                error: error instanceof Error ? error.message : `Unknown error in ${nodeName}`
-            };
-        }
+      try {
+        const updatedState = await logic(state);
+        return {
+          ...state,
+          ...updatedState
+        }; // Merging ensures a complete GraphState
+      } catch (error) {
+        logger.error(`Error in ${nodeName}:`, error);
+        return { 
+          ...state, 
+          error: true,
+          message: error instanceof Error ? error.message : 'An unknown error occurred.'
+        } as GraphState;
+      }
     };
-};
+  }
 
 const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
     let timeoutHandle: NodeJS.Timeout | undefined;
@@ -84,8 +85,9 @@ const withRetry = async <T>(fn: () => Promise<T>, maxRetries: number, delay: num
  * @returns A partial GraphState with the final result.
  */
 export const log_final_result = async (state: GraphState): Promise<Partial<GraphState>> => {
-    logger.info(`Final result: ${state.formattedResponse}`);
-    return state;
+    const result = state.formattedResponse || state.response || "No response generated.";
+    logger.info(`Final result: ${result}`);
+    return { ...state, formattedResponse: result };
 };
 
 /**
@@ -123,3 +125,10 @@ function format_trending_tracks(tracks: any[], limit: number): string {
 
     return `Here are the top ${limit} trending tracks on Audius:\n${formatted}`;
 }
+
+
+
+
+
+
+

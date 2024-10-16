@@ -2,7 +2,7 @@ services:
   glassbead:
     build:
       context: .
-      dockerfile: app/Dockerfile
+      dockerfile: backend/app/Dockerfile
     ports:
       - "8123:8123"
     env_file:

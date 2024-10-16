@@ -1,6 +1,8 @@
 import { logger } from '../../logger.js';
 
-export function formatTrackResults(response: any, originalQuery: string): string {
+// Function Declarations
+
+function formatTrackResults(response: any, originalQuery: string): string {
     if (!response || !response.data || !response.data.data || !Array.isArray(response.data.data)) {
       return "Unable to find information about the requested track.";
     }
@@ -29,9 +31,9 @@ export function formatTrackResults(response: any, originalQuery: string): string
         return `Unable to find any tracks matching '${searchedTrackName}'.`;
       }
     }
-  } 
-  
-export function formatApiResults(response: any, apiName: string): string {
+} 
+
+function formatApiResults(response: any, apiName: string): string {
     if (!response || !response.data) {
       return "Unable to find the requested information.";
     }
@@ -39,9 +41,9 @@ export function formatApiResults(response: any, apiName: string): string {
     try {
       switch (apiName) {
         case "Get Trending Tracks":
-          return formatTrendingResults(response.data, 'tracks');
+          return formatTrendingTracks(response.data);
         case "Get Trending Playlists":
-          return formatTrendingResults(response.data, 'playlists');
+          return formatTrendingPlaylists(response.data);
         case "Search Tracks":
           return formatMultipleTracks(response.data);
         case "Get Track":
@@ -61,7 +63,7 @@ export function formatApiResults(response: any, apiName: string): string {
     }
 }
 
-export function formatSearchTracks(tracks: any[], query: string): string {
+function formatSearchTracks(tracks: any[], query: string): string {
   const [trackName, artistName] = query.split(' by ').map(s => s.trim());
 
   const filteredTracks = tracks.filter(track => {
@@ -81,7 +83,7 @@ export function formatSearchTracks(tracks: any[], query: string): string {
   return `Here are the tracks matching "${query}": ${trackInfo}`;
 }
   
-export function formatUserInfo(data: any, query: string): string {
+function formatUserInfo(data: any, query: string): string {
     // Ensure data is always an array
     const users = Array.isArray(data) ? data : [data];
   
@@ -110,7 +112,7 @@ export function formatUserInfo(data: any, query: string): string {
     ).join('\n')}`;
 } 
   
-export function formatPlaylistInfo(data: any[], query: string, fullPlaylistDetails?: any): string {
+function formatPlaylistInfo(data: any[], query: string, fullPlaylistDetails?: any): string {
     if (!data || data.length === 0) {
       return `No playlists found matching "${query}"`;
     }
@@ -135,13 +137,13 @@ export function formatPlaylistInfo(data: any[], query: string, fullPlaylistDetai
     `;
 }
   
-export function formatTrendingTracks(tracks: any[]): string {
+function formatTrendingTracks(tracks: any[]): string {
     return tracks.map((track, index) => 
       `${index + 1}. "${track.title}" by ${track.user.name}`
     ).join('\n');
 }
 
-export function formatTrendingPlaylists(data: any[]): string {
+function formatTrendingPlaylists(data: any[]): string {
     const playlists = data.slice(0, 5);
     const playlistList = playlists.map((playlist: any) => `"${playlist.playlist_name}" by ${playlist.user.name}`).join(', ');
     const playlistTracklist = playlists.map((playlist: any) => {
@@ -151,7 +153,7 @@ export function formatTrendingPlaylists(data: any[]): string {
     return `The top trending playlists on Audius right now are: ${playlistList}. Here are the tracks on each: ${playlistTracklist}`;
 }
 
-export function formatDetailedTrackInfo(tracks: any[]): string {
+function formatDetailedTrackInfo(tracks: any[]): string {
   return tracks.map((track, index) => 
     `${index + 1}. "${track.title}" by ${track.user.name}\n` +
     `   Genre: ${track.genre || 'Unknown'}\n` +
@@ -160,25 +162,25 @@ export function formatDetailedTrackInfo(tracks: any[]): string {
   ).join('\n\n');
 }
 
-export function formatMultipleTracks(tracks: any[]): string {
+function formatMultipleTracks(tracks: any[]): string {
   return tracks.map((track, index) => 
     `${index + 1}. "${track.title}" by ${track.user.name} (${track.play_count || 'Unknown'} plays)`
   ).join('\n');
 }
 
-export function formatPlaylistResults(playlists: any[]): string {
+function formatPlaylistResults(playlists: any[]): string {
   return playlists.map((playlist, index) => 
     `${index + 1}. "${playlist.playlist_name}" by ${playlist.user.name} (${playlist.total_play_count} plays)`
   ).join('\n');
 }
 
-export function formatUserResults(users: any[]): string {
+function formatUserResults(users: any[]): string {
   return users.map((user, index) => 
     `${index + 1}. ${user.name} (@${user.handle}) - ${user.follower_count} followers, ${user.track_count} tracks`
   ).join('\n');
 }
 
-export function formatTrendingResults(trending: any[], type: 'tracks' | 'playlists'): string {
+function formatTrendingResults(trending: any[], type: 'tracks' | 'playlists'): string {
   const formattedList = trending.slice(0, 5).map((item, index) => {
     if (type === 'tracks') {
       return `${index + 1}. "${item.title}" by ${item.user.name} (${item.play_count} plays)`;
@@ -195,3 +197,46 @@ function formatDuration(durationInSeconds: number): string {
   const seconds = durationInSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
+
+/**
+ * Formats genre popularity data into a readable string.
+ * @param genrePopularity - Record mapping genres to points.
+ * @param limit - Number of top genres to include.
+ * @returns A formatted string listing the top genres.
+ */
+function formatGenrePopularity(genrePopularity: Record<string, number>, limit: number): string {
+  // Sort genres by popularity
+  const sortedGenres = Object.entries(genrePopularity)
+    .sort(([, countA], [, countB]) => countB - countA)
+    .slice(0, limit);
+
+  const formatted = sortedGenres.map(([genre, count], index) =>
+    `${index + 1}. ${capitalizeFirstLetter(genre)} (${count} tracks)`
+  ).join('\n');
+
+  return `Top ${limit} Genres on Audius:\n${formatted}`;
+}
+
+// Helper function
+function capitalizeFirstLetter(string: string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+// Export Statements
+
+export {
+    formatTrackResults,
+    formatApiResults,
+    formatSearchTracks,
+    formatUserInfo,
+    formatPlaylistInfo,
+    formatTrendingTracks,
+    formatTrendingPlaylists,
+    formatDetailedTrackInfo,
+    formatMultipleTracks,
+    formatPlaylistResults,
+    formatUserResults,
+    formatTrendingResults,
+    formatDuration,
+    formatGenrePopularity
+};

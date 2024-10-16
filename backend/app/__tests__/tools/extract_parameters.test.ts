@@ -1,6 +1,6 @@
 import { ChatOpenAI } from '@langchain/openai';
-import { extractParameters } from '../../tools/extract_parameters.js';
-import { ComplexityLevel, Entity, GraphState, TrackData, TrackEntity } from '../../types.js';
+import { extractParameters } from '../../tools/node_tools/extract_parameters.js';
+import { ComplexityLevel, Entity, GraphState } from '../../types.js';
 
 const llm = {
   call: jest.fn(),
@@ -20,21 +20,18 @@ describe('extractParameters', () => {
       params: {},
       error: undefined,
       message: null,
-      llm: llm, // Provide a mock or appropriate value
-      categories: [], // Provide a mock or appropriate value
-      apis: [], // Provide a mock or appropriate value
-      bestApi: null, // Provide a mock or appropriate value
+      llm: llm,
+      categories: [],
+      apis: [],
+      bestApi: null,
       response: [],
       complexity: 'simple' as ComplexityLevel,
       formattedResponse: 'test',
     };
 
     const updatedState = await extractParameters(state);
-    expect(updatedState.params.calculationMethod).toBe('pareto');
     expect(updatedState.params.timeframe).toBe('week');
     expect(updatedState.params.limit).toBe(5);
-    expect(updatedState.params.numberOfTracks).toBe(100);
-    expect(updatedState.params.pointsPool).toBe(10000);
   });
 
   it('should handle search_tracks queries with entity', async () => {
@@ -46,11 +43,10 @@ describe('extractParameters', () => {
       params: {},
       error: undefined,
       message: null,
-      llm: llm, // Provide a mock or appropriate value
-      categories: [], // Provide a mock or appropriate value
-      apis: [], // Provide a mock or appropriate value
-      bestApi: null, // Provide a mock or appropriate value
-      // Add the two additional required properties here
+      llm: llm,
+      categories: [],
+      apis: [],
+      bestApi: null,
       response: [],
       complexity: 'simple' as ComplexityLevel,
       formattedResponse: 'test',
@@ -58,8 +54,7 @@ describe('extractParameters', () => {
 
     const updatedState = await extractParameters(state);
     expect(updatedState.params.track).toBe('Blinding Lights');
-    expect(updatedState.params.artist).toBe('The Weeknd');
-    // Add more assertions as needed
+    expect(updatedState.params.user).toBe('The Weeknd');
   });
 
   it('should handle search_tracks queries without valid entity', async () => {
@@ -71,11 +66,10 @@ describe('extractParameters', () => {
       params: {},
       error: undefined,
       message: null,
-      llm: llm, // Provide a mock or appropriate value
-      categories: [], // Provide a mock or appropriate value
-      apis: [], // Provide a mock or appropriate value
-      bestApi: null, // Provide a mock or appropriate value
-      // Add the two additional required properties here
+      llm: llm,
+      categories: [],
+      apis: [],
+      bestApi: null,
       response: [],
       complexity: 'simple' as ComplexityLevel,
       formattedResponse: 'test',
@@ -86,5 +80,5 @@ describe('extractParameters', () => {
     expect(updatedState.params.artist).toBe('');
   });
 
-  // Add more test cases as needed with the required properties
+  // Add more test cases as needed
 });

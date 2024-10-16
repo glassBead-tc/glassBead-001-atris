@@ -1,8 +1,16 @@
 {
+  "docker_compose_file": "./.dockercompose",
   "dockerfile_lines": [],
   "graphs": {
-    "graph": "./backend/app/graph/createGraph.ts"
+    "atris": "/backend/app/graph/createAtris.ts:graph"
   },
-  "env": "./.env",
+  "env": [
+    "OPENAI_API_KEY",
+    "AUDIUS_API_KEY",
+    "AUDIUS_API_SECRET",
+    "AUDIUS_PROJECT_NAME",
+    "AUDIUS_DISCOVERY_PROVIDER_ENDPOINT",
+    "TAVILY_API_KEY"
+  ],
   "node_version": "20"
 }

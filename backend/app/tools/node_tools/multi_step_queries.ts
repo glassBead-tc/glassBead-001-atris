@@ -1,6 +1,6 @@
-import { GraphState } from "../types.js";
-import { logger } from '../logger.js';
-import { globalAudiusApi } from "../services/audiusApi.js";
+import { GraphState } from "../../types.js";
+import { logger } from '../../logger.js';
+import { globalAudiusApi } from "../../services/audiusApi.js";
 import { TrackResponse } from '@audius/sdk';
 
 /**
@@ -13,7 +13,7 @@ export async function handleMultiStepQuery(state: GraphState): Promise<Partial<G
 
   if (queryType !== 'genre_info') {
     logger.warn(`handleMultiStepQuery called with unsupported queryType: ${queryType}`);
-    return { error: "Unsupported query type for multi-step processing." };
+    return { error: true };
   }
 
   try {

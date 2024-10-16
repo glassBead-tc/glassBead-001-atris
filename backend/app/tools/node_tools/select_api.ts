@@ -1,5 +1,5 @@
-import { GraphState, DatasetSchema } from "../types.js";
-import { logger } from '../logger.js';
+import { GraphState, DatasetSchema } from "../../types.js";
+import { logger } from '../../logger.js';
 
 const RELEVANCE_THRESHOLD = 0.5;
 
@@ -87,7 +87,7 @@ export const selectApi = (state: GraphState): Partial<GraphState> => {
 
   if (!apis || apis.length === 0) {
     logger.warn("No APIs available for selection");
-    return { error: "No APIs available for selection" };
+    return { error: true };
   }
 
   const relevantApis = apis
@@ -102,7 +102,7 @@ export const selectApi = (state: GraphState): Partial<GraphState> => {
   if (relevantApis.length === 0) {
     logger.warn("No relevant APIs found based on relevance scores");
     return {
-      error: "No relevant APIs found",
+      error: true,
       message: "Failed to select an API: No APIs matched the query's relevance criteria."
     };
   }
@@ -120,6 +120,6 @@ export const selectApi = (state: GraphState): Partial<GraphState> => {
   return {
     bestApi: selected.api,
     parameters,
-    error: null
+    error: false
   };
 };

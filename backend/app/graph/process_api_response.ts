@@ -4,64 +4,63 @@ import { isUserData } from "../tools/utils/typeGuards.js";
 import { GraphState, TrackData } from "../types.js";
 
 export async function processApiResponse(state: GraphState): Promise<GraphState> {
-    logger.debug("Entering processApiResponse");
-    logger.debug(`Query Type: ${state.queryType}`);
-    logger.debug(`Response: ${JSON.stringify(state.response)}`);
-  
-    try {
+  logger.debug("Entering processApiResponse");
+  logger.debug(`Query Type: ${state.queryType}`);
+  logger.debug(`Response: ${JSON.stringify(state.response)}`);
+
+  try {
       if (!state.response) {
-        logger.error("No response data to process");
-        throw new Error("No response data to process");
+          logger.error("No response data to process");
+          throw new Error("No response data to process");
       }
-  
+
       let formattedResponse: string;
-  
+
       if (state.queryType === 'genre_info') {
-        // Ensure that tracks data is available
-        const tracks: TrackData[] = state.response.data.tracks; // Adjust based on actual response structure
-        if (!tracks || !Array.isArray(tracks)) {
-          throw new Error("Invalid or missing tracks data for genre_info");
-        }
-  
-        formattedResponse = formatTrendingGenres(tracks, state.params.limit || 5);
+          // Ensure that tracks data is available
+          const tracks: TrackData[] = state.response.data.tracks; // Adjust based on actual response structure
+          if (!tracks || !Array.isArray(tracks)) {
+              throw new Error("Invalid or missing tracks data for genre_info");
+          }
+
+          formattedResponse = formatTrendingGenres(tracks, state.params.limit || 5);
       } else if (state.entity && state.entity.entityType === 'user') {
-        formattedResponse = processUserQuery(state);
+          formattedResponse = processUserQuery(state);
       } else if (isTrackData(state.response.data)) {
-        // Handle track data
-        formattedResponse = `Track: ${state.response.data.title} by ${state.response.data.artist}`;
+          // Handle track data
+          formattedResponse = `Track: ${state.response.data.title} by ${state.response.data.artist}`;
       } else if (isUserData(state.response.data)) {
-        // Handle artist data
-        formattedResponse = `Artist: ${state.response.data.name} with ${state.response.data.followerCount} followers.`;
+          // Handle artist data
+          formattedResponse = `Artist: ${state.response.data.name} with ${state.response.data.followerCount} followers.`;
       } else {
-        // Handle other cases
-        logger.warn(`Unsupported query type: ${state.queryType}`);
-        throw new Error(`Unsupported query type: ${state.queryType}`);
+          // Handle other cases
+          logger.warn(`Unsupported query type: ${state.queryType}`);
+          throw new Error(`Unsupported query type: ${state.queryType}`);
       }
-  
+
       return {
-        ...state,
-        response: formattedResponse,
-        message: "Processed API response successfully."
-        // Ensure all required properties from GraphState are present
+          ...state,
+          response: formattedResponse,
+          message: "Processed API response successfully."
       };
-    } catch (error: unknown) {
+  } catch (error: unknown) {
       if (error instanceof Error) {
-        logger.error(`Error in processApiResponse: ${error.message}`, { stack: error.stack });
-        return { 
-          ...state, 
-          error: true,
-          message: error.message 
-        };
+          logger.error(`Error in processApiResponse: ${error.message}`, { stack: error.stack });
+          return { 
+              ...state, 
+              error: true,
+              message: error.message 
+          };
       } else {
-        logger.error('Unknown error in processApiResponse');
-        return { 
-          ...state, 
-          error: true,
-          message: 'An unknown error occurred while processing the API response.' 
-        };
+          logger.error('Unknown error in processApiResponse');
+          return { 
+              ...state, 
+              error: true,
+              message: 'An unknown error occurred while processing the API response.' 
+          };
       }
-    }
   }
+}
 
 function processUserQuery(state: GraphState): string {
   const userData = state.response.data;

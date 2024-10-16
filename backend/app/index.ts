@@ -12,8 +12,8 @@ logger.level = "debug";
 function getTestQueries(): string[] {
   return [
     "How many plays does the track Lost My Mind (instrumental) have?",
-    // "Who are the most followed artists?",
-    // "Find me some electronic music playlists",
+    "What is the most popular song on Audius right now?",
+    "Find me some electronic music playlists with over 10000 plays.",
     // "What's the most played track by Skrillex?",
     // "Show me the latest uploads in the hip-hop genre"
   ];

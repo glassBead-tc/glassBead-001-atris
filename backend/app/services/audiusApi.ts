@@ -1,5 +1,4 @@
 import { 
-  GetUserRequest,
   TrackResponse, 
   UserResponse,
   PlaylistResponse,
@@ -13,17 +12,13 @@ import {
   Track,
   User,
   Playlist,
-  DiscoveryNodeSelectorService,
-  StorageNodeSelectorService,
   Genre,
   DiscoveryNodeSelector,
   StorageNodeSelector,
   AuthService,
-  StorageNode,
   TransactionData,
 } from '@audius/sdk'; // Named imports
 import { GroupedGenres } from '../types.js';
-import axios, { AxiosInstance } from 'axios';
 import { logger } from '../logger.js'; // Correct import without '.js'
 import { ApiResponse as CustomApiResponse } from '../types.js'; // Correct import
 
@@ -155,12 +150,21 @@ export class AudiusApiService {
   // Example correction if 'getTrack' is the correct method
   async getUserTracks(userId: string, limit: number): Promise<CustomApiResponse<TrackResponse[]>> {
     try {
-      const request: SearchTracksRequestLimited = { query: userId, limit: 5 };
+      const request: SearchTracksRequestLimited = { query: userId, limit }; // Use the limit parameter
       const response = await this.audiusSdk.tracks.searchTracks(request);
       logger.debug('getUserTracks response:', response);
-      const tracks = response.data?.map((track: Track) => track.title) || [];
-      const trackResponse = tracks.map((track: string) => ({ title: track })) as TrackResponse[];
-      return { data: trackResponse };
+      
+      // Ensure response.data is an array and process it
+      const trackResponse = response.data?.map((track: Track) => ({
+        id: track.id,
+        title: track.title,
+        user: {
+          name: track.user.name,
+        },
+        playCount: track.playCount // Assuming play_count is available in the response
+      })) || [];
+      
+      return { data: trackResponse as TrackResponse[] };
     } catch (error: any) {
       logger.error('Failed to get user tracks:', error);
       throw new Error('Failed to get user tracks.');

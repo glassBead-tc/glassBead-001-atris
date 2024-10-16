@@ -32,6 +32,23 @@ export function normalizeName(name: string): string {
 }
 
 export async function classifyQuery(query: string): Promise<QueryClassification> {
+  let normalizedQuery = query.toLowerCase().trim();
+  
+  // Check for track play count queries
+  const trackPlayCountRegex = /how many plays does (the track )?(.*?) have\??/i;
+  const trackPlayCountMatch = normalizedQuery.match(trackPlayCountRegex);
+  
+  if (trackPlayCountMatch) {
+    const trackName = trackPlayCountMatch[2].trim();
+    return {
+      type: 'entity_query',
+      entityType: 'track',
+      entity: trackName,
+      isEntityQuery: true,
+      complexity: 'simple'
+    };
+  }
+
   let classification: QueryClassification = {
     type: 'general',
     isEntityQuery: false,
@@ -39,8 +56,6 @@ export async function classifyQuery(query: string): Promise<QueryClassification>
     entity: null,
     complexity: 'simple',
   };
-
-  let normalizedQuery = query.toLowerCase();
 
   // Expand contractions
   Object.keys(contractions).forEach((contraction: string) => {
@@ -65,7 +80,7 @@ export async function classifyQuery(query: string): Promise<QueryClassification>
   if (allEntities.length > 0) {
     const rawEntity: string = allEntities[0]; // Taking the first detected entity
     const entity = normalizeName(rawEntity); // Normalize the entity name
-    let detectedEntityType: 'user' | 'track' | 'playlist' | 'genre' | null = null;
+    let detectedEntityType: 'user' | 'track' | 'playlist' | null = null;
 
     // Simplified entity type detection based on query content
     if (/artist|user|profile/i.test(normalizedQuery)) {
@@ -74,10 +89,9 @@ export async function classifyQuery(query: string): Promise<QueryClassification>
       detectedEntityType = 'track';
     } else if (/playlist/i.test(normalizedQuery)) {
       detectedEntityType = 'playlist';
-    } else if (/genre/i.test(normalizedQuery)) {
-      detectedEntityType = 'genre';
     }
 
+    // Only classify if entity type was detected
     if (detectedEntityType) {
       classification = {
         type: `search_${detectedEntityType}s`,
@@ -99,7 +113,7 @@ export async function classifyQuery(query: string): Promise<QueryClassification>
       const rawEntity = match[2] ? match[2].trim() : null;
       const entity = rawEntity ? normalizeName(rawEntity) : null;
 
-      let mappedEntityType: 'user' | 'track' | 'playlist' | 'genre' | null = null;
+      let mappedEntityType: 'user' | 'track' | 'playlist' | null = null;
       switch (detectedPluralEntityType) {
         case 'tracks':
         case 'track':
@@ -115,23 +129,19 @@ export async function classifyQuery(query: string): Promise<QueryClassification>
           break;
         case 'genres':
         case 'genre':
-          mappedEntityType = 'genre';
-          break;
-        default:
+          mappedEntityType = null; // Genres are not entities in our current system
           break;
       }
 
-      if (mappedEntityType) {
-        classification = {
-          type: `search_${mappedEntityType}s`,
-          isEntityQuery: true,
-          entityType: mappedEntityType,
-          entity: entity,
-          complexity: 'simple',
-        };
-        logger.debug(`Pattern-based classification: ${classification.type}, isEntityQuery: ${classification.isEntityQuery}`);
-        return classification;
-      }
+      classification = {
+        type: mappedEntityType ? `search_${mappedEntityType}s` : 'trending_tracks',
+        isEntityQuery: !!mappedEntityType,
+        entityType: mappedEntityType || null,
+        entity: entity,
+        complexity: mappedEntityType ? 'moderate' : 'simple', // Adjust complexity based on entity type
+      };
+      logger.debug(`Pattern-based classification: ${classification.type}, isEntityQuery: ${classification.isEntityQuery}`);
+      return classification;
     }
   }
 
@@ -149,6 +159,12 @@ export async function classifyQuery(query: string): Promise<QueryClassification>
   }
 
   // Final default return
-  logger.debug(`Default classification: ${classification.type}`);
-  return classification;
+  logger.debug(`Default classification: general`);
+  return {
+    type: 'general',
+    entityType: null,
+    entity: null,
+    isEntityQuery: false,
+    complexity: 'simple'
+  };
 }

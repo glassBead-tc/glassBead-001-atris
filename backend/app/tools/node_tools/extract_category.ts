@@ -1,6 +1,6 @@
-import { GraphState, PlaylistData, TrackData, UserData } from "../types.js";
-import { logger } from '../logger.js';
-import { normalizeName } from '../modules/queryClassifier.js';
+import { GraphState, PlaylistData, TrackData, UserData } from "../../types.js";
+import { logger } from '../../logger.js';
+import { normalizeName } from '../../modules/queryClassifier.js';
 
 interface CategoryKeywords {
   [key: string]: string[];
@@ -19,10 +19,20 @@ const categoryKeywords: CategoryKeywords = {
   'Recommendations': ['recommend', 'suggest', 'similar to', 'if you like', 'for fans of']
 };
 
-export async function extractCategory(state: GraphState): Promise<Partial<GraphState>> {
+/**
+ * Function to extract category from the query.
+ * @param state - The current GraphState.
+ * @returns A new GraphState with updated categories and related fields.
+ */
+export async function extractCategory(state: GraphState): Promise<GraphState> {
   try {
     if (!state.query) {
-      return { ...state, categories: ['General'], isEntityQuery: false };
+      return { 
+        ...state, 
+        categories: ['General'], 
+        isEntityQuery: false,
+        entityType: null // Explicitly set to null
+      };
     }
 
     const query = state.query.toLowerCase();
@@ -109,10 +119,11 @@ export async function extractCategory(state: GraphState): Promise<Partial<GraphS
     return {
       ...state,
       categories,
-      entityName: entity || null, // Store the normalized entity name
-      entity: null, // Initialize entity data as null; to be populated later
+      entityName: entity || null,
+      entity: null,
       isEntityQuery: !!entityType,
-      queryType
+      queryType,
+      entityType: entityType || null // Ensure it's never undefined
     };
   } catch (error) { 
     logger.error(`Error in extractCategory: ${error instanceof Error ? error.message : String(error)}`);
@@ -120,7 +131,13 @@ export async function extractCategory(state: GraphState): Promise<Partial<GraphS
       ...state,
       categories: ['General'],
       isEntityQuery: false,
-      error: `Error in category extraction: ${error instanceof Error ? error.message : String(error)}`
+      error: true,
+      message: state.message,
+      bestApi: state.bestApi,
+      params: state.params,
+      response: state.response,
+      apis: state.apis,
+      entityType: state.entityType || null // Ensure it's never undefined
     };
   }
 }

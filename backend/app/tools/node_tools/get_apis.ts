@@ -1,7 +1,7 @@
 import fs from "fs";
-import { DatasetSchema, GraphState } from "../types.js";
-import { TRIMMED_CORPUS_PATH } from "../constants.js";
-import { logger } from '../logger.js';
+import { DatasetSchema, GraphState } from "../../types.js";
+import { TRIMMED_CORPUS_PATH } from "../../constants.js";
+import { logger } from '../../logger.js';
 
 export const getApis = async (state: GraphState): Promise<Partial<GraphState>> => {
     let { categories } = state;
@@ -36,7 +36,7 @@ export const getApis = async (state: GraphState): Promise<Partial<GraphState>> =
             logger.warn("No APIs found matching the given categories");
             return {
                 apis: [],
-                error: "No matching APIs found",
+                error: true,
                 message: "No APIs were found matching the given categories."
             };
         }
@@ -49,7 +49,7 @@ export const getApis = async (state: GraphState): Promise<Partial<GraphState>> =
         logger.error("Error in getApis:", error);
         return { 
             apis: [], 
-            error: "Failed to fetch APIs",
+            error: true,
             message: "An error occurred while fetching APIs."
         };
     }

@@ -1,7 +1,7 @@
 import axios from 'axios';
-import { DatasetSchema } from "../types.js";
-import { logger } from '../logger.js';
-import { globalAudiusApi } from '../services/audiusApi.js'; // Correct import path
+import { DatasetSchema } from "../../types.js";
+import { logger } from '../../logger.js';
+import { globalAudiusApi } from '../../services/audiusApi.js'; // Correct import path
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second

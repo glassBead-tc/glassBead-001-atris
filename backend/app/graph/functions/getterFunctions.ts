@@ -1,6 +1,6 @@
 import { GraphState } from "../../types.js";
 import { logger } from "../../logger.js";
-import { getApis } from "../../tools/get_apis.js";
+import { getApis } from "../../tools/node_tools/get_apis.js";
 import readline from 'readline';
 
 export const get_apis = async (state: GraphState): Promise<GraphState> => {

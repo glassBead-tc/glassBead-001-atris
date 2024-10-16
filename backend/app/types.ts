@@ -7,10 +7,10 @@ export type AudiusData = TrackData | UserData | PlaylistData | PopularTrackData 
 export interface QueryClassification {
   type: string;
   isEntityQuery: boolean;
-  entityType: 'user' | 'track' | 'playlist' | 'genre' | null;
+  entityType: 'user' | 'track' | 'playlist' | null;
   entity: string | null;
   complexity: ComplexityLevel;
-}
+} 
 
 export interface DatasetSchema {
   id: string;
@@ -42,10 +42,18 @@ export interface GraphState {
   apis: DatasetSchema[];
   bestApi: DatasetSchema | null;
   secondaryApi?: DatasetSchema | null;
-  params: Record<string, any>;
+  params: {
+    apiUrl?: string;
+    timeframe?: string;
+    limit?: number;
+    track?: string;
+    user?: string;
+    artist?: string;
+    // Add any other parameters you might need
+  };
   response: any;
   secondaryResponse?: any;  
-  error?: string | null;
+  error: boolean; // Changed from string | null to boolean
   formattedResponse?: string;
   message: string | null;
   isEntityQuery?: boolean;
@@ -55,7 +63,7 @@ export interface GraphState {
   complexity: ComplexityLevel | string;
   multiStepHandled?: boolean;
   initialState?: GraphState;
-  entityType: string | null; // Added this line
+  entityType: 'user' | 'playlist' | 'track' | null; // Updated definition
 }
 
 export type QueryType =
@@ -134,7 +142,6 @@ export interface PlaylistData {
   upc?: string;
   tracks: TrackData[];
 }
-
   
 export interface PopularTrackData {
     type: 'popularTrack';
@@ -188,14 +195,15 @@ export function isPlaylistData(entity: any): entity is PlaylistData {
 
 // Define NodeNames as a constant array with 'as const'
 export type NodeNames =
-  | "error"
-  | "START"
-  | "END"
-  | "query_classification"
+  | "classify_query"
   | "extract_category"
+  | "create_fetch_request"
+  | "process_api_response"
+  | "verify_params"
+  | "processEntityQueries"
   | "get_apis"
-  | "select_api"
   | "extract_parameters"
+  | "extract_high_level_categories"
   | "handle_search_tracks"
   | "handle_trending_tracks"
   | "handle_search_playlists"
@@ -205,13 +213,8 @@ export type NodeNames =
   | "handle_playlist_info"
   | "handle_multi_step_query"
   | "log_final_result"
-  | "classify_query";
-
-// Define the DatasetParameters interface
-export interface DatasetParameters {
-  name: string;
-  // Add other relevant properties if necessary
-}
+  | "START"
+  | "END";
 
 // Update the ApiResponse interface to use 'data' consistently
 export interface ApiResponse<T> {
@@ -225,18 +228,11 @@ export interface WebSearchResult {
   // Add other relevant properties if needed
 }
 
-export interface GraphState {
-  // Define according to your application's state
-}
-
-export interface DatasetSchema {
-  api_name: string;
-  required_parameters: DatasetParameters[];
-}
-
-// Electronic subgenres are grouped under the parent genre "Electronic"
-// This gives context to the LLM that "Trance" and "Jungle" are their own genres, but both
-// are part of the "Electronic" genre overall.
+/**
+ * Electronic subgenres are grouped under the parent genre "Electronic"
+ * This gives context to the LLM that "Trance" and "Jungle" are their own genres, but both
+ * are part of the "Electronic" genre overall.
+ */
 export const GroupedGenres = {
   ALL: "All Genres",
   ROCK: "Rock",
