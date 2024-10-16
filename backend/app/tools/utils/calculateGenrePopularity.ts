@@ -8,15 +8,11 @@ import { TrackData } from '../../types.js';
  * @param totalPoints - Total points to distribute among genres.
  * @returns A record mapping genres to their assigned points.
  */
-export function calculateGenrePopularity(
-  tracks: TrackData[],
-  totalPoints: number = 10000
-): Record<string, number> {
+export const calculateGenrePopularity = (genres: string[], baseValue: number): Record<string, number> =>  {
   const genreCounts: Record<string, number> = {};
 
   // Count occurrences of each genre
-  tracks.forEach((track) => {
-    const genre = track.genre ? track.genre.toLowerCase() : 'unknown';
+  genres.forEach((genre) => {
     genreCounts[genre] = (genreCounts[genre] || 0) + 1;
   });
 
@@ -40,7 +36,7 @@ export function calculateGenrePopularity(
   const genrePopularity: Record<string, number> = {};
   sortedGenres.forEach(([genre, _], index) => {
     const normalizedFactor = paretoFactors[index] / totalParetoFactor;
-    genrePopularity[genre] = parseFloat((normalizedFactor * totalPoints).toFixed(2));
+    genrePopularity[genre] = parseFloat((normalizedFactor * baseValue).toFixed(2));
   });
 
   logger.info(

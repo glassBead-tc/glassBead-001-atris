@@ -1,4 +1,4 @@
-import { DatasetSchema } from '../types.js';
+import { DatasetSchema } from '../../types.js';
 
 interface KeywordPattern {
   pattern: RegExp;

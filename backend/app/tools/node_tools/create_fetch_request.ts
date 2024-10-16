@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { DatasetSchema } from "../../types.js";
 import { logger } from '../../logger.js';
-import { globalAudiusApi } from '../../services/audiusApi.js'; // Correct import path
+import { globalAudiusApi } from '../../services/audiusApi.js';
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
@@ -47,7 +47,6 @@ export async function executeApiCall(
       case "Get User Following":
         if (!params.userId) throw new Error("User ID is required for Get User Following API");
         return await globalAudiusApi.getUserFollowing(params.userId, params.limit);
-      // ... handle other cases ...
       default:
         throw new Error(`Unknown API name: ${api.api_name}`);
     }

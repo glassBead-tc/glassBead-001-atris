@@ -22,7 +22,7 @@ import { extractTrendingTracksParameters,
   extractOffset,
   extractGenre } from "../../tools/utils/extractionUtils/index.js";
 // Import format functions
-import { formatGenrePopularity, formatTrendingTracks } from '../../tools/utils/formatResults.js';
+import { formatGenrePopularity, formatTrendingTracks, formatUserInfo, formatPlaylistInfo, formatDetailedTrackInfo, formatMultipleTracks, formatPlaylistResults, formatUserResults, formatTrendingResults, formatDuration } from '../../tools/utils/formatResults.js';
 import { calculateGenrePopularity } from '../../tools/utils/calculateGenrePopularity.js';
 
 // Import other utility functions as needed

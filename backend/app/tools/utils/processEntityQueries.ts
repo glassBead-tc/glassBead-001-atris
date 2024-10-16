@@ -1,5 +1,5 @@
-import { GraphState, UserData, TrackData, PlaylistData } from "../types.js";
-import { logger } from '../logger.js';
+import { GraphState, UserData, TrackData, PlaylistData } from "../../types.js";
+import { logger } from '../../logger.js';
 
 /**
  * Processes user queries by formatting user data.

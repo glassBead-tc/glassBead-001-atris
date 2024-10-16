@@ -1,6 +1,6 @@
 import { StructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
-import { logger } from '../logger.js';
+import { logger } from '../../logger.js';
 
 export class ExtractHighLevelCategories extends StructuredTool {
   name = "extract_high_level_categories";

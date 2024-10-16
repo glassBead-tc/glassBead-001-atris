@@ -74,8 +74,8 @@ export async function extractParameters(state: GraphState): Promise<GraphState> 
 
     // Additional parameter extraction using extractParam if needed
     // Example:
-    // params.track_id = extractParam("track_id", query);
-    // params.limit = extractParam("limit", query);
+    params.track_id = extractParam("track_id", query);
+    params.limit = extractParam("limit", query);
     // ... and so on for other parameters.
 
     logger.info(`Extracted parameters: ${JSON.stringify(params)}`);
