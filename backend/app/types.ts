@@ -34,14 +34,18 @@ export interface DatasetParameters {
   default: string;
 }
 
+export interface Entity {
+  // Define this based on your entities (e.g., UserEntity, TrackEntity, PlaylistEntity)
+}
+
 export interface GraphState {
-  llm: ChatOpenAI<ChatOpenAICallOptions>;
-  query: string;
-  queryType: QueryType | string;
-  categories: string[];
-  apis: DatasetSchema[];
-  bestApi: DatasetSchema | null;
-  secondaryApi?: DatasetSchema | null;
+  llm: ChatOpenAI<ChatOpenAICallOptions>; // Essential
+  query: string; // Essential
+  queryType: QueryType; // Essential
+  categories: string[]; // Essential
+  apis: DatasetSchema[]; // Essential
+  bestApi: DatasetSchema | null; // Optional
+  secondaryApi: DatasetSchema | null; // Optional
   params: {
     apiUrl?: string;
     timeframe?: string;
@@ -50,20 +54,20 @@ export interface GraphState {
     user?: string;
     artist?: string;
     // Add any other parameters you might need
-  };
-  response: any;
-  secondaryResponse?: any;  
-  error: boolean; // Changed from string | null to boolean
-  formattedResponse?: string;
-  message: string | null;
-  isEntityQuery?: boolean;
-  entityName?: string | null; // Added to store the entity's name
-  entity: Entity | null; 
-  parameters?: { [key: string]: any }; 
-  complexity: ComplexityLevel | string;
-  multiStepHandled?: boolean;
-  initialState?: GraphState;
-  entityType: 'user' | 'playlist' | 'track' | null; // Updated definition
+  }; // Essential
+  response: any; // Essential
+  secondaryResponse: any | null;  // Optional
+  error: boolean; // Essential
+  formattedResponse: string | null; // Optional
+  message: string | null; // Optional
+  isEntityQuery: boolean; // Essential
+  entityName: string | null; // Optional
+  entity: Entity | null; // Optional (consider revisiting its necessity)
+  parameters: { [key: string]: any } | null; // Optional
+  complexity: ComplexityLevel; // Essential
+  multiStepHandled: boolean; // Optional
+  initialState: GraphState | null; // Optional
+  entityType: 'user' | 'playlist' | 'track' | null; // Essential
 }
 
 export type QueryType =
@@ -190,158 +194,7 @@ export function isTrackData(entity: any): entity is TrackData {
  * @returns True if entity is PlaylistData, else false.
  */
 export function isPlaylistData(entity: any): entity is PlaylistData {
-  return entity && typeof entity === 'object' && 'title' in entity;
+  return entity && typeof entity === 'object' && 'playlistName' in entity;
 }
 
-// Define NodeNames as a constant array with 'as const'
-export type NodeNames =
-  | "classify_query"
-  | "extract_category"
-  | "create_fetch_request"
-  | "process_api_response"
-  | "verify_params"
-  | "processEntityQueries"
-  | "get_apis"
-  | "extract_parameters"
-  | "extract_high_level_categories"
-  | "handle_search_tracks"
-  | "handle_trending_tracks"
-  | "handle_search_playlists"
-  | "handle_search_users"
-  | "handle_search_genres"
-  | "handle_entity_query"
-  | "handle_playlist_info"
-  | "handle_multi_step_query"
-  | "log_final_result"
-  | "START"
-  | "END";
-
-// Update the ApiResponse interface to use 'data' consistently
-export interface ApiResponse<T> {
-  data: T;
-}
-
-// Update other interfaces as needed
-export interface WebSearchResult {
-  title: string;
-  content: string;
-  // Add other relevant properties if needed
-}
-
-/**
- * Electronic subgenres are grouped under the parent genre "Electronic"
- * This gives context to the LLM that "Trance" and "Jungle" are their own genres, but both
- * are part of the "Electronic" genre overall.
- */
-export const GroupedGenres = {
-  ALL: "All Genres",
-  ROCK: "Rock",
-  METAL: "Metal",
-  ALTERNATIVE: "Alternative",
-  HIP_HOP_RAP: "Hip-Hop/Rap",
-  EXPERIMENTAL: "Experimental",
-  PUNK: "Punk",
-  FOLK: "Folk",
-  POP: "Pop",
-  AMBIENT: "Ambient",
-  SOUNDTRACK: "Soundtrack",
-  WORLD: "World",
-  JAZZ: "Jazz",
-  ACOUSTIC: "Acoustic",
-  FUNK: "Funk",
-  R_AND_B_SOUL: "R&B/Soul",
-  DEVOTIONAL: "Devotional",
-  CLASSICAL: "Classical",
-  REGGAE: "Reggae",
-  PODCASTS: "Podcasts",
-  COUNTRY: "Country",
-  SPOKEN_WORK: "Spoken Word",
-  COMEDY: "Comedy",
-  BLUES: "Blues",
-  KIDS: "Kids",
-  AUDIOBOOKS: "Audiobooks",
-  LATIN: "Latin",
-  LOFI: "Lo-Fi",
-  HYPERPOP: "Hyperpop",
-  DANCEHALL: "Dancehall",
-  ELECTRONIC: {
-    ELECTRONIC: "Electronic",
-    TECHNO: "Techno",
-    TRAP: "Trap",
-    HOUSE: "House",
-    TECH_HOUSE: "Tech House",
-    DEEP_HOUSE: "Deep House",
-    DISCO: "Disco",
-    ELECTRO: "Electro",
-    JUNGLE: "Jungle",
-    PROGRESSIVE_HOUSE: "Progressive House",
-    HARDSTYLE: "Hardstyle",
-    GLITCH_HOP: "Glitch Hop",
-    TRANCE: "Trance",
-    FUTURE_BASS: "Future Bass",
-    FUTURE_HOUSE: "Future House",
-    TROPICAL_HOUSE: "Tropical House",
-    DOWNTEMPO: "Downtempo",
-    DRUM_AND_BASS: "Drum & Bass",
-    DUBSTEP: "Dubstep",
-    JERSEY_CLUB: "Jersey Club",
-    VAPORWAVE: "Vaporwave",
-    MOOMBAHTON: "Moombahton",
-  },
-} as const;
-
-interface BaseEntity {
-  id: string;
-  entityType: 'track' | 'user' | 'playlist';
-  name: string; // Common field for all entity types
-}
-
-export interface TrackEntity extends BaseEntity {
-  entityType: 'track';
-  title: string; // Specific to tracks
-  user: {
-    name: string;
-    handle: string;
-  };
-  play_count: number;
-}
-
-export interface UserEntity extends BaseEntity {
-  entityType: 'user';
-  handle: string; // Specific to users
-  follower_count: number;
-}
-
-export interface PlaylistEntity extends BaseEntity {
-  entityType: 'playlist';
-  tracks: TrackEntity[];
-}
-
-export type Entity = TrackEntity | UserEntity | PlaylistEntity;
-
-// When setting a track entity
-export const setTrackEntity = (trackData: TrackData): Entity => ({
-  id: trackData.id,
-  entityType: 'track',
-  name: trackData.title, // Use title as the name for tracks
-  title: trackData.title,
-  user: trackData.user,
-  play_count: trackData.playCount
-});
-
-// When setting a user entity
-export const setUserEntity = (userData: UserData): Entity => ({
-  id: userData.id,
-  entityType: 'user',
-  name: userData.handle, // Use handle as the name for users
-  handle: userData.handle,
-  follower_count: userData.followerCount
-});
-
-// When setting a playlist entity
-export const setPlaylistEntity = (playlistData: PlaylistData): Entity => ({
-  id: playlistData.id,
-  entityType: 'playlist',
-  name: playlistData.playlistName,
-  tracks: playlistData.tracks.map(setTrackEntity) as TrackEntity[]
-});
+// Additional helper functions and type definitions...

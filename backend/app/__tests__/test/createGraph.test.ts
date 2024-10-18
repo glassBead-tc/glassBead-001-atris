@@ -1,7 +1,7 @@
 import { jest, describe, beforeEach, test, expect } from '@jest/globals';
 import { createGraph } from '../../graph/createAtris.js';
 import { GraphState, ComplexityLevel } from '../../types.js';
-import * as queryClassifier from '../../modules/queryClassifier.js';
+import * as queryClassifier from '../../tools/node_tools/query_classifier.js';
 import * as extractCategory from '../../tools/node_tools/extract_category.js';
 import * as getApis from '../../tools/node_tools/get_apis.js';
 import { createDefaultGraphState } from '../helpers/createDefaultGraphState.js';

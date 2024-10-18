@@ -1,6 +1,6 @@
 import { Entity, GraphState, NodeNames } from "../../types.js";
 import { logger } from "../../logger.js";
-import { classifyQuery } from "../../modules/queryClassifier.js";
+import { classifyQuery } from "../../tools/node_tools/query_classifier.js";
 
 
 /**

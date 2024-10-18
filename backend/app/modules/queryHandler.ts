@@ -2,7 +2,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { CompiledStateGraph } from "@langchain/langgraph";
 import { GraphState, QueryClassification } from "../types.js";
 import { logger } from '../logger.js';
-import { classifyQuery } from './queryClassifier.js';
+import { ClassifyQueryTool } from '../tools/classifyQueryTool.js';
 
 interface QueryResult {
   response: string;
@@ -16,8 +16,9 @@ export async function handleQuery(
 ): Promise<QueryResult> {
   logger.info(`Handling query: ${query}`);
 
-  // Await the asynchronous classification of the query
-  const classification: QueryClassification = await classifyQuery(query);
+  // Use the ClassifyQueryTool instead of classifyQuery function
+  const classifyQueryTool = new ClassifyQueryTool();
+  const classification = await classifyQueryTool.call({ query });
   logger.info(`Query classification: ${JSON.stringify(classification)}`);
 
   logger.info(`Query type: ${classification.type}, Is entity query: ${classification.isEntityQuery}, Entity type: ${classification.entityType}, Entity: ${classification.entity}, Complexity: ${classification.complexity}`);

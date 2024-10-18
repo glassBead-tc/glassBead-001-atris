@@ -14,18 +14,20 @@ import {
   handle_search_genres // Newly added handler for genre searches
 } from './nodes/handlerFunctions.js';
 import { log_final_result } from './functions/creationHelperFunctions.js';
-import { classifyQuery as classify_query } from '../modules/queryClassifier.js';
-import {
-  extract_category,
-  create_fetch_request,
-  process_api_response,
-  verify_params,
-  process_entity_queries,
-  get_apis,
-  extract_parameters,
-  extract_high_level_categories,
-  handle_multi_step_query
-} from '../tools/node_tools/index.js';
+import { classifyQuery } from '../tools/node_tools/query_classifier.js';
+import { ExtractCategory } from '../tools/node_tools/extract_category.js';
+import { getApis } from '../tools/node_tools/get_apis.js';
+import { extractParameters } from '../tools/node_tools/extract_parameters.js';
+import { handle_multi_step_query, selectApi } from '../tools/node_tools/select_api.js';
+import { verifyParams } from '../tools/node_tools/verify_params.js';
+import { executeApiCall } from '../tools/node_tools/create_fetch_request.js';
+import { processApiResponse } from '../tools/node_tools/process_api_response.js';
+import { processUserQuery, processPlaylistQuery, processTrackQuery } from '../tools/node_tools/process_entity_queries.js';
+import { process_entity_queries } from '../tools/node_tools/index.js';
+import { extract_high_level_categories } from '../tools/node_tools/index.js';
+import { ExtractCategoryTool } from '../tools/extractCategoryTool.js';
+import { ClassifyQueryTool } from '../tools/classifyQueryTool.js';
+import { VerifyParamsTool } from '../tools/VerifyParamsTool.js';
 
 dotenv.config();
 
@@ -68,7 +70,10 @@ function createAtrisGraph(): CompiledStateGraph<GraphState, GraphState> {
         default: () => [],
         reducer: (current, newVal) => newVal.length > 0 ? newVal : current
       },
-      // Line 59-61: Defining the 'response' channel to store API responses
+      params: { 
+        default: () => ({}),
+        reducer: (current, newVal) => (Object.keys(newVal).length > 0) ? newVal : current
+      },
       response: { 
         default: () => "",
         reducer: (current, newVal) => newVal || current
@@ -88,17 +93,14 @@ function createAtrisGraph(): CompiledStateGraph<GraphState, GraphState> {
         default: () => null,
         reducer: (current, newVal) => newVal || current
       },
-      // Line 91-93: Defining the 'params' channel to store parameters extracted from the query
-      params: { 
-        default: () => ({}),
-        reducer: (current, newVal) => (Object.keys(newVal).length > 0) ? newVal : current
-      },
-      // Line 95-97: Defining the 'entityType' channel to store the type of entity involved in the query
       entityType: { 
         default: () => null,
         reducer: (current, newVal) => newVal || current
       },
-      // Line 99-101: Defining the 'entity' channel to store the specific entity related to the query
+      entityName: { 
+        default: () => null,
+        reducer: (current, newVal) => newVal || current
+      },
       entity: { 
         default: () => null,
         reducer: (current, newVal) => newVal || current
@@ -107,19 +109,46 @@ function createAtrisGraph(): CompiledStateGraph<GraphState, GraphState> {
       error: {
         default: () => false,
         reducer: (current, newVal) => newVal
+      },
+      isEntityQuery: {
+        default: () => false,
+        reducer: (current, newVal) => newVal
+      },
+      parameters: {
+        default: () => null,
+        reducer: (current, newVal) => newVal || current
+      },
+      secondaryApi: {
+        default: () => null,
+        reducer: (current, newVal) => newVal || current
+      },
+      secondaryResponse: {
+        default: () => null,
+        reducer: (current, newVal) => newVal || current
+      },
+      multiStepHandled: {
+        default: () => false,
+        reducer: (current, newVal) => newVal || current
+      },
+      initialState: {
+        default: () => null,
+        reducer: (current, newVal) => newVal || current
       }
     }
   })
-  .addNode("classify_query", classify_query)
-  .addNode("extract_category", extract_category)
-  .addNode("get_apis", get_apis)
-  .addNode("extract_parameters", extract_parameters)
-  .addNode("verify_params", verify_params)
-  .addNode("create_fetch_request", create_fetch_request)
-  .addNode("process_api_response", process_api_response)
+  .addNode("classify_query", new ClassifyQueryTool())
+  .addNode("extract_category", new ExtractCategoryTool())
+  .addNode("get_apis", new GetApisTool())
+  .addNode("select_api", new SelectApiTool())
+  .addNode("extract_parameters", new ExtractParametersTool())
+  .addNode("verify_params", new VerifyParamsTool())
+  .addNode("create_fetch_request", new CreateFetchRequestTool())
+  .addNode("process_api_response", new ProcessApiResponseTool())
+  .addNode("format_response", new FormatResponseTool())
+  .addNode("handle_error", new HandleErrorTool())
   .addNode("log_final_result", log_final_result)
-  .addNode("process_entity_queries", process_entity_queries)
-  .addNode("extract_high_level_categories", extract_high_level_categories)
+  .addNode("process_entity_queries", new ProcessEntityQueriesTool())
+  .addNode("extract_high_level_categories", new ExtractHighLevelCategoriesTool())
   .addNode("handle_search_tracks", handle_search_tracks)
   .addNode("handle_trending_tracks", handle_trending_tracks)
   .addNode("handle_search_playlists", handle_search_playlists)
@@ -127,7 +156,7 @@ function createAtrisGraph(): CompiledStateGraph<GraphState, GraphState> {
   .addNode("handle_search_genres", handle_search_genres)
   .addNode("handle_entity_query", handle_entity_query)
   .addNode("handle_playlist_info", handle_playlist_info)
-  .addNode("handle_multi_step_query", handle_multi_step_query);
+  .addNode("handle_multi_step_query", new HandleMultiStepQueryTool());
 
   // Defining conditional transitions based on queryType
   graph.addConditionalEdges({
@@ -198,6 +227,11 @@ function createAtrisGraph(): CompiledStateGraph<GraphState, GraphState> {
   .addConditionalEdges({
     source: "get_apis",
     path: (state: GraphState): NodeNames => 
+      state.error ? "log_final_result" : "select_api"
+  })
+  .addConditionalEdges({
+    source: "select_api",
+    path: (state: GraphState): NodeNames => 
       state.error ? "log_final_result" : "extract_parameters"
   })
   .addConditionalEdges({
@@ -217,6 +251,16 @@ function createAtrisGraph(): CompiledStateGraph<GraphState, GraphState> {
   })
   .addConditionalEdges({
     source: "process_api_response",
+    path: (state: GraphState): NodeNames => 
+      state.error ? "log_final_result" : "format_response"
+  })
+  .addConditionalEdges({
+    source: "format_response",
+    path: (state: GraphState): NodeNames => 
+      state.error ? "log_final_result" : "handle_error"
+  })
+  .addConditionalEdges({
+    source: "handle_error",
     path: (state: GraphState): NodeNames => 
       state.error ? "log_final_result" : "log_final_result"
   });

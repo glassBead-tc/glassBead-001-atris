@@ -1,4 +1,4 @@
-import { classifyQuery } from '../../modules/queryClassifier.js';
+import { classifyQuery } from '../../tools/node_tools/query_classifier.js';
 import { ComplexityLevel } from '../../types.js';
 
 describe('queryClassifier', () => {

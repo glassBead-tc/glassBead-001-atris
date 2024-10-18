@@ -1,5 +1,5 @@
 import { QueryClassification } from '../types.js';
-import { classifyQuery } from './queryClassifier.js';
+import { classifyQuery } from '../tools/node_tools/query_classifier.js';
 
 console.log('Test file execution started');
 

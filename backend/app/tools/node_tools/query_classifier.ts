@@ -1,6 +1,6 @@
 import nlp from 'compromise';
-import { QueryClassification } from '../types.js';
-import { logger } from '../logger.js';
+import { QueryClassification } from '../../types.js';
+import { logger } from '../../logger.js';
 
 const contractions: { [key: string]: string } = {
   "what's": "what is",

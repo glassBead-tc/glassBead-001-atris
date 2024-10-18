@@ -4,7 +4,7 @@ import { globalAudiusApi } from "./services/audiusApi.js";
 import { logger } from "./logger.js";
 import { handleQuery } from "./modules/queryHandler.js";
 import { checkRequiredEnvVars, getOpenAiApiKey } from "./config.js";
-import { classifyQuery } from "./modules/queryClassifier.js";
+import { classifyQuery } from "./tools/node_tools/query_classifier.js";
 
 logger.level = "debug";
 
