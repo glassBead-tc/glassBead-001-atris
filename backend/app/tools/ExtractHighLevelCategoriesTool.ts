@@ -2,6 +2,7 @@ import { StructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { GraphState } from '../types.js';
 import { logger } from '../logger.js';
+import { HIGH_LEVEL_CATEGORY_MAPPING } from "../constants.js";
 
 export class ExtractHighLevelCategoriesTool extends StructuredTool {
   name = "extract_high_level_categories";
@@ -15,23 +16,19 @@ export class ExtractHighLevelCategoriesTool extends StructuredTool {
     }),
   });
 
-  async _call({ state }: z.infer<typeof this.schema>): Promise<GraphState> {
+  async _call({ state }: z.infer<typeof this.schema>): Promise<Partial<GraphState>> {
     try {
       const query = state.query.toLowerCase();
-      const categories = [];
+      const categories: string[] = [];
 
-      if (query.includes("track") || query.includes("song")) {
-        categories.push("Tracks");
+      // Iterate over HIGH_LEVEL_CATEGORY_MAPPING to identify relevant categories
+      for (const [category, keywords] of Object.entries(HIGH_LEVEL_CATEGORY_MAPPING)) {
+        if (keywords.some(keyword => query.includes(keyword.toLowerCase()))) {
+          categories.push(category);
+        }
       }
-      if (query.includes("playlist")) {
-        categories.push("Playlists");
-      }
-      if (query.includes("user") || query.includes("artist")) {
-        categories.push("Users");
-      }
-      if (query.includes("search")) {
-        categories.push("Search");
-      }
+
+      // Default to 'General' if no categories are matched
       if (categories.length === 0) {
         categories.push("General");
       }
@@ -39,7 +36,6 @@ export class ExtractHighLevelCategoriesTool extends StructuredTool {
       logger.debug(`Extracted high-level categories: ${categories.join(', ')}`);
 
       return { 
-        ...state,
         categories,
         error: false,
         message: 'Categories extracted successfully.',
@@ -47,7 +43,6 @@ export class ExtractHighLevelCategoriesTool extends StructuredTool {
     } catch (error) {
       logger.error("Error in ExtractHighLevelCategoriesTool:", error);
       return { 
-        ...state,
         categories: ['General'],
         error: true,
         message: 'Error extracting high-level categories.',

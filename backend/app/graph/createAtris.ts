@@ -14,23 +14,18 @@ import {
   handle_search_genres // Newly added handler for genre searches
 } from './nodes/handlerFunctions.js';
 import { log_final_result } from './functions/creationHelperFunctions.js';
-import { classifyQuery } from '../tools/node_tools/query_classifier.js';
-import { ExtractCategory } from '../tools/node_tools/extract_category.js';
-import { getApis } from '../tools/node_tools/get_apis.js';
-import { extractParameters } from '../tools/node_tools/extract_parameters.js';
-import { handle_multi_step_query, selectApi } from '../tools/node_tools/select_api.js';
-import { verifyParams } from '../tools/node_tools/verify_params.js';
-import { executeApiCall } from '../tools/node_tools/create_fetch_request.js';
-import { processApiResponse } from '../tools/node_tools/process_api_response.js';
-import { processUserQuery, processPlaylistQuery, processTrackQuery } from '../tools/node_tools/process_entity_queries.js';
-import { process_entity_queries } from '../tools/node_tools/index.js';
-import { extract_high_level_categories } from '../tools/node_tools/index.js';
 import { ExtractCategoryTool } from '../tools/ExtractCategoryTool.js';
-import { ClassifyQueryTool } from '../tools/CategorizeQueryTool.js';
-import { VerifyParamsTool } from '../tools/VerifyParamsTool.js';
-import { ExtractParametersTool } from '../tools/ExtractParametersTool.js';
-import { ExtractHighLevelCategoriesTool } from '../tools/ExtractHighLevelCategoriesTool.js';
-import { GetApisTool } from '../tools/GetApisTool.js';
+import { categorizeQuery, CategorizeQueryTool } from '../tools/CategorizeQueryTool.js';
+import { VerifyParamsTool, verifyParams } from '../tools/VerifyParamsTool.js';
+import { ExtractParametersTool, extractParameters } from '../tools/ExtractParametersTool.js';
+import { ExtractHighLevelCategoriesTool, extractHighLevelCategories } from '../tools/ExtractHighLevelCategoriesTool.js';
+import { GetApisTool, getApis } from '../tools/GetApisTool.js';
+import { selectApi, SelectApiTool } from '../tools/SelectApiTool.js';
+import { CreateFetchRequestTool, createFetchRequest } from '../tools/CreateFetchRequestTool.js';
+import { ProcessApiResponseTool, processApiResponse } from '../tools/ProcessApiResponseTool.js';
+import { handle_multi_step_query } from '../tools/node_tools/index.js';
+import { extractParameters } from '../tools/node_tools/extract_parameters.js';
+import { verifyParams } from '../tools/node_tools/verify_params.js';
 
 dotenv.config();
 
@@ -50,40 +45,40 @@ function createAtrisGraph(): CompiledStateGraph<GraphState, GraphState> {
     channels: {
       // Line 39-42: Defining the 'llm' channel with a default ChatOpenAI instance and a reducer to maintain its state
       llm: { 
-        default: () => llm,
+        default: () => null,
         reducer: (current, newVal) => newVal || current
       },
       // Line 43-46: Defining the 'query' channel to hold the user's query with a default empty string
       query: { 
-        default: () => "",
+        default: () => null,
         reducer: (current, newVal) => newVal || current
       },
       // Line 47-50: Defining the 'queryType' channel to classify the type of query, defaulting to 'general'
       queryType: { 
-        default: () => "general",
+        default: () => null,
         reducer: (current, newVal) => newVal || current
       },
       // Line 51-54: Defining the 'categories' channel to store extracted categories from the query
       categories: { 
-        default: () => ['General', 'User', 'Playlist', 'Track'],
+        default: () => null,
         reducer: (current, newVal) => newVal.length > 0 ? newVal : current
       },
       // Line 55-58: Defining the 'apis' channel to store available APIs based on the query
       apis: { 
-        default: () => [],
+        default: () => null,
         reducer: (current, newVal) => newVal.length > 0 ? newVal : current
       },
       params: { 
-        default: () => ({}),
+        default: () => null,
         reducer: (current, newVal) => (Object.keys(newVal).length > 0) ? newVal : current
       },
       response: { 
-        default: () => "",
+        default: () => null,
         reducer: (current, newVal) => newVal || current
       },
       // Line 80-82: Defining the 'complexity' channel to assess query complexity, defaulting to 'simple'
       complexity: { 
-        default: () => "simple",
+        default: () => null,
         reducer: (current, newVal) => newVal || current
       },
       // Line 83-85: Defining the 'message' channel to hold any messages or errors, defaulting to null
@@ -110,11 +105,11 @@ function createAtrisGraph(): CompiledStateGraph<GraphState, GraphState> {
       },
       // Line 103-105: Defining the 'error' channel to indicate if an error has occurred
       error: {
-        default: () => false,
+        default: () => null,
         reducer: (current, newVal) => newVal
       },
       isEntityQuery: {
-        default: () => false,
+        default: () => null,
         reducer: (current, newVal) => newVal
       },
       parameters: {
@@ -130,7 +125,7 @@ function createAtrisGraph(): CompiledStateGraph<GraphState, GraphState> {
         reducer: (current, newVal) => newVal || current
       },
       multiStepHandled: {
-        default: () => false,
+        default: () => null,
         reducer: (current, newVal) => newVal || current
       },
       initialState: {
@@ -139,31 +134,31 @@ function createAtrisGraph(): CompiledStateGraph<GraphState, GraphState> {
       }
     }
   })
-  .addNode("classify_query", new ClassifyQueryTool())
-  .addNode("extract_category", new ExtractCategoryTool())
-  .addNode("get_apis", new GetApisTool())
-  .addNode("select_api", new SelectApiTool())
-  .addNode("extract_parameters", new ExtractParametersTool())
-  .addNode("verify_params", new VerifyParamsTool())
-  .addNode("create_fetch_request", new CreateFetchRequestTool())
-  .addNode("process_api_response", new ProcessApiResponseTool())
-  .addNode("format_response", new FormatResponseTool())
-  .addNode("handle_error", new HandleErrorTool())
+  .addNode("categorize_query", categorizeQuery)
+  .addNode("extract_category", extractCategory)
+  .addNode("get_apis", getApis)
+  .addNode("select_api", selectApi)
+  .addNode("extract_parameters", extractParameters)
+  .addNode("verify_params", verifyParams)
+  .addNode("create_fetch_request", createFetchRequest)
+  .addNode("process_api_response", processApiResponse)
+  .addNode("format_response", formatResponse)
+  .addNode("handle_error", handleError)
   .addNode("log_final_result", log_final_result)
-  .addNode("process_entity_queries", new ProcessEntityQueriesTool())
-  .addNode("extract_high_level_categories", new ExtractHighLevelCategoriesTool())
+  .addNode("process_entity_queries", processEntityQueries)
+  .addNode("extract_high_level_categories", extractHighLevelCategories)
   .addNode("handle_search_tracks", handle_search_tracks)
   .addNode("handle_trending_tracks", handle_trending_tracks)
   .addNode("handle_search_playlists", handle_search_playlists)
   .addNode("handle_search_users", handle_search_users)
   .addNode("handle_search_genres", handle_search_genres)
   .addNode("handle_entity_query", handle_entity_query)
-  .addNode("handle_playlist_info", handle_playlist_info)
-  .addNode("handle_multi_step_query", new HandleMultiStepQueryTool());
+  .addNode("handle_playlist_info", handle_playlist_info)  // Added this line
+  .addNode("handle_multi_step_query", handle_multi_step_query);
 
   // Defining conditional transitions based on queryType
   graph.addConditionalEdges({
-    source: "classify_query",
+    source: "categorize_query",
     path: (state: GraphState): NodeNames => {
       if (state.error) return "log_final_result";
       switch (state.queryType) {

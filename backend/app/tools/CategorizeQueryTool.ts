@@ -1,6 +1,6 @@
 import { StructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
-import { ComplexityLevel, EntityType, QueryCategorization, QueryType, initialGraphState } from "../types.js";
+import { EntityType, QueryCategorization, QueryType, initialGraphState, ComplexityLevel } from "../types.js";
 import { logger } from '../logger.js';
 import { normalizeName } from "./node_tools/query_classifier.js";
 import nlp from "compromise";
@@ -8,33 +8,11 @@ import { GraphState } from "../types.js";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { ChatOpenAI } from "@langchain/openai";
 
-// Import any other necessary modules
-
-// const contractions: { [key: string]: string } = {
-//     "what's": "what is",
-//     "where's": "where is",
-//     "when's": "when is",
-//     "who's": "who is",
-//     "how's": "how is",
-//     "that's": "that is",
-//     "there's": "there is",
-//     "here's": "here is",
-//     "it's": "it is",
-//     "isn't": "is not",
-//     "aren't": "are not",
-//     "wasn't": "was not",
-//     "weren't": "were not",
-//     "haven't": "have not",
-//     "hasn't": "has not",
-//     "hadn't": "had not",
-//     // Add more contractions as needed
-//   };
-
 export class CategorizeQueryTool extends StructuredTool {
   name = "categorize_query";
   description = "Categorizes the user's query to determine its type and complexity.";
 
-  contractions: { [key: string]: string } = {
+  contractions: Record<string, string> = {
     "what's": "what is",
     "where's": "where is",
     "when's": "when is",
@@ -104,20 +82,20 @@ export class CategorizeQueryTool extends StructuredTool {
         if (trackPlayCountMatch) {
           const trackName = trackPlayCountMatch[2].trim();
           return {
-            queryType: 'search_tracks',
-            entityType: 'track',
-            entity: trackName,
+            queryType: 'search_tracks' as QueryType,
+            entityType: 'track' as EntityType,
+            entityName: trackName,
             isEntityQuery: true,
-            complexity: 'simple'
+            complexity: 'simple' as ComplexityLevel
           } as QueryCategorization;
         }
       
         let categorization: QueryCategorization = {
-          queryType: 'general',
+          queryType: 'general' as QueryType,
           isEntityQuery: false,
           entityType: null,
-          entity: null,
-          complexity: 'simple',
+          entityName: null,
+          complexity: 'simple' as ComplexityLevel,
         } as QueryCategorization;
       
         // Expand contractions
@@ -160,8 +138,8 @@ export class CategorizeQueryTool extends StructuredTool {
               queryType: `search_${detectedEntityType}s` as QueryType,
               isEntityQuery: true,
               entityType: detectedEntityType as EntityType,
-              entity: entity,
-              complexity: 'simple',
+              entityName: entity,
+              complexity: 'simple' as ComplexityLevel,
             } as QueryCategorization;
             logger.debug(`Entity identified: ${categorization.queryType}`);
             return categorization;
@@ -200,7 +178,7 @@ export class CategorizeQueryTool extends StructuredTool {
               queryType: mappedEntityType ? `search_${mappedEntityType}s` as QueryType : 'trending_tracks' as QueryType,
               isEntityQuery: !!mappedEntityType,
               entityType: mappedEntityType as EntityType,
-              complexity: mappedEntityType ? 'moderate' : 'simple', // Adjust complexity based on entity type
+              complexity: mappedEntityType ? 'moderate' as ComplexityLevel : 'simple' as ComplexityLevel, // Adjust complexity based on entity type
             } as QueryCategorization;
             logger.debug(`Pattern-based categorization: ${categorization.queryType}, isEntityQuery: ${categorization.isEntityQuery}`);
             return categorization;
@@ -210,10 +188,10 @@ export class CategorizeQueryTool extends StructuredTool {
         // Default categorization for trending tracks
         if (/trending|popular|top tracks/i.test(normalizedQuery)) {
           categorization = {
-            queryType: 'trending_tracks',
+            queryType: 'trending_tracks' as QueryType,
             isEntityQuery: false,
             entityType: null,
-            complexity: 'simple',
+            complexity: 'simple' as ComplexityLevel,
           } as QueryCategorization;
           logger.debug(`Trending tracks query categorization: ${categorization.queryType}`);
           return categorization;
@@ -222,10 +200,10 @@ export class CategorizeQueryTool extends StructuredTool {
         // Final default return
         logger.debug(`Default categorization: general`);
         return {
-          queryType: 'general',
+          queryType: 'general' as QueryType,
           entityType: null,
           isEntityQuery: false,
-          complexity: 'simple'
+          complexity: 'simple' as ComplexityLevel,
         } as QueryCategorization;
     } catch (error) {
       logger.error(`Error in CategorizeQueryTool: ${error instanceof Error ? error.message : String(error)}`);
@@ -245,7 +223,34 @@ export async function categorizeQuery(query: string): Promise<Partial<GraphState
     [
         "system",
         `You are an expert GenAI engineer who specializes in natural language processing 
-        and regular expressions. Given a user's query, use the CategorizeQueryTool to categorize it.`
+        and regular expressions. Given a user's query, use the CategorizeQueryTool to categorize it.
+        
+        Expressed in TypeScript, here are the relevant types you have to work with and the
+        object you must categorize the user query into: 
+        
+        export type QueryCategorization = {
+          queryType: ${'QueryType'};
+          isEntityQuery: ${'boolean'};
+          entityType: ${'EntityType'};
+          complexity: ${'ComplexityLevel'};
+          entityName: ${'string | null'};
+        } // this is the type you must return
+         
+        export type ComplexityLevel = 'simple' | 'moderate' | 'complex';
+        export type EntityType = 'track' | 'user' | 'playlist' | null;
+        export type QueryType =
+          | 'trending_tracks'
+          | 'search_tracks'
+          | 'search_users'
+          | 'search_playlists'
+          | 'search_genres'
+          | 'genre_info'
+          | 'entity_query'
+          | 'playlist_info'
+          | 'general';
+          
+          Using the CategorizeQueryTool and the types above, categorize the user's query:
+          `
     ],
     ["user", `User's query: {query}`]
   ]);

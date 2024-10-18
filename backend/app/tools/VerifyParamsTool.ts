@@ -2,6 +2,7 @@ import { StructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { GraphState } from "../types.js";
 import { logger } from '../logger.js';
+import { findMissingParams } from './utils/findMissingParams.js';
 
 export class VerifyParamsTool extends StructuredTool {
   name = "verify_params";
@@ -41,4 +42,22 @@ export class VerifyParamsTool extends StructuredTool {
       };
     }
   }
+}
+
+export async function verifyParams(state: GraphState): Promise<Partial<GraphState>> {
+  const requiredParameters = state.bestApi?.required_parameters?.map(param => param.name) || [];
+  const missingParams = findMissingParams(requiredParameters, Object.keys(state.params || {}));
+
+  if (missingParams.length > 0) {
+    logger.info("Additional information needed to answer the question accurately.");
+    logger.debug(`Missing parameters: ${missingParams.join(', ')}`);
+    return {
+      error: true,
+      message: "Missing parameters",
+    };
+  }
+  return {
+    error: false,
+    message: "Parameters verified successfully.",
+  };
 }

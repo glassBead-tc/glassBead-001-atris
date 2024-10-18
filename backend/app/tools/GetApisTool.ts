@@ -12,6 +12,7 @@ export class GetApisTool extends StructuredTool {
   schema = z.object({
     state: z.object({
       categories: z.array(z.string()).nonempty("Categories cannot be empty").describe("Categories extracted from the query"),
+      apis: z.array(z.any()).optional(),
       error: z.boolean().optional(),
       message: z.string().optional(),
     }),
@@ -50,8 +51,7 @@ export class GetApisTool extends StructuredTool {
 
       if (apis.length === 0) {
         return 'No APIs were found matching the given categories.';
-      }
-
+      } 
       // Return a string summarizing the found APIs
       return `Found ${apis.length} APIs matching the categories: ${categories.join(', ')}.`;
     } catch (error: any) {

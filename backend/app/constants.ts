@@ -30,7 +30,8 @@ export const HIGH_LEVEL_CATEGORY_MAPPING = {
   ],
   Tips: [
     "Get Tips"
-  ]
+  ],
+  // Add any additional categories as needed
 };
 
 export enum Genre {
@@ -130,4 +131,5 @@ export enum StemCategory {
   BASS = 'BASS',
   OTHER = 'OTHER'
 }
+
 

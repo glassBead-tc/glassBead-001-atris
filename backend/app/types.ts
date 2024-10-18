@@ -9,6 +9,7 @@ export type QueryCategorization = {
   isEntityQuery: boolean;
   entityType: EntityType;
   complexity: ComplexityLevel;
+  entityName: string | null;
 }
 
 export interface DatasetSchema {
@@ -31,11 +32,6 @@ export interface DatasetParameters {
   type: string;
   description: string;
   default: string;
-}
-
-export interface Entity {
-  entityType: EntityType;
-  entity: string | null;
 }
 
 export interface GraphState {
@@ -62,7 +58,7 @@ export interface GraphState {
   message?: string | null;
   isEntityQuery?: boolean | null;
   entityName?: string | null;
-  entity?: Entity | null;
+  entity?: string | null;
   parameters?: { [key: string]: any } | null;
   complexity: ComplexityLevel | null;
   multiStepHandled?: boolean | null; // Optional

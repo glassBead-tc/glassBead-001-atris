@@ -15,13 +15,14 @@ export class SelectApiTool extends StructuredTool {
       apis: z.array(z.any()).optional(),
       bestApi: z.any().nullable().optional(),
       entityType: z.enum(['user', 'track', 'playlist']).nullable().optional(),
+      categories: z.array(z.string()).optional(),
       isEntityQuery: z.boolean().optional(),
       // ... include other necessary fields from GraphState
     }),
   });
 
   async _call({ state }: z.infer<typeof this.schema>): Promise<Partial<GraphState>> {
-    const { queryType, entityType, apis, isEntityQuery, bestApi } = state;
+    const { queryType, entityType, apis, isEntityQuery, categories } = state;
 
     if (!apis || apis.length === 0) {
       logger.warn("No APIs available for selection");
@@ -33,7 +34,7 @@ export class SelectApiTool extends StructuredTool {
 
     const relevantApis = apis
       .map(api => {
-        const relevance = calculateRelevance(api, entityType || null, queryType, bestApi);
+        const relevance = calculateRelevance(api, entityType || null, queryType || null, categories || [], isEntityQuery || false);
         logger.debug(`API: ${api.api_name}, Relevance: ${relevance}`);
         return { api, relevance };
       })
@@ -69,8 +70,9 @@ export class SelectApiTool extends StructuredTool {
 function calculateRelevance(
   api: DatasetSchema,
   entityType: string | null,
-  queryType: string,
-  bestApi: string | null
+  queryType: string | null,
+  categories: string[],
+  isEntityQuery?: boolean
 ): number {
   let relevance = 0;
   const apiNameLower = api.api_name.toLowerCase();
@@ -151,7 +153,7 @@ export const selectApi = (state: GraphState): Partial<GraphState> => {
 
   const relevantApis = apis
     .map(api => {
-      const relevance = calculateRelevance(api, query, queryType, entityType, categories, isEntityQuery);
+      const relevance = calculateRelevance(api, entityType || null, queryType, categories || [], isEntityQuery || false);
       logger.debug(`API: ${api.api_name}, Relevance: ${relevance}`);
       return { api, relevance };
     })

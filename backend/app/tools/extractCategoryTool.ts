@@ -1,9 +1,10 @@
 import { StructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
-import { GraphState } from "../types.js";
+import { GraphState, QueryCategorization, QueryType } from "../types.js";
 import { logger } from '../logger.js';
 import { normalizeName } from "./node_tools/query_classifier.js";
-// Import any other necessary modules
+import { HIGH_LEVEL_CATEGORY_MAPPING } from "../constants.js";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
 
 export class ExtractCategoryTool extends StructuredTool {
   name = "extract_category";
@@ -12,13 +13,12 @@ export class ExtractCategoryTool extends StructuredTool {
   schema = z.object({
     state: z.object({
       query: z.string().describe("The user's query string"),
-      categories: z.array(z.string()).optional(),
-      entityName: z.string().optional(),
-      entity: z.string().optional(),
-      isEntityQuery: z.boolean().optional(),
-      queryType: z.string().optional(),
-      entityType: z.string().optional(),
-      error: z.boolean().optional(),
+      categories: z.array(z.string()).optional().describe("The high-level categories that the user's query falls into"),
+      entityName: z.string().optional().describe("The name of the entity that the user is asking about"),
+      isEntityQuery: z.boolean().optional().describe("Can this query be answered with only the Audius API and Atris's onboard tools?"),
+      queryType: z.string().optional().describe("In what general category does this query fall into?"),
+      entityType: z.string().optional().describe("Is the user asking about a user, a track, or a playlist?"),
+      error: z.boolean().optional().describe("Was there an error in the ExtractCategory tool?"),
       // ... include other necessary fields from GraphState
     }),
   });
@@ -28,18 +28,8 @@ export class ExtractCategoryTool extends StructuredTool {
       [key: string]: string[];
     }
     
-    const categoryKeywords: CategoryKeywords = {
-      'Tracks': ['track', 'song', 'audio', 'music', 'genre', 'trending', 'popular', 'play', 'listen', 'release', 'upload', 'remix', 'single', 'album track'],
-      'Users': ['artist', 'follower', 'user', 'profile', 'account', 'musician', 'dj', 'following', 'creator', 'producer'],
-      'Playlists': ['playlist', 'collection', 'album', 'mixtape', 'compilation', 'set', 'tracklist'],
-      'Tips': ['tip', 'donate', 'support', 'contribution', 'fund', 'gift'],
-      'Search': ['find', 'search', 'look for', 'discover', 'explore', 'query'],
-      'Trending': ['trending', 'popular', 'hot', 'top', 'chart', 'viral', 'most followed', 'most played', 'rising'],
-      'Favorites': ['favorite', 'like', 'loved', 'saved', 'bookmark', 'hearted'],
-      'Upload': ['upload', 'post', 'share', 'publish', 'release', 'distribute'],
-      'Genres': ['genre', 'style', 'category', 'type of music', 'classification'],
-      'Recommendations': ['recommend', 'suggest', 'similar to', 'if you like', 'for fans of']
-    };
+    // Utilize HIGH_LEVEL_CATEGORY_MAPPING for keyword associations
+    const categoryKeywords: CategoryKeywords = HIGH_LEVEL_CATEGORY_MAPPING;
     
     if (!state.query) {
       return { 
@@ -55,9 +45,9 @@ export class ExtractCategoryTool extends StructuredTool {
     let entityType: "playlist" | "track" | "user" | undefined = undefined;
     let entity: string | undefined = undefined;
     
-    // Extract categories
+    // Extract categories using HIGH_LEVEL_CATEGORY_MAPPING
     for (const [category, keywords] of Object.entries(categoryKeywords)) {
-      if (keywords.some(keyword => query.includes(keyword))) {
+      if (keywords.some(keyword => query.includes(keyword.toLowerCase()))) {
         categories.push(category);
       }
     }
@@ -85,6 +75,7 @@ export class ExtractCategoryTool extends StructuredTool {
     
     if (query.includes('follower') || query.includes('following')) {
       categories.push('Users');
+      entityType = 'user';
     }
     
     if (query.includes('play count') || query.includes('most played')) {
@@ -93,6 +84,7 @@ export class ExtractCategoryTool extends StructuredTool {
     
     if (query.includes('profile') || query.includes('about user')) {
       categories.push('Users');
+      entityType = 'user';
     }
     
     // If no specific entity is found, try to extract any quoted text as an entity
@@ -114,7 +106,7 @@ export class ExtractCategoryTool extends StructuredTool {
       categories.push('General');
     }
     
-    let queryType: string = 'general';
+    let queryType: QueryType = 'general';
     
     if (categories.includes('Trending') && categories.includes('Tracks')) {
       queryType = 'trending_tracks';
@@ -128,24 +120,15 @@ export class ExtractCategoryTool extends StructuredTool {
       queryType = 'search_genres';
     }
     
-    logger.debug(`extractCategory result - categories: ${categories.join(', ')}, queryType: ${queryType}, entityType: ${entityType}, entity: ${entity}`);
+    logger.debug(`extractCategory result - categories: ${categories.join(', ')}, queryType: ${queryType}, entityType: ${entityType}, entityName: ${entity}`);
     
     return {
-      ...state,
       categories,
-      entityName: entity || null,
-      entity: null,
-      isEntityQuery: !!entityType,
       queryType,
-      entityType: entityType || null,
-      complexity: 'simple',
-      apis: [],
-      params: {},
-      response: null,
-      error: false,
-      message: '',
-      bestApi: null,
-      query: query
+      entityType,
+      entityName: entity || null,
+      isEntityQuery: !!entityType,
+      error: false
     };
   } catch (error: typeof Error, state: GraphState) { 
     logger.error(`Error in ExtractCategory: ${error instanceof Error ? error.message : String(error)}`);
@@ -161,9 +144,40 @@ export class ExtractCategoryTool extends StructuredTool {
       apis: [],
       entityType: null,
       complexity: 'simple',
-      entity: null,
+      entityName: null,
       query: '',
       queryType: 'general'
     };
   }
 }
+
+export async function extractCategory(state: GraphState): Promise<Partial<GraphState>> {
+    const { llm, query } = state;
+  
+    const prompt = ChatPromptTemplate.fromMessages([
+      [
+        "system",
+        `You are an expert agent that extracts category and entity information from a user query and returns a JSON object with the following structure:
+        {
+          "categories": ["category1", "category2", ...],
+          "isEntityQuery": true or false,
+          "entityType": "playlist" | "track" | "user" | null,
+          "entityName": "entity name" | null,
+          "queryType": "general" | "trending_tracks" | "search_tracks" | "search_users" | "search_playlists" | "search_genres" | null,
+          "complexity": "simple" | "complex" | null,
+        }
+  
+  Currently, you are helping a user with a query. Your job is to extract the category and entity information from the query.
+  Here are all the high level categories, and every tool name that falls under them:
+  {categoriesAndTools}`,
+      ],
+      ["human", `Query: {query}`],
+    ]); 
+  
+    const tool = new ExtractCategoryTool();
+    const modelWithTools = llm!.withStructuredOutput(tool);
+    const chain = prompt.pipe(modelWithTools).pipe(tool);
+    const response = await chain.invoke({ query });
+    const categoryExtraction: QueryCategorization = JSON.parse(response);
+    return categoryExtraction as Partial<GraphState>;
+  }
