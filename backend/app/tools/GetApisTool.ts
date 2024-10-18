@@ -12,28 +12,17 @@ export class GetApisTool extends StructuredTool {
   schema = z.object({
     state: z.object({
       categories: z.array(z.string()).nonempty("Categories cannot be empty").describe("Categories extracted from the query"),
-      // Include other essential fields from GraphState as required
       error: z.boolean().optional(),
       message: z.string().optional(),
-      query: z.string().optional(),
-      queryType: z.string().optional(),
-      apis: z.array(z.any()).optional(),
-      params: z.record(z.any()).optional(),
-      response: z.any().optional(),
-      bestApi: z.any().nullable().optional(),
-      isEntityQuery: z.boolean().optional(),
-      entityType: z.enum(['user', 'track', 'playlist']).nullable().optional(),
-      complexity: z.string().optional(),
-      // ... include other necessary fields from GraphState
     }),
   });
 
-  async _call({ state }: z.infer<typeof this.schema>): Promise<GraphState> {
+  async _call({ state }: z.infer<typeof this.schema>): Promise<string> {
     let { categories } = state;
     logger.debug(`GetApisTool called with categories: ${JSON.stringify(categories)}`);
 
-    // Remove duplicates from categories
-    categories = categories ? [...new Set(categories)] : [];
+    // Remove duplicates from categories and ensure it's non-empty
+    categories = categories && categories.length > 0 ? [...new Set(categories)] as [string, ...string[]] : ['General'];
     logger.debug(`Unique categories: ${JSON.stringify(categories)}`);
 
     try {
@@ -60,29 +49,14 @@ export class GetApisTool extends StructuredTool {
       logger.debug(`APIs found: ${JSON.stringify(apis)}`);
 
       if (apis.length === 0) {
-        logger.warn('No APIs found matching the given categories');
-        return {
-          ...state,
-          apis: [],
-          error: true,
-          message: 'No APIs were found matching the given categories.'
-        };
+        return 'No APIs were found matching the given categories.';
       }
 
-      return { 
-        ...state,
-        apis,
-        error: false,
-        message: `Found ${apis.length} APIs matching the categories: ${categories.join(', ')}.`,
-      };
+      // Return a string summarizing the found APIs
+      return `Found ${apis.length} APIs matching the categories: ${categories.join(', ')}.`;
     } catch (error: any) {
       logger.error('Error in GetApisTool:', error);
-      return { 
-        ...state,
-        apis: [], 
-        error: true,
-        message: 'An error occurred while fetching APIs.'
-      };
+      return 'An error occurred while fetching APIs.';
     }
   }
 }

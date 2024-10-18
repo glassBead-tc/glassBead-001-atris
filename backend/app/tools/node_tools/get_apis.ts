@@ -8,7 +8,7 @@ export const getApis = async (state: GraphState): Promise<Partial<GraphState>> =
     logger.debug(`getApis function called with categories: ${JSON.stringify(categories)}`);
 
     // Remove duplicates from categories
-    categories = [...new Set(categories)];
+    categories = [...new Set(categories)] as [string, ...string[]];
     logger.debug(`Unique categories: ${JSON.stringify(categories)}`);
 
     try {
@@ -20,7 +20,7 @@ export const getApis = async (state: GraphState): Promise<Partial<GraphState>> =
 
         if (!categories || !Array.isArray(categories) || categories.length === 0) {
             logger.warn("No categories provided, returning all APIs");
-            apis = allData.endpoints;
+            apis = allData.endpoints as DatasetSchema[];
         } else {
             const categorySet = new Set(categories.map((cat: string) => cat.toLowerCase()));
             apis = allData.endpoints.filter(api => {

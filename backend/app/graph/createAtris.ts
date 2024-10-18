@@ -25,9 +25,12 @@ import { processApiResponse } from '../tools/node_tools/process_api_response.js'
 import { processUserQuery, processPlaylistQuery, processTrackQuery } from '../tools/node_tools/process_entity_queries.js';
 import { process_entity_queries } from '../tools/node_tools/index.js';
 import { extract_high_level_categories } from '../tools/node_tools/index.js';
-import { ExtractCategoryTool } from '../tools/extractCategoryTool.js';
-import { ClassifyQueryTool } from '../tools/classifyQueryTool.js';
+import { ExtractCategoryTool } from '../tools/ExtractCategoryTool.js';
+import { ClassifyQueryTool } from '../tools/CategorizeQueryTool.js';
 import { VerifyParamsTool } from '../tools/VerifyParamsTool.js';
+import { ExtractParametersTool } from '../tools/ExtractParametersTool.js';
+import { ExtractHighLevelCategoriesTool } from '../tools/ExtractHighLevelCategoriesTool.js';
+import { GetApisTool } from '../tools/GetApisTool.js';
 
 dotenv.config();
 
@@ -62,7 +65,7 @@ function createAtrisGraph(): CompiledStateGraph<GraphState, GraphState> {
       },
       // Line 51-54: Defining the 'categories' channel to store extracted categories from the query
       categories: { 
-        default: () => [],
+        default: () => ['General', 'User', 'Playlist', 'Track'],
         reducer: (current, newVal) => newVal.length > 0 ? newVal : current
       },
       // Line 55-58: Defining the 'apis' channel to store available APIs based on the query

@@ -12,11 +12,18 @@ export class ExtractCategoryTool extends StructuredTool {
   schema = z.object({
     state: z.object({
       query: z.string().describe("The user's query string"),
+      categories: z.array(z.string()).optional(),
+      entityName: z.string().optional(),
+      entity: z.string().optional(),
+      isEntityQuery: z.boolean().optional(),
+      queryType: z.string().optional(),
+      entityType: z.string().optional(),
+      error: z.boolean().optional(),
       // ... include other necessary fields from GraphState
     }),
   });
 
-  async _call({ state }: z.infer<typeof this.schema>): Promise<GraphState> {
+  async _call({ state }: z.infer<typeof this.schema>): Promise<Partial<GraphState>> {
     interface CategoryKeywords {
       [key: string]: string[];
     }
@@ -36,21 +43,9 @@ export class ExtractCategoryTool extends StructuredTool {
     
     if (!state.query) {
       return { 
-        ...state, 
-        categories: ['General'], 
-        isEntityQuery: false,
-        entityType: null,
-        queryType: 'general',
-        query: '',
-        apis: [],
-        params: {},
-        response: null,
-        error: false,
-        message: '',
-        bestApi: null,
-        entityName: null,
-        complexity: 'simple',
-        entity: null
+        error: true,
+        message: 'No query recognized.',
+        // Only include properties that this tool modifies
       };
     }
     

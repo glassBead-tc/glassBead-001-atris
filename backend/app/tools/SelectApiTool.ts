@@ -1,21 +1,78 @@
-import { GraphState, DatasetSchema } from "../../types.js";
-import { logger } from '../../logger.js';
+import { GraphState, DatasetSchema } from "../types.js";
+import { logger } from "../logger.js";
+import { z } from "zod";
+import { StructuredTool } from "@langchain/core/tools";
 
 const RELEVANCE_THRESHOLD = 0.5;
 
+export class SelectApiTool extends StructuredTool {
+  name = 'select_api';
+  description = 'Select the most relevant API based on the query and entity type.';
 
+  schema = z.object({
+    state: z.object({
+      queryType: z.string().optional(),
+      apis: z.array(z.any()).optional(),
+      bestApi: z.any().nullable().optional(),
+      entityType: z.enum(['user', 'track', 'playlist']).nullable().optional(),
+      isEntityQuery: z.boolean().optional(),
+      // ... include other necessary fields from GraphState
+    }),
+  });
+
+  async _call({ state }: z.infer<typeof this.schema>): Promise<Partial<GraphState>> {
+    const { queryType, entityType, apis, isEntityQuery, bestApi } = state;
+
+    if (!apis || apis.length === 0) {
+      logger.warn("No APIs available for selection");
+      return {
+        error: true,
+        message: "Failed to select an API: No APIs available for selection."
+      };
+    }
+
+    const relevantApis = apis
+      .map(api => {
+        const relevance = calculateRelevance(api, entityType || null, queryType, bestApi);
+        logger.debug(`API: ${api.api_name}, Relevance: ${relevance}`);
+        return { api, relevance };
+      })
+      .filter(item => item.relevance >= RELEVANCE_THRESHOLD)
+      .sort((a, b) => b.relevance - a.relevance);
+
+    if (relevantApis.length === 0) {
+      logger.warn("No relevant APIs found based on relevance scores");
+      return {
+        error: true,
+        message: "Failed to select an API: No APIs matched the query's relevance criteria."
+      };
+    }
+
+    const selected = relevantApis[0];
+    logger.info(`Selected API: ${selected.api.api_name} with relevance ${selected.relevance}`);
+
+    // Set a default limit if not specified and applicable
+    const parameters = selected.api.default_parameters || {};
+    if (isEntityQuery && !parameters.limit) {
+      parameters.limit = 5;
+      logger.info(`Set default limit to ${parameters.limit}`);
+    }
+
+    return {
+      bestApi: selected.api,
+      parameters,
+      error: false
+    };
+  }
+}
 
 function calculateRelevance(
   api: DatasetSchema,
-  query: string,
-  queryType: string,
   entityType: string | null,
-  categories: string[],
-  isEntityQuery?: boolean
+  queryType: string,
+  bestApi: string | null
 ): number {
   let relevance = 0;
-  const queryLower = query.toLowerCase();
-  const apiDescriptionLower = api.api_description.toLowerCase();
   const apiNameLower = api.api_name.toLowerCase();
 
   logger.debug(`Calculating relevance for API: ${api.api_name}`);

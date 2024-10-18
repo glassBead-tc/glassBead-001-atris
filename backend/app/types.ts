@@ -1,16 +1,15 @@
 import { TrackArtwork, User, ProfilePicture, CoverPhoto, Playlist, PlaylistAddedTimestamp, PlaylistArtwork, Access } from "@audius/sdk";
 import { ChatOpenAI, ChatOpenAICallOptions } from "@langchain/openai";
 
-export type ComplexityLevel = 'simple' | 'moderate' | 'complex' | string;
+export type ComplexityLevel = 'simple' | 'moderate' | 'complex';
 export type AudiusData = TrackData | UserData | PlaylistData | PopularTrackData | NoMatchData | null;
 
-export interface QueryClassification {
-  type: string;
+export type QueryCategorization = {
+  queryType: QueryType;
   isEntityQuery: boolean;
-  entityType: 'user' | 'track' | 'playlist' | null;
-  entity: string | null;
+  entityType: EntityType;
   complexity: ComplexityLevel;
-} 
+}
 
 export interface DatasetSchema {
   id: string;
@@ -35,39 +34,40 @@ export interface DatasetParameters {
 }
 
 export interface Entity {
-  // Define this based on your entities (e.g., UserEntity, TrackEntity, PlaylistEntity)
+  entityType: EntityType;
+  entity: string | null;
 }
 
 export interface GraphState {
-  llm: ChatOpenAI<ChatOpenAICallOptions>; // Essential
-  query: string; // Essential
-  queryType: QueryType; // Essential
-  categories: string[]; // Essential
-  apis: DatasetSchema[]; // Essential
-  bestApi: DatasetSchema | null; // Optional
-  secondaryApi: DatasetSchema | null; // Optional
-  params: {
-    apiUrl?: string;
-    timeframe?: string;
-    limit?: number;
-    track?: string;
-    user?: string;
-    artist?: string;
+  llm: ChatOpenAI<ChatOpenAICallOptions> | null;
+  query: string | null;
+  queryType: QueryType | null;
+  categories: string[] | null;
+  apis: DatasetSchema[] | null;
+  bestApi?: DatasetSchema | null;
+  secondaryApi?: DatasetSchema | null;
+  params?: {
+    apiUrl?: string | null;
+    timeframe?: string | null;
+    limit?: number | null;
+    track?: string | null;
+    user?: string | null;
+    artist?: string | null;
     // Add any other parameters you might need
-  }; // Essential
-  response: any; // Essential
-  secondaryResponse: any | null;  // Optional
-  error: boolean; // Essential
-  formattedResponse: string | null; // Optional
-  message: string | null; // Optional
-  isEntityQuery: boolean; // Essential
-  entityName: string | null; // Optional
-  entity: Entity | null; // Optional (consider revisiting its necessity)
-  parameters: { [key: string]: any } | null; // Optional
-  complexity: ComplexityLevel; // Essential
-  multiStepHandled: boolean; // Optional
-  initialState: GraphState | null; // Optional
-  entityType: 'user' | 'playlist' | 'track' | null; // Essential
+  } | null;
+  response?: any | null;
+  secondaryResponse?: any | null;  // Optional
+  error?: boolean | null;
+  formattedResponse?: string | null;
+  message?: string | null;
+  isEntityQuery?: boolean | null;
+  entityName?: string | null;
+  entity?: Entity | null;
+  parameters?: { [key: string]: any } | null;
+  complexity: ComplexityLevel | null;
+  multiStepHandled?: boolean | null; // Optional
+  initialState?: GraphState | null; // Optional
+  entityType?: EntityType | null; // Optional
 }
 
 export type QueryType =
@@ -77,7 +77,11 @@ export type QueryType =
   | 'search_playlists'
   | 'search_genres'
   | 'genre_info'
-  | string;
+  | 'entity_query'
+  | 'playlist_info'
+  | 'general';
+
+export type EntityType = 'track' | 'user' | 'playlist' | null;
 
 export type TrackData = {
   id: string;
@@ -198,3 +202,28 @@ export function isPlaylistData(entity: any): entity is PlaylistData {
 }
 
 // Additional helper functions and type definitions...
+
+export const initialGraphState = {
+  llm: null,
+  query: null,
+  queryType: null,
+  categories: null,
+  apis: null,
+  bestApi: null,
+  secondaryApi: null,
+  params: null,
+  response: null,
+  secondaryResponse: null,  
+  error: null,
+  formattedResponse: null,
+  message: null,
+  isEntityQuery: null,
+  entityName: null,
+  entity: null,
+  parameters: null,
+  complexity: null,
+  multiStepHandled: null, 
+  initialState: null,
+  entityType: null,
+};
+

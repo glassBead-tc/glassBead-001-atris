@@ -2,7 +2,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { CompiledStateGraph } from "@langchain/langgraph";
 import { GraphState, QueryClassification } from "../types.js";
 import { logger } from '../logger.js';
-import { ClassifyQueryTool } from '../tools/classifyQueryTool.js';
+import { ClassifyQueryTool } from '../tools/CategorizeQueryTool.js';
 
 interface QueryResult {
   response: string;

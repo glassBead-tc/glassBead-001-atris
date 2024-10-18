@@ -11,15 +11,14 @@ export class VerifyParamsTool extends StructuredTool {
     state: z.object({
       params: z.record(z.any()),
       bestApi: z.any(), // Replace 'any' with the appropriate type
-      // Include other necessary fields
     }),
   });
 
   async _call({ state }: z.infer<typeof this.schema>): Promise<Partial<GraphState>> {
     try {
       // Perform verification logic based on bestApi requirements
-      const requiredParams = state.bestApi.requiredParams || [];
-      const missingParams = requiredParams.filter(param => !(param in state.params));
+      const requiredParams = state.bestApi?.required_parameters || [];
+      const missingParams = requiredParams.filter((param: string) => !(param in state.params));
 
       if (missingParams.length > 0) {
         const errorMessage = `Missing required parameters: ${missingParams.join(', ')}`;
