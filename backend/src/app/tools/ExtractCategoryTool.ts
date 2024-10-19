@@ -1,10 +1,12 @@
 import fs from "fs";
+import path from "path";
 import { StructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { GraphState } from "../index.js";
-import { HIGH_LEVEL_CATEGORY_MAPPING, TRIMMED_CORPUS_PATH } from "../constants.js";
+import { HIGH_LEVEL_CATEGORY_MAPPING } from "../constants.js";
 import { DatasetSchema } from "../types.js";
+import { fileURLToPath } from "url";
 
 /**
  * Given a users query, extract the high level category which
@@ -43,12 +45,19 @@ export class ExtractHighLevelCategories extends StructuredTool {
   }
 }
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const dataFilePath = path.join(__dirname, "../../data/audius_corpus.json");
+
 /**
  * @param {GraphState} state
  */
 export async function extractCategory(
   state: GraphState
 ): Promise<Partial<GraphState>> {
+  const data = fs.readFileSync(dataFilePath, 'utf-8');
+  const jsonData = JSON.parse(data);
   const { llm, query } = state;
 
   const prompt = ChatPromptTemplate.fromMessages([
@@ -69,9 +78,7 @@ Here are all the high level categories, and every tool name that falls under the
   const modelWithTools = llm.withStructuredOutput(tool);
   const chain = prompt.pipe(modelWithTools).pipe(tool);
 
-  const allApis: DatasetSchema[] = JSON.parse(
-    fs.readFileSync(TRIMMED_CORPUS_PATH, "utf-8")
-  );
+  const allApis: DatasetSchema[] = jsonData.endpoints;
   const categoriesAndTools = Object.entries(HIGH_LEVEL_CATEGORY_MAPPING)
     .map(([high, low]) => {
       const allTools = allApis.filter((api) => low.includes(api.category_name));

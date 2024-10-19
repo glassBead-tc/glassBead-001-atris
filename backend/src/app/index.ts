@@ -1,6 +1,5 @@
 import { logger } from "./logger.js";
 import { ChatOpenAI } from "@langchain/openai";
-import * as dotenv from 'dotenv';
 import { DatasetSchema } from "./types.js";
 import fs from "fs";
 import { findMissingParams } from "./utils.js";
@@ -14,7 +13,9 @@ import { selectApi } from "./tools/SelectApiTool.js";
 import { createFetchRequest } from "./tools/CreateFetchRequestTool.js";
 import { processApiResponse } from "./tools/ProcessApiResponseTool.js";
 
-dotenv.config();
+import dotenv from 'dotenv';
+
+dotenv.config({ path: '../.env' });
 
 export type GraphState = {
   /**
@@ -114,6 +115,7 @@ const { categories } = state;
 
 async function main() {
   logger.info("Starting main execution");
+  logger.info(`OpenAI API Key: ${process.env.OPENAI_API_KEY}`);
 
   const atris = createGraph();
 
