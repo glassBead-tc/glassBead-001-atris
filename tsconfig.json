@@ -8,14 +8,15 @@
     "strict": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "dist/",
-    "rootDir": "./",
+    "outDir": "./backend/dist",
+    "rootDir": "backend/src",
     "types": ["node", "jest"],
     "resolveJsonModule": true
   },
-  "include": ["backend/app/**/*", "backend/src/**/*"],
+  "include": ["backend/src/**/*"],
   "exclude": [
-    "node_modules",
-    "test/**"
+    "node_modules/",
+    "backend/dist/",
+    "backend/__tests__/"
   ]
 }
