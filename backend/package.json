@@ -8,7 +8,7 @@
     "dist/"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp -r src/app/data dist/app/data",
     "start": "node --experimental-wasm-modules -r dotenv/config dist/app/index.js dotenv_config_path=.env",
     "start:dist": "npm run build && node -r dotenv/config dist/app/index.js",
     "lint": "eslint --cache --ext .ts,.js src/",

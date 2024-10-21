@@ -1,7 +1,7 @@
 // import { StateGraph, CompiledStateGraph, END, START } from "@langchain/langgraph";
 // import { GraphState, StateDefinition } from "../types.js"; // Ensure StateDefinition is imported
 // import { ChatOpenAI } from '@langchain/openai';
-// import { CategorizeQueryToolNode } from '../tools/CategorizeQueryTool.js';
+// import { CategorizeQueryTool } from '../tools/CategorizeQueryTool.js';
 // import { extractParameters } from '../tools/ExtractParametersTool.js';
 // // Import additional ToolNodes as necessary
 
@@ -22,7 +22,7 @@
 //   });
 
 //   // Add ToolNodes to the graph
-//   graph.addNode("categorize_query", CategorizeQueryToolNode);
+//   graph.addNode("categorize_query", CategorizeQueryTool);
 //   graph.addNode("extract_parameters", extractParameters);
 //   // Add other ToolNodes similarly
 

@@ -44,7 +44,6 @@ export interface GraphState {
   params: Record<string, string> | null;
   response: any | null;
   complexity: string | null;
-  message: string | null;
   isEntityQuery: boolean;
   entityName: string | null;
   entity: AudiusData | null;
@@ -56,6 +55,7 @@ export interface GraphState {
   initialState: GraphState | null;
   formattedResponse: string | null;
   entityType: 'user' | 'playlist' | 'track' | null;
+  stateMessages: string[] | null;
 }
 
 export type QueryType =
@@ -233,3 +233,10 @@ export type NodeNames =
 export type StateDefinition = {
   [key in NodeNames]: GraphState;
 };
+
+export interface SelectAPIResponse {
+  api: DatasetSchema;
+  parameters: Record<string, any>;
+  error: boolean | null;
+
+}

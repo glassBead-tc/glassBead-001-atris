@@ -7,7 +7,6 @@ import { GraphState } from "../index.js";
 import { HIGH_LEVEL_CATEGORY_MAPPING } from "../constants.js";
 import { DatasetSchema } from "../types.js";
 import { fileURLToPath } from "url";
-
 /**
  * Given a users query, extract the high level category which
  * best represents the query.
@@ -48,7 +47,7 @@ export class ExtractHighLevelCategories extends StructuredTool {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const dataFilePath = path.join(__dirname, "../../data/audius_corpus.json");
+const dataFilePath = path.join(__dirname, "../data/audius_corpus.json");
 
 /**
  * @param {GraphState} state
@@ -56,7 +55,7 @@ const dataFilePath = path.join(__dirname, "../../data/audius_corpus.json");
 export async function extractCategory(
   state: GraphState
 ): Promise<Partial<GraphState>> {
-  const data = fs.readFileSync(dataFilePath, 'utf-8');
+  const data = fs.readFileSync(dataFilePath, "utf-8");
   const jsonData = JSON.parse(data);
   const { llm, query } = state;
 
@@ -65,13 +64,14 @@ export async function extractCategory(
       "system",
       `You are an expert software engineer.
 
-Currently, you are helping a fellow engineer select the best category of APIs based on their query.
-You are only presented with a list of high level API categories, and their query.
+Currently, you are selecting the best category of API endpoints based on the user's query.
+You are only presented with a list of high level API categories, and the user's query.
 Think slowly, and carefully select the best category for the query.
 Here are all the high level categories, and every tool name that falls under them:
 {categoriesAndTools}`,
+
     ],
-    ["human", `Query: {query}`],
+    ["human", `Query: ${query}`],
   ]);
 
   const tool = new ExtractHighLevelCategories();
