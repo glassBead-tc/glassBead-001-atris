@@ -2,7 +2,7 @@ import { StructuredTool, tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { GraphState } from "../index.js";
-import { DatasetSchema, DatasetParameters } from "../types.js";
+import { DatasetSchema, DatasetParameters, TrackData, UserData, PlaylistData } from "../types.js";
 import * as readline from "readline";
 import { findMissingParams } from "../utils.js";
 import fs from "fs";
@@ -55,6 +55,8 @@ export async function callAudiusAPI<Output extends Record<string, any> = Record<
   }
 }
 
+
+
 /**
  * Selects the best Audius API based on the user's query.
  *
@@ -95,12 +97,23 @@ Given the user's query, utilize the 'Select_API' tool to determine the best API.
   }
 }
 
+
+
+
 // READ/PARSE USER INPUT -> EXTRACT PARAMS -> REQUEST PARAMS
+
+
+
+
+
 
 /**
  * Format for user input: <name>,<value>:::<name>,<value>
  */
 const paramsFormat = `<name>,<value>:::<name>,<value>`;
+
+
+
 
 /**
  * Tool to read user input from the command line.
@@ -148,6 +161,9 @@ export const readUserInputTool = tool(
     }),
   }
 );
+
+
+
 
 /**
  * Parses the user input string into a key-value pair.
@@ -215,6 +231,8 @@ export async function requestParameters(
     },
   };
 }
+
+
 
 /**
  * Tool to extract parameters from a user's query using the ExtractHighLevelCategoriesTool.
@@ -447,6 +465,69 @@ Parameters: ${[...api.required_parameters, ...api.optional_parameters]
 }
 
 /**
+ * Tool to process the API response.
+ */
+export const processApiResponseTool = tool(
+  async (input: { state: { bestApi: DatasetSchema; fetchResponse: any } }): Promise<Partial<GraphState>> => {
+    const { bestApi, fetchResponse } = input.state;
+
+    if (!fetchResponse) {
+      throw new Error("No response received from the API.");
+    }
+
+    // Example processing logic based on API type
+    let processedData = {};
+    switch (bestApi.api_name) {
+      case 'PlaylistAPI':
+        processedData = await processPlaylistDataResponse(fetchResponse);
+        break;
+      case 'TrackAPI':
+        processedData = await processTrackDataResponse(fetchResponse);
+        break;
+      case 'UserAPI':
+        processedData = await processUserDataResponse(fetchResponse);
+        break;
+      // Add more cases as needed
+      default:
+        processedData = fetchResponse;
+    }
+
+    return { 
+      response: processedData, 
+      error: false
+    };
+  },
+  {
+    name: "process_api_response",
+    description: "Processes the response received from the API fetch request.",
+    schema: z.object({
+      state: z.object({
+        bestApi: z.any(),
+        fetchResponse: z.any(),
+      }),
+    }),
+  }
+);
+
+async function processTrackDataResponse(response: TrackData, state: GraphState): Promise<any> {
+  // Implement your processing logic for TrackAPI response here
+   // This is a placeholder function
+   return response;
+}
+
+async function processUserDataResponse(response: UserData, state: GraphState): Promise<any> {
+
+  // Implement your processing logic for UserAPI response here
+  return response;
+}
+
+async function processPlaylistDataResponse(response: PlaylistData, state: GraphState): Promise<any> {
+  // Implement your processing logic for PlaylistAPI response here
+   return response;
+}
+
+
+/**
  * List of all tools used in the ecosystem.
  */
 export const ALL_TOOLS_LIST = {
@@ -456,5 +537,6 @@ export const ALL_TOOLS_LIST = {
   requestParameters,
   readUserInputTool,
   ExtractHighLevelCategoriesTool,
+  processApiResponseTool
   // Add other tools here as needed
 };
