@@ -95,26 +95,18 @@ function capitalize(text: string): string {
  * @returns {Promise<Partial<GraphState>>} - The updated graph state with the selected API.
  */
 export async function selectApi(state: GraphState): Promise<Partial<GraphState>> {
-  const { apis, isEntityQuery, entityType } = state;
+  const { apis } = state;
 
   if (!apis || apis.length === 0) {
     throw new Error("No APIs available for selection.");
   }
 
-  let bestApi: DatasetSchema | undefined;
+  // Select the 'Get Track' API
+  const apiName = 'Get Track';
+  const bestApi = apis.find(api => api.api_name === apiName);
 
-  if (isEntityQuery && entityType) {
-    // Select the 'Get [Entity]' API
-    const getApiName = `Get ${capitalize(entityType)}`;
-    bestApi = apis.find(api => api.api_name === getApiName);
-
-    if (!bestApi) {
-      throw new Error(`No API found for ${getApiName}`);
-    }
-  } else {
-    // Existing logic for non-entity queries
-    // For simplicity, select the first API as a default
-    bestApi = apis[0];
+  if (!bestApi) {
+    throw new Error(`No API found for ${apiName}`);
   }
 
   return { bestApi };
@@ -396,77 +388,23 @@ export async function requestParameters(
 export async function extractParameters(
   state: GraphState
 ): Promise<Partial<GraphState>> {
-  const { llm, query, bestApi } = state;
+  const { query } = state;
 
-  const prompt = ChatPromptTemplate.fromMessages([
-    [
-      "system",
-      `You are an expert software engineer. You're provided with a list of required and optional parameters for an API, along with a user's query.
+  // Use regular expression to extract "Track Title by Artist Name"
+  const regex = /(?:how many plays does )?(.*? by .*?)(?: have on audius\??)?$/i;
+  const match = query?.match(regex);
 
-Given the query and the parameters, use the 'extract_params' tool to extract the parameters from the query.
+  if (match && match[1]) {
+    const trackArtistQuery = match[1].trim();
+    return {
+      parameters: {
+        trackArtistQuery,
+      },
+    };
+  }
 
-If the query does not contain any of the parameters, do not return params.
-
-Required parameters: {requiredParams}
-
-Optional parameters: {optionalParams}`,
-    ],
-    ["human", `Query: {query}`],
-  ]);
-
-  const schema = z
-    .object({
-      params: z
-        .record(z.string())
-        .describe("The parameters extracted from the query.")
-        .optional(),
-    })
-    .describe("The extracted parameters from the query.");
-
-  const extractParamsTool = tool(
-    async (input: { requiredParams: string; optionalParams: string; query: string }) => {
-      return JSON.stringify({});
-    },
-    {
-      name: "extract_params",
-      description:
-        "Extracts parameters from a user's query based on the provided required and optional parameters.",
-      schema: z.object({
-        requiredParams: z.string().describe("List of required parameters."),
-        optionalParams: z.string().describe("List of optional parameters."),
-        query: z.string().describe("The user's query."),
-      }),
-    }
-  );
-
-  const modelWithTools = llm!.withStructuredOutput(extractParamsTool);
-
-  // Safely access required and optional parameters
-  const requiredParams = (bestApi?.required_parameters || [])
-    .map(
-      (p) => `Name: ${p.name}, Description: ${p.description}, Type: ${p.type}`
-    )
-    .join("\n");
-  const optionalParams = (bestApi?.optional_parameters || [])
-    .map(
-      (p) => `Name: ${p.name}, Description: ${p.description}, Type: ${p.type}`
-    )
-    .join("\n");
-
-  const chain = prompt.pipe(modelWithTools).pipe(extractParamsTool);
-
-  const response = await chain.invoke({
-    query,
-    requiredParams,
-    optionalParams,
-  });
-
-  // Parse the response to get extracted parameters
-  const extractedParams: Record<string, string> = JSON.parse(response);
-
-  return {
-    parameters: extractedParams ?? null,
-  };
+  // If pattern doesn't match, return an error or empty parameters
+  throw new Error("Could not extract track and artist information from the query.");
 } 
 
 // EXTRACT QUERY CATEGORY
@@ -629,40 +567,46 @@ ${categoriesAndTools}`,
   };
 }
 
+/**
+ * Searches for the track using the combined track title and artist name query.
+ *
+ * @param {GraphState} state - The current state of the graph.
+ * @returns {Promise<Partial<GraphState>>} - The updated graph state with the track ID and details.
+ */
 export async function searchEntity(state: GraphState): Promise<Partial<GraphState>> {
-  const { entityName } = state;
+  const { parameters } = state;
 
-  if (!entityName) {
-    throw new Error("Entity name is missing in state.");
+  const trackArtistQuery = parameters?.trackArtistQuery;
+
+  if (!trackArtistQuery) {
+    throw new Error("Track and artist query is missing in parameters.");
   }
 
-  // Assuming you have the Audius URL or can construct it
-  const audiusUrl = constructAudiusUrl(entityName);
+  const apiUrl = '/tracks/search';
 
-  // Construct parameters for the resolve API
-  const parameters = {
-    url: audiusUrl,
+  const params = {
+    query: trackArtistQuery,
     app_name: process.env.AUDIUS_APP_NAME || 'YOUR_APP_NAME',
   };
 
-  // Use the resolve endpoint
-  const apiUrl = '/v1/resolve';
+  // Call the Audius API
+  const response = await callAudiusAPI(apiUrl, params, state);
 
-  // Call the resolve API
-  const response = await callAudiusAPI(apiUrl, parameters, state);
-
-  // Extract the entity ID from the response
-  const entityId = response.data?.track?.id;
-
-  if (!entityId) {
-    throw new Error(`Could not resolve track with name "${entityName}"`);
+  if (!response.data || response.data.length === 0) {
+    throw new Error(`No tracks found for "${trackArtistQuery}"`);
   }
 
-  // Update parameters for the next API call
-  const updatedParameters = { ...state.parameters, track_id: entityId };
+  // Assume the first result is the best match
+  const track = response.data[0];
+  const trackId = track.id;
 
+  // Update parameters for the next API call
+  const updatedParameters = { ...parameters, track_id: trackId };
+
+  // Save the track data for use in the final response
   return {
     parameters: updatedParameters,
+    trackData: track, // Optionally store the entire track data
   };
 }
 
@@ -808,9 +752,38 @@ export const ALL_TOOLS_LIST: { [key: string]: StructuredToolInterface | Runnable
   readUserInputTool,
   ExtractHighLevelCategoriesTool,
   createFetchRequest,
-  selectApi: selectAPIToolInstance, // Use the instantiated tool
+  selectApi: selectAPIToolInstance,
+  readUserInput: readUserInputTool // Use the instantiated tool
   // Add other tools here as needed
 };
+
+/**
+ * Formats the final response to the user.
+ *
+ * @param {GraphState} state - The current state of the graph.
+ * @returns {Promise<Partial<GraphState>>} - The updated graph state with the formatted response.
+ */
+export async function formatResponse(state: GraphState): Promise<Partial<GraphState>> {
+  const { parameters, trackData } = state;
+
+  if (!trackData) {
+    throw new Error("Track data is missing.");
+  }
+
+  const { title, user, play_count } = trackData;
+  const artistName = user.name;
+
+  const formattedResponse = `${title} by ${artistName} has ${play_count} plays on Audius.`;
+
+  return {
+    formattedResponse,
+  };
+}
+
+
+
+
+
 
 
 

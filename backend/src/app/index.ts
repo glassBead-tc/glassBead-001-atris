@@ -3,7 +3,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { ComplexityLevel, DatasetSchema, EntityType, AudiusCorpus } from "./types.js";
 import fs from "fs";
 import dotenv from 'dotenv';
-import { ALL_TOOLS_LIST, extractCategory, extractParameters, createFetchRequest, selectApi, requestParameters, searchEntity } from "./tools/tools.js";
+import { extractCategory, extractParameters, createFetchRequest, selectApi, searchEntity, formatResponse, readUserInputTool } from "./tools/tools.js";
 import { StateGraph, END, START } from "@langchain/langgraph";
 import { TRIMMED_CORPUS_PATH } from "./constants.js";
 import { findMissingParams } from "./utils.js";
@@ -153,24 +153,24 @@ function createGraph() {
     .addNode("extract_category_node", extractCategory)
     .addNode("get_apis_node", getApis)
     .addNode("select_api_node", selectApi)
-    .addNode("handle_entity_query_node", searchEntity)
     .addNode("extract_params_node", extractParameters)
-    .addNode("human_loop_node", requestParameters)
+    .addNode("search_entity_node", searchEntity)
+    .addNode("human_loop_node", readUserInputTool) // Using the readUserInputTool for human input
     .addNode("execute_request_node", createFetchRequest)
+    .addNode("format_response_node", formatResponse)
     .addEdge("extract_category_node", "get_apis_node")
     .addEdge("get_apis_node", "select_api_node")
-    // Conditional edge based on isEntityQuery
-    .addConditionalEdges("select_api_node", (state: GraphState) => {
-      return state.isEntityQuery ? "handle_entity_query_node" : "extract_params_node";
+    .addEdge("select_api_node", "extract_params_node")
+    .addEdge("extract_params_node", "search_entity_node")
+    .addEdge("search_entity_node", "human_loop_node") // If parameters are missing, go to human loop
+    .addConditionalEdges("human_loop_node", (state: GraphState) => {
+      return state.error ? "execute_request_node" : "execute_request_node"; // Adjust based on your logic
     })
-    .addEdge("handle_entity_query_node", "extract_params_node")
-    .addConditionalEdges("extract_params_node", verifyParams)
-    .addConditionalEdges("human_loop_node", verifyParams)
-    .addEdge(START, "extract_category_node")
-    .addEdge("execute_request_node", END);
+    .addEdge("execute_request_node", "format_response_node")
+    .addEdge("format_response_node", END)
+    .addEdge(START, "extract_category_node");
 
-  const app = graph.compile();
-  return app;
+  return graph.compile();
 }
 
 const datasetQuery = "How many plays does 115 SECONDS OF CLAMS by TRICK CHENEY. have on Audius?";
@@ -214,3 +214,5 @@ async function main(query: string) {
 }
 
 main(datasetQuery);
+
+

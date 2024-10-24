@@ -57,6 +57,7 @@ export interface GraphState {
   initialState: GraphState | null;
   formattedResponse: string | null;
   message: string | null;
+  trackData: any | null;
 }
 
 export type QueryType =
@@ -213,7 +214,8 @@ export const initialGraphState: GraphState = {
   multiStepHandled: false, 
   initialState: null,
   entityType: null,
-  selectedHost: null
+  selectedHost: null,
+  trackData: null
 };
 
 export type NodeNames =
