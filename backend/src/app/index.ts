@@ -3,45 +3,17 @@ import { logger } from "./logger.js";
 import { ChatOpenAI } from "@langchain/openai";
 import { DatasetSchema } from "./types.js";
 import fs from "fs";
-import { findMissingParams } from "./utils.js";
-import { TRIMMED_CORPUS_PATH, HIGH_LEVEL_CATEGORY_MAPPING } from "./constants.js";
-import { END, START, StateGraph, MessagesAnnotation, NodeInterrupt, Annotation, GraphAnnotation} from "@langchain/langgraph";
-import { extractParameters } from "./tools/ExtractParametersTool.js";
-import { extractCategory } from "./tools/ExtractCategoryTool.js";
-import { requestParameters } from "./tools/RequestParametersTool.js";
-import { selectApi } from "./tools/SelectApiTool.js";
-import { createFetchRequest } from "./tools/CreateFetchRequestTool.js";
-import { processApiResponse } from "./tools/ProcessApiResponseTool.js";
-import { tool } from "@langchain/core/tools";
-import { z } from "zod";
-import { StructuredToolInterface } from "@langchain/core/tools";
-import { RunnableToolLike } from "@langchain/core/runnables";
 import dotenv from 'dotenv';
 import { ALL_TOOLS_LIST } from "./tools/tools.js";
-import { BaseMessage, type AIMessage } from "@langchain/core/messages";
-
+import { StateGraph, END, START } from "@langchain/langgraph";
+import { BaseMessage, AIMessage } from "@langchain/core/messages";
+import { findMissingParams } from "./utils.js";
+import { TRIMMED_CORPUS_PATH } from "./constants.js";
+import { StructuredToolInterface } from "@langchain/core/tools";
+import { RunnableToolLike } from "@langchain/core/runnables";
+import { tool } from "@langchain/core/tools"
 
 dotenv.config({ path: '../.env' });
-
-const GraphAnnotation = Annotation.Root({
-  ...MessagesAnnotation.spec,
-  requestedStockPurchaseDetails: Annotation<Partial<GraphState>>
-}); 
-
-const llm = new ChatOpenAI({
-  model: "gpt-4o-mini",
-  temperature: 0
-});
-
-
-// Convert ALL_TOOLS_LIST to an array using Object.values
-const tools: (StructuredToolInterface | RunnableToolLike)[] = Object.values(ALL_TOOLS_LIST);
-const toolNodeAtris = new ToolNode(tools);
-
-const modelWithTools = llm.bindTools(tools);
-
-const toolNode = new ToolNode(tools);
-
 
 export type GraphState = {
   /**
@@ -91,38 +63,47 @@ const graphChannels = {
   parameters: null,
   response: null,
   error: null,
-  stateMessages: null,
+  messages: null,
 };
 
 /**
-* @param {GraphState} state
-*/
+ * Determines the next node based on the current state.
+ *
+ * @param {GraphState} state - The current state of the graph.
+ * @returns {"human_loop_node" | "execute_request_node"} - The next node to transition to.
+ */
 const verifyParams = (
-state: GraphState
+  state: GraphState
 ): "human_loop_node" | "execute_request_node" => {
-const { bestApi, parameters } = state;
-if (!bestApi) {
-  throw new Error("No best API found");
-}
-if (!parameters) {
-  return "human_loop_node";
-}
-const requiredParamsKeys = bestApi.required_parameters.map(
-  ({ name }) => name
-);
-const extractedParamsKeys = Object.keys(parameters);
-const missingKeys = findMissingParams(
-  requiredParamsKeys,
-  extractedParamsKeys
-);
-if (missingKeys.length > 0) {
-  return "human_loop_node";
-}
-return "execute_request_node";
+  const { bestApi, parameters } = state;
+  if (!bestApi) {
+    throw new Error("No best API found");
+  }
+  if (!parameters) {
+    return "human_loop_node";
+  }
+  const requiredParamsKeys = bestApi.required_parameters.map(
+    ({ name }) => name
+  );
+  const extractedParamsKeys = Object.keys(parameters);
+  const missingKeys = findMissingParams(
+    requiredParamsKeys,
+    extractedParamsKeys
+  );
+  if (missingKeys.length > 0) {
+    return "human_loop_node";
+  }
+  return "execute_request_node";
 };
 
+/**
+ * Retrieves the APIs based on the selected categories.
+ *
+ * @param {GraphState} state - The current state of the graph.
+ * @returns {{ apis: DatasetSchema[] }} - The filtered list of APIs.
+ */
 function getApis(state: GraphState) {
-const { categories } = state;
+  const { categories } = state;
   if (!categories || categories.length === 0) {
     throw new Error("No categories passed to get_apis_node");
   }
@@ -139,42 +120,30 @@ const { categories } = state;
   };
 }
 
-const callModel = async (state: typeof GraphAnnotation.State) => {
+/**
+ * Determines the continuation condition based on the current state.
+ *
+ * @param {GraphState} state - The current state of the graph.
+ * @returns {string | string[]} - The next node(s) to transition to.
+ */
+const shouldContinue = (state: GraphState) => {
   const { messages } = state;
 
-  const systemMessage = {
-    role: "system",
-    content:
-      "You're an expert financial analyst, tasked with answering the users questions " +
-      "about a given company or companies. You do not have up to date information on " +
-      "the companies, so you much call tools when answering users questions. " +
-      "All financial data tools require a company ticker to be passed in as a parameter. If you " +
-      "do not know the ticker, you should use the web search tool to find it.",
-  };
-
-  const llmWithTools = llm.bindTools(tools);
-  const result = await llmWithTools.invoke([systemMessage, ...messages]);
-  return { messages: result };
-};
-
-const shouldContinue = (state: typeof GraphAnnotation.State) => {
-  const { messages, requestedStockPurchaseDetails } = state;
+  if (!messages || messages.length === 0) {
+    return END;
+  }
 
   const lastMessage = messages[messages.length - 1];
 
-  // Cast here since `tool_calls` does not exist on `BaseMessage`
-  const messageCastAI = lastMessage as AIMessage;
-  if (messageCastAI._getType() !== "ai" || !messageCastAI.tool_calls?.length) {
+  // Use the type guard to verify if lastMessage is an AIMessage
+  if (isAIMessage(lastMessage) && lastMessage.tool_calls?.length) {
+    // LLM called tools; proceed accordingly
+  } else {
     // LLM did not call any tools, or it's not an AI message, so we should end.
     return END;
   }
 
-  // If `requestedStockPurchaseDetails` is present, we want to execute the purchase
-  if (requestedStockPurchaseDetails) {
-    return "execute_purchase";
-  }
-
-  const { tool_calls } = messageCastAI;
+  const { tool_calls } = lastMessage;
   if (!tool_calls?.length) {
     throw new Error(
       "Expected tool_calls to be an array with at least one element"
@@ -191,54 +160,10 @@ const shouldContinue = (state: typeof GraphAnnotation.State) => {
   });
 };
 
-async function main() {
-  logger.info("Starting main execution");
-
-  const atris = createGraph();
-
-  // Initialize the LLM (ChatOpenAI)
-  const llm = new ChatOpenAI({
-    openAIApiKey: process.env.OPENAI_API_KEY,
-    modelName: "gpt-4o-mini", // Or another model as appropriate
-    temperature: 0,
-  });
-
-  const shouldContinue = (state: typeof GraphAnnotation.State) => {
-    const { messages, requestedStockPurchaseDetails } = state;
-  
-    const lastMessage = messages[messages.length - 1];
-  
-    // Cast here since `tool_calls` does not exist on `BaseMessage`
-    const messageCastAI = lastMessage as AIMessage;
-    if (messageCastAI._getType() !== "ai" || !messageCastAI.tool_calls?.length) {
-      // LLM did not call any tools, or it's not an AI message, so we should end.
-      return END;
-    }
-  
-    // If `requestedStockPurchaseDetails` is present, we want to execute the purchase
-    if (requestedStockPurchaseDetails) {
-      return "execute_purchase";
-    }
-  
-    const { tool_calls } = messageCastAI;
-    if (!tool_calls?.length) {
-      throw new Error(
-        "Expected tool_calls to be an array with at least one element"
-      );
-    }
-  
-    return tool_calls.map((tc) => {
-      if (tc.name === "purchase_stock") {
-        // The user is trying to purchase a stock, route to the verify purchase node.
-        return "prepare_purchase_details";
-      } else {
-        return "tools";
-      }
-    });
-  };
-
-  /**
- * TODO: implement
+/**
+ * Creates the state graph for the application.
+ *
+ * @returns {StateGraph<GraphState>} - The compiled state graph.
  */
 function createGraph() {
   const graph = new StateGraph<GraphState>({
@@ -250,7 +175,7 @@ function createGraph() {
     .addNode("extract_params_node", extractParameters) // extract parameters for API call
     .addNode("human_loop_node", requestParameters) // request parameters from user if required param is missing
     .addNode("execute_request_node", createFetchRequest) // execute API call
-    .addNode("process_api_response", processApiResponse) // process API response
+    .addNode("process_api_response", processApiResponseTool) // process API response
     .addEdge("extract_category_node", "get_apis_node") // extract categories -> get APIs
     .addEdge("get_apis_node", "select_api_node") // get APIs -> select API
     .addEdge("select_api_node", "extract_params_node") // select API -> extract params
@@ -262,9 +187,25 @@ function createGraph() {
 
   const app = graph.compile();
   return app;
-}
+};
 
+/**
+ * Initializes and runs the main execution flow.
+ */
+async function main() {
+  logger.info("Starting main execution");
 
+  const llm = new ChatOpenAI({
+    openAIApiKey: process.env.OPENAI_API_KEY,
+    modelName: "gpt-4o-mini", // Or another model as appropriate
+    temperature: 0,
+  });
+
+  // Bind the tools from ALL_TOOLS_LIST to the LLM
+  const tools: (StructuredToolInterface | RunnableToolLike)[] = Object.values(ALL_TOOLS_LIST);
+  const modelWithTools = llm.bindTools(tools);
+
+  const atris = createGraph();
 
   const queries = [
     "What are the top trending tracks on Audius?",
@@ -285,7 +226,7 @@ function createGraph() {
       parameters: null,
       response: null,
       error: false,
-      stateMessages: [],
+      messages: [],
     };
 
     try {
@@ -301,6 +242,69 @@ function createGraph() {
   logger.info("Main execution completed");
 }
 
+/**
+ * Starts the application and handles any unhandled errors.
+ */
 main().catch(error => {
   logger.error("Unhandled error in main:", error);
 });
+
+/**
+ * Type guard to check if a message is of type AIMessage.
+ *
+ * @param {BaseMessage} message - The message to check.
+ * @returns {boolean} - True if the message is an AIMessage, false otherwise.
+ */
+function isAIMessage(message: BaseMessage): message is AIMessage {
+  return (message as AIMessage)._getType() === "ai";
+}
+
+/**
+ * Example of using a tool from ALL_TOOLS_LIST
+ */
+async function main() {
+  const llm = new ChatOpenAI(/* your configurations */);
+  
+  let state: GraphState = {
+    llm,
+    query: "Find popular playlists for jazz music.",
+    queryType: null,
+    categories: null,
+    apis: null,
+    bestApi: null,
+    params: null,
+    response: null,
+    complexity: null,
+    isEntityQuery: false,
+    entityName: null,
+    entity: null,
+    parameters: null,
+    complexity: null,
+    multiStepHandled: false,
+    initialState: null,
+    entityType: null,
+    stateMessages: [],
+    // Initialize other properties as needed
+  };
+
+  try {
+    // Example tool execution
+    const extractCategory = ALL_TOOLS_LIST["extractCategory"] as StructuredToolInterface;
+    const { category } = await extractCategory.run({ query: state.query! });
+    state = { ...state, categories: [...(state.categories || []), category] };
+    
+    const extractParameters = ALL_TOOLS_LIST["extractParameters"] as StructuredToolInterface;
+    const { extractedParameters } = await extractParameters.run({ parameters: ["param1", "param2"] });
+    state = { ...state, parameters: extractedParameters };
+    
+    const requestParameters = ALL_TOOLS_LIST["requestParameters"] as StructuredToolInterface;
+    const { requestedParameters } = await requestParameters.run({ missingParams: ["param3"] });
+    state = { ...state, parameters: { ...state.parameters, ...requestedParameters } };
+    
+    // ... Continue with other tool executions ...
+    
+    logger.info("Main execution completed");
+  } catch (error) {
+    logger.error("Error during main execution:", error);
+  }
+}

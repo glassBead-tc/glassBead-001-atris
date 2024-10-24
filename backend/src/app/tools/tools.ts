@@ -1,13 +1,15 @@
-import { StructuredTool, tool } from "@langchain/core/tools";
-import { z } from "zod";
+
+import { StructuredTool, StructuredToolInterface, tool } from "@langchain/core/tools";
+import { RunnableToolLike } from "@langchain/core/runnables";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { GraphState } from "../index.js";
-import { DatasetSchema, DatasetParameters, TrackData, UserData, PlaylistData } from "../types.js";
+import nlp from "compromise";
+import { z } from "zod";
+import { GraphState, DatasetSchema, DatasetParameters, ComplexityLevel, EntityType, QueryType } from "../types.js";
+import { logger } from "../logger.js";
 import * as readline from "readline";
 import { findMissingParams } from "../utils.js";
 import fs from "fs";
 import { HIGH_LEVEL_CATEGORY_MAPPING, TRIMMED_CORPUS_PATH } from "../constants.js";
-import { OpenAIChatInput } from "@langchain/openai";
 
 /**
  * Utility function to call the Audius API.
@@ -55,8 +57,6 @@ export async function callAudiusAPI<Output extends Record<string, any> = Record<
   }
 }
 
-
-
 /**
  * Selects the best Audius API based on the user's query.
  *
@@ -79,15 +79,15 @@ Given the user's query, utilize the 'Select_API' tool to determine the best API.
     ["human", `Query: ${query}`],
   ]);
 
-  const selectTool = createSelectAPITool(apis, query);
-  const modelWithTools = llm.withStructuredOutput(selectTool);
+  const selectTool = createSelectAPITool(apis, query!);
+  const modelWithTools = llm!.withStructuredOutput(selectTool);
   const chain = prompt.pipe(modelWithTools).pipe(selectTool);
 
   try {
     const response = await chain.invoke({
       api: "", // The LLM will populate this based on the prompt
     });
-    const bestApi: DatasetSchema = JSON.parse(response);
+    const bestApi: DatasetSchema = JSON.parse(response as string);
     return {
       bestApi,
     };
@@ -101,10 +101,6 @@ Given the user's query, utilize the 'Select_API' tool to determine the best API.
 
 
 // READ/PARSE USER INPUT -> EXTRACT PARAMS -> REQUEST PARAMS
-
-
-
-
 
 
 /**
@@ -159,6 +155,130 @@ export const readUserInputTool = tool(
         )
         .describe("A list of missing parameters with their descriptions."),
     }),
+  }
+);
+
+// Define the categorization function
+export const CategorizeQueryTool = tool(
+  async ({ state }: { state: { query: string } }): Promise<Partial<GraphState>> => {
+    let normalizedQuery = state.query.toLowerCase().trim();
+
+    // Check for track play count queries
+    const trackPlayCountRegex = /how many plays does (the track )?(.*?) have\??/i;
+    const trackPlayCountMatch = normalizedQuery.match(trackPlayCountRegex);
+
+    if (trackPlayCountMatch) {
+      const trackName = trackPlayCountMatch[2].trim();
+      return {
+        queryType: 'search_tracks' as QueryType,
+        entityType: 'track' as EntityType,
+        entityName: trackName,
+        isEntityQuery: true,
+        complexity: 'simple' as ComplexityLevel
+      };
+    }
+
+    // Expand contractions
+    const contractions: Record<string, string> = {
+      "what's": "what is",
+      "where's": "where is",
+      "when's": "when is",
+      "who's": "who is",
+      "how's": "how is",
+      "that's": "that is",
+      "there's": "there is",
+      "here's": "here is",
+      "it's": "it is",
+      "isn't": "is not",
+      "aren't": "are not",
+      "wasn't": "was not",
+      "weren't": "were not",
+      "haven't": "have not",
+      "hasn't": "has not",
+      "hadn't": "had not",
+      // Add more contractions as needed
+    };
+  
+    Object.keys(contractions).forEach((contraction) => {
+      const regex = new RegExp(`\\b${contraction}\\b`, 'gi');
+      normalizedQuery = normalizedQuery.replace(regex, contractions[contraction]);
+    });
+  
+    const doc = nlp(normalizedQuery);
+    logger.debug(`Processing query: "${normalizedQuery}"`);
+  
+    // Enhanced entity extraction using NLP
+    const entities = doc.terms().out('array');
+    let mappedEntityType: EntityType | null = null;
+  
+    if (entities.length > 0) {
+      const entity = entities[0].toLowerCase();
+      switch (entity) {
+        case 'tracks':
+        case 'track':
+          mappedEntityType = 'track';
+          break;
+        case 'users':
+        case 'user':
+          mappedEntityType = 'user';
+          break;
+        case 'playlists':
+        case 'playlist':
+          mappedEntityType = 'playlist';
+          break;
+        case 'genres':
+        case 'genre':
+          mappedEntityType = null; // Genres are not entities in our current system
+          break;
+      }
+  
+      return {
+        queryType: mappedEntityType ? `search_${mappedEntityType}s` as QueryType : 'trending_tracks' as QueryType,
+        isEntityQuery: !!mappedEntityType,
+        entityType: mappedEntityType,
+        complexity: mappedEntityType ? 'moderate' as ComplexityLevel : 'simple' as ComplexityLevel,
+        entityName: mappedEntityType ? entity : null,
+      };
+    }
+  
+    // Default categorization for trending tracks
+    if (/trending|popular|top tracks/i.test(normalizedQuery)) {
+      return {
+        queryType: 'trending_tracks' as QueryType,
+        isEntityQuery: false,
+        entityType: null,
+        entityName: null,
+        complexity: 'simple' as ComplexityLevel,
+      };
+    }
+  
+    // Final default return
+    return {
+      queryType: 'general' as QueryType,
+      entityType: null,
+      isEntityQuery: false,
+      complexity: 'simple' as ComplexityLevel,
+      entityName: null,
+    };
+  },
+  {
+    name: "categorize_query",
+    description: "Categorizes the user's query to determine its type and complexity.",
+    schema: z.object({
+      state: z.object({
+        query: z.string().describe("The user's query string to classify"),
+      }),
+    }),
+  }
+);
+
+export const ExtractCategoryTool = tool(
+  async ({ state }: { state: { query: string } }): Promise<Partial<GraphState>> => {
+    return CategorizeQueryTool.invoke({ state });
+  },
+  {
+    name: "extract_category",
+    description: "Extracts the category from the user's query.",
   }
 );
 
@@ -291,7 +411,7 @@ Optional parameters: {optionalParams}`,
   );
 
   // Bind the extractParamsTool to the language model
-  const modelWithTools = llm.withStructuredOutput(extractParamsTool);
+  const modelWithTools = llm!.withStructuredOutput(extractParamsTool);
 
   // Create the chain by piping the prompt through the model and tool
   const chain = prompt.pipe(modelWithTools).pipe(extractParamsTool);
@@ -365,22 +485,6 @@ export const ExtractHighLevelCategoriesTool = tool(
 export async function extractCategory(
   state: GraphState
 ): Promise<Partial<GraphState>> {
-  const { llm, query } = state;
-
-  const prompt = ChatPromptTemplate.fromMessages([
-    [
-      "system",
-      `You are an expert software engineer.
-
-Currently, you are helping a fellow engineer select the best category of APIs based on their query.
-You are only presented with a list of high level API categories, and their query.
-Think slowly, and carefully select the best category for the query.
-Here are all the high level categories, and every tool name that falls under them:
-{categoriesAndTools}`,
-    ],
-    ["human", `Query: {query}`],
-  ]);
-
   // Prepare the prompt with categories and tools
   const allApis: DatasetSchema[] = JSON.parse(
     fs.readFileSync(TRIMMED_CORPUS_PATH, "utf-8")
@@ -394,8 +498,25 @@ Here are all the high level categories, and every tool name that falls under the
     })
     .join("\n\n");
 
+  const { llm, query } = state;
+
+  const prompt = ChatPromptTemplate.fromMessages([
+    [
+      "system",
+      `You are an expert software engineer.
+
+Currently, you are helping a fellow engineer select the best category of APIs based on their query.
+You are only presented with a list of high level API categories, and their query.
+Think slowly, and carefully select the best category for the query.
+Here are all the high level categories, and every tool name that falls under them:
+${categoriesAndTools}`,
+    ],
+    ["human", `Query: ${query}`],
+  ]);
+
+
   // Bind the tool to the language model
-  const modelWithTools = llm.withStructuredOutput([ExtractHighLevelCategoriesTool]);
+  const modelWithTools = llm!.withStructuredOutput([ExtractHighLevelCategoriesTool]);
 
   // Create the chain by piping the prompt through the model and tool
   const chain = prompt.pipe(modelWithTools).pipe(ExtractHighLevelCategoriesTool);
@@ -418,24 +539,24 @@ Here are all the high level categories, and every tool name that falls under the
  *
  * @param {DatasetSchema[]} apis - The list of available APIs.
  * @param {string} query - The user's query.
- * @returns {StructuredTool} - An instance of the SelectAPITool.
+ * @returns {StructuredToolInterface | RunnableToolLike} - An instance of the SelectAPITool.
  */
-export function createSelectAPITool(apis: DatasetSchema[], query: string): StructuredTool {
+export function createSelectAPITool(apis: DatasetSchema[], query: string): StructuredTool | RunnableToolLike {
   const description = `Given the following query by a user, select the API which will best serve the query.
 
 Query: ${query}
 
 APIs:
 ${apis
-  .map(
-    (api) => `Tool name: ${api.tool_name}
+    .map(
+      (api) => `Tool name: ${api.tool_name}
 API Name: ${api.api_name}
 Description: ${api.api_description}
 Parameters: ${[...api.required_parameters, ...api.optional_parameters]
-      .map((p) => `Name: ${p.name}, Description: ${p.description}`)
-      .join("\n")}`
-  )
-  .join("\n---\n")}`;
+          .map((p) => `Name: ${p.name}, Description: ${p.description}`)
+          .join("\n")}`
+    )
+    .join("\n---\n")}`;
 
   const schema = z.object({
     api: z
@@ -444,20 +565,22 @@ Parameters: ${[...api.required_parameters, ...api.optional_parameters]
   });
 
   return tool(
-    async (input: { api: string }) => {
+    async (input: { api: string }): Promise<Partial<GraphState>> => {
       const { api: apiName } = input;
       const bestApi = apis.find((a) => a.api_name === apiName);
       if (!bestApi) {
         throw new Error(
-          `API ${apiName} not found in list of APIs: ${apis
+          `API ${apiName} not found in the list of available APIs: ${apis
             .map((a) => a.api_name)
             .join(", ")}`
         );
       }
-      return JSON.stringify(bestApi);
+      return {
+        bestApi,
+      };
     },
     {
-      name: "Select_API",
+      name: "select_api",
       description,
       schema,
     }
@@ -465,78 +588,118 @@ Parameters: ${[...api.required_parameters, ...api.optional_parameters]
 }
 
 /**
- * Tool to process the API response.
+ * Instantiate createSelectAPITool with actual parameters.
+ * Replace `existingApis` and `initialQuery` with your actual data.
  */
-export const processApiResponseTool = tool(
-  async (input: { state: { bestApi: DatasetSchema; fetchResponse: any } }): Promise<Partial<GraphState>> => {
-    const { bestApi, fetchResponse } = input.state;
+const existingApis: DatasetSchema[] = [
+  // Populate with your DatasetSchema objects
+  // Example:
+  // {
+  //   id: "1",
+  //   category_name: "Music",
+  //   tool_name: "PlaylistTool",
+  //   api_name: "PlaylistAPI",
+  //   api_description: "Fetches playlist data.",
+  //   required_parameters: [...],
+  //   optional_parameters: [...],
+  //   method: "GET",
+  //   api_url: "https://api.audius.co/playlists",
+  // },
+];
 
-    if (!fetchResponse) {
-      throw new Error("No response received from the API.");
-    }
+const initialQuery: string = "Find popular playlists for jazz music.";
 
-    // Example processing logic based on API type
-    let processedData = {};
-    switch (bestApi.api_name) {
-      case 'PlaylistAPI':
-        processedData = await processPlaylistDataResponse(fetchResponse);
-        break;
-      case 'TrackAPI':
-        processedData = await processTrackDataResponse(fetchResponse);
-        break;
-      case 'UserAPI':
-        processedData = await processUserDataResponse(fetchResponse);
-        break;
-      // Add more cases as needed
-      default:
-        processedData = fetchResponse;
-    }
+// Instantiate the SelectAPITool
+const selectAPIToolInstance = createSelectAPITool(existingApis, initialQuery);
 
-    return { 
-      response: processedData, 
-      error: false
-    };
-  },
-  {
-    name: "process_api_response",
-    description: "Processes the response received from the API fetch request.",
-    schema: z.object({
-      state: z.object({
-        bestApi: z.any(),
-        fetchResponse: z.any(),
-      }),
-    }),
+/**
+ * @param {GraphState} state
+ */
+export async function createFetchRequest(
+  state: GraphState
+): Promise<Partial<GraphState>> {
+  const { params, bestApi } = state;
+  if (!bestApi) {
+    throw new Error("No best API found");
   }
-);
 
-async function processTrackDataResponse(response: TrackData, state: GraphState): Promise<any> {
-  // Implement your processing logic for TrackAPI response here
-   // This is a placeholder function
-   return response;
-}
+  let response: any = null;
+  try {
+    if (!params) {
+      const fetchRes = await fetch(bestApi.api_url, {
+        method: bestApi.method,
+      });
+      response = fetchRes.ok ? await fetchRes.json() : await fetchRes.text();
+    } else {
+      let fetchOptions: Record<string, any> = {
+        method: bestApi.method,
+      };
+      let parsedUrl = bestApi.api_url;
 
-async function processUserDataResponse(response: UserData, state: GraphState): Promise<any> {
+      const paramKeys = Object.entries(params);
+      paramKeys.forEach(([key, value]) => {
+        if (parsedUrl.includes(`{${key}}`)) {
+          parsedUrl = parsedUrl.replace(`{${key}}`, value);
+          delete params[key];
+        }
+      });
 
-  // Implement your processing logic for UserAPI response here
-  return response;
-}
+      const url = new URL(parsedUrl);
 
-async function processPlaylistDataResponse(response: PlaylistData, state: GraphState): Promise<any> {
-  // Implement your processing logic for PlaylistAPI response here
-   return response;
+      if (["GET", "HEAD"].includes(bestApi.method)) {
+        Object.entries(params).forEach(([key, value]) =>
+          url.searchParams.append(key, value)
+        );
+      } else {
+        fetchOptions = {
+          ...fetchOptions,
+          body: JSON.stringify(params),
+        };
+      }
+
+      const fetchRes = await fetch(url, fetchOptions);
+      response = fetchRes.ok ? await fetchRes.json() : await fetchRes.text();
+    }
+
+    if (response) {
+      return {
+        response,
+      };
+    }
+  } catch (e) {
+    console.error("Error fetching API");
+    console.error(e);
+  }
+
+  return {
+    response: null,
+  };
 }
 
 
 /**
  * List of all tools used in the ecosystem.
  */
-export const ALL_TOOLS_LIST = {
-  extractCategory,
-  createSelectAPITool, // Updated to use the factory function
-  extractParameters,
-  requestParameters,
+export const ALL_TOOLS_LIST: { [key: string]: StructuredToolInterface | RunnableToolLike | Promise<Partial<GraphState>> | ((state: GraphState) => Promise<Partial<GraphState>>) } = {
+  extractCategory: ExtractCategoryTool,
+  extractParameters: extractParameters,
   readUserInputTool,
   ExtractHighLevelCategoriesTool,
-  processApiResponseTool
+  createFetchRequest,
+  selectApi: selectAPIToolInstance, // Use the instantiated tool
   // Add other tools here as needed
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+

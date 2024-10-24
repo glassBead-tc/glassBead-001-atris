@@ -70,4 +70,3 @@ export const createFetchRequest = tool(
     // schema: z.object({ ... })
   }
 );
-
