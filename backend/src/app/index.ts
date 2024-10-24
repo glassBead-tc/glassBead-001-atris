@@ -1,13 +1,13 @@
+
 import { logger } from "./logger.js";
 import { ChatOpenAI } from "@langchain/openai";
 import { ComplexityLevel, DatasetSchema, EntityType } from "./types.js";
 import fs from "fs";
 import dotenv from 'dotenv';
-import { extractCategory, extractParameters, createFetchRequest, requestParameters, selectApi, ALL_TOOLS_LIST } from "./tools/tools.js";
+import { ALL_TOOLS_LIST, extractCategory, extractParameters, createFetchRequest, selectApi, requestParameters } from "./tools/tools.js";
 import { StateGraph, END, START } from "@langchain/langgraph";
-import { findMissingParams } from "./utils.js";
 import { TRIMMED_CORPUS_PATH } from "./constants.js";
-import { StructuredToolInterface } from "@langchain/core/tools";
+import { findMissingParams } from "./utils.js";
 
 dotenv.config({ path: '../.env' });
 
@@ -59,7 +59,7 @@ export type GraphState = {
   /**
    * Is this an entity query?
    */
-  isEntityQuery: boolean
+  isEntityQuery: boolean;
   /**
    * The name of the entity
    */
@@ -88,10 +88,7 @@ const graphChannels = {
 };
 
 /**
- * Determines the next node based on the current state.
- *
- * @param {GraphState} state - The current state of the graph.
- * @returns {"human_loop_node" | "execute_request_node"} - The next node to transition to.
+ * @param {GraphState} state
  */
 const verifyParams = (
   state: GraphState
@@ -117,12 +114,8 @@ const verifyParams = (
   return "execute_request_node";
 };
 
-/**
- * Retrieves the APIs based on the selected categories.
- *
- * @param {GraphState} state - The current state of the graph.
- * @returns {{ apis: DatasetSchema[] }} - The filtered list of APIs.
- */
+
+
 function getApis(state: GraphState) {
   const { categories } = state;
   if (!categories || categories.length === 0) {
@@ -142,74 +135,68 @@ function getApis(state: GraphState) {
 }
 
 /**
- * Creates the state graph for the application.
- *
- * @returns {StateGraph<GraphState>} - The compiled state graph.
+ * TODO: implement
  */
 function createGraph() {
   const graph = new StateGraph<GraphState>({
     channels: graphChannels,
   })
-    .addNode("extract_category_node", extractCategory) // get categories from user query
-    .addNode("get_apis_node", getApis) // get appropriate APIs for high-level categories
-    .addNode("select_api_node", selectApi) // select most relevant API endpoint among category group for use
-    .addNode("extract_params_node", extractParameters) // extract parameters for API call
-    .addNode("human_loop_node", requestParameters) // request parameters from user if required param is missing
-    .addNode("execute_request_node", createFetchRequest) // execute API call
-    .addEdge("extract_category_node", "get_apis_node") // extract categories -> get APIs
-    .addEdge("get_apis_node", "select_api_node") // get APIs -> select API
-    .addEdge("select_api_node", "extract_params_node") // select API -> extract params
-    .addConditionalEdges("extract_params_node", verifyParams) // extract params -> verify params if params are missing
-    .addConditionalEdges("human_loop_node", verifyParams) // request params -> verify params with user to get missing params
-    .addEdge(START, "extract_category_node") // start -> extract categories
-    .addEdge("execute_request_node", END); // process response -> end
+    .addNode("extract_category_node", extractCategory)
+    .addNode("get_apis_node", getApis)
+    .addNode("select_api_node", selectApi)
+    .addNode("extract_params_node", extractParameters)
+    .addNode("human_loop_node", requestParameters)
+    .addNode("execute_request_node", createFetchRequest)
+    .addEdge("extract_category_node", "get_apis_node")
+    .addEdge("get_apis_node", "select_api_node")
+    .addEdge("select_api_node", "extract_params_node")
+    .addConditionalEdges("extract_params_node", verifyParams)
+    .addConditionalEdges("human_loop_node", verifyParams)
+    .addEdge(START, "extract_category_node")
+    .addEdge("execute_request_node", END);
 
   const app = graph.compile();
   return app;
-};
-
-/**
- * Example of using a tool from ALL_TOOLS_LIST
- */
-async function main() {
-  const llm = new ChatOpenAI(/* your configurations */);
-  
-  let state: GraphState = {
-    llm,
-    query: "Find popular playlists for jazz music.",
-    queryType: null,
-    categories: null,
-    apis: null,
-    bestApi: null,
-    parameters: null,
-    response: null,
-    complexity: null,
-    isEntityQuery: false,
-    entityName: null,
-    entityType: null,
-    error: false,
-    messages: [],
-    // Initialize other properties as needed
-  };
-
-  try {
-    // Example tool execution
-    const extractCategory = ALL_TOOLS_LIST["extractCategory"] as StructuredToolInterface;
-    const { category } = await extractCategory.run({ query: state.query! });
-    state = { ...state, categories: [...(state.categories || []), category] };
-    
-    const extractParameters = ALL_TOOLS_LIST["extractParameters"] as StructuredToolInterface;
-    const { extractedParameters } = await extractParameters.run({ parameters: ["param1", "param2"] });
-    state = { ...state, parameters: extractedParameters };
-    
-    const requestParameters = ALL_TOOLS_LIST["requestParameters"] as StructuredToolInterface;
-    const { requestedParameters } = await requestParameters.run({ missingParams: ["param3"] });
-    state = { ...state, parameters: { ...state.parameters, ...requestedParameters } };
-    
-    // ... Continue with other tool executions ...
-    
-    logger.info("Main execution completed");
-  } catch (error) {
-    logger.error("Error during main execution:", error);
-  }
 }
+
+const datasetQuery = "How many plays does 115 SECONDS OF CLAMS by TRICK CHENEY. have on Audius?";
+
+async function main(query: string) {
+  const app = createGraph();
+
+  const llm = new ChatOpenAI({
+    modelName: "gpt-4o-mini",
+    temperature: 0,
+  });
+
+  const stream = await app.stream({
+    llm,
+    query,
+  });
+
+  let finalResult: GraphState | null = null;
+  for await (const event of stream) {
+    console.log("\n------\n");
+    if (Object.keys(event)[0] === "execute_request_node") {
+      console.log("---FINISHED---");
+      finalResult = event.execute_request_node;
+    } else {
+      console.log("Stream event: ", Object.keys(event)[0]);
+      // Uncomment the line below to see the values of the event.
+      // console.log("Value(s): ", Object.values(event)[0]);
+    }
+  }
+
+  if (!finalResult) {
+    throw new Error("No final result");
+  }
+  if (!finalResult.bestApi) {
+    throw new Error("No best API found");
+  }
+
+
+  console.log("---FETCH RESULT---");
+  console.log(finalResult.response);
+}
+
+main(datasetQuery);

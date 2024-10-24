@@ -1,4 +1,3 @@
-
 import { StructuredTool, StructuredToolInterface, tool } from "@langchain/core/tools";
 import { RunnableToolLike } from "@langchain/core/runnables";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
@@ -10,6 +9,7 @@ import * as readline from "readline";
 import { findMissingParams } from "../utils.js";
 import fs from "fs";
 import { HIGH_LEVEL_CATEGORY_MAPPING, TRIMMED_CORPUS_PATH } from "../constants.js";
+import { verify } from "crypto";
 
 /**
  * Utility function to call the Audius API.
@@ -282,7 +282,23 @@ export const ExtractCategoryTool = tool(
   }
 );
 
+export async function verifyParams(state: GraphState): Promise<Partial<GraphState>> {
+  const requiredParameters = state.bestApi?.required_parameters?.map(param => param.name) || [];
+  const missingParams = findMissingParams(requiredParameters, Object.keys(state.params || {}));
 
+  if (missingParams.length > 0) {
+    logger.info("Additional information needed to answer the question accurately.");
+    logger.debug(`Missing parameters: ${missingParams.join(', ')}`);
+    return {
+      error: true,
+      message: "Missing parameters",
+    };
+  }
+  return {
+    error: false,
+    message: "Parameters verified successfully.",
+  };
+}
 
 
 /**
@@ -689,6 +705,7 @@ export const ALL_TOOLS_LIST: { [key: string]: StructuredToolInterface | Runnable
   selectApi: selectAPIToolInstance, // Use the instantiated tool
   // Add other tools here as needed
 };
+
 
 
 
