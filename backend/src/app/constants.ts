@@ -1,6 +1,6 @@
 import path from "path";
 
-export const TRIMMED_CORPUS_PATH = path.resolve('', '../data/audius_corpus.json');
+export const TRIMMED_CORPUS_PATH = path.resolve('', './src/app/data/audius_corpus.json');
 
 export const HIGH_LEVEL_CATEGORY_MAPPING = {
   Tracks: [

@@ -3,58 +3,85 @@ import { RunnableToolLike } from "@langchain/core/runnables";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import nlp from "compromise";
 import { z } from "zod";
-import { GraphState, DatasetSchema, DatasetParameters, ComplexityLevel, EntityType, QueryType } from "../types.js";
+import { GraphState, DatasetSchema, DatasetParameters, ComplexityLevel, EntityType, QueryType, AudiusCorpus } from "../types.js";
 import { logger } from "../logger.js";
 import * as readline from "readline";
 import { findMissingParams } from "../utils.js";
 import fs from "fs";
 import { HIGH_LEVEL_CATEGORY_MAPPING, TRIMMED_CORPUS_PATH } from "../constants.js";
+import fetch from 'node-fetch';
 import { verify } from "crypto";
+
+// Function to fetch and select an Audius API host
+async function getAudiusHost(): Promise<string> {
+  const response = await fetch('https://api.audius.co');
+  const data = await response.json();
+
+  if (!data.data || data.data.length === 0) {
+    throw new Error('No available Audius hosts');
+  }
+
+  // For simplicity, select the first host
+  // You might implement logic to select a host based on health or availability
+  const selectedHost = data.data[0];
+  return selectedHost;
+}
 
 /**
  * Utility function to call the Audius API.
  */
-export async function callAudiusAPI<Output extends Record<string, any> = Record<string, any>>(
-  endpoint: string,
-  params: Record<string, string>
-): Promise<Output> {
-  if (!process.env.AUDIUS_API_KEY) {
-    throw new Error("AUDIUS_API_KEY is not set");
-  }
-
-  const baseURL = process.env.AUDIUS_BASE_URL || "https://api.audius.co";
-  const queryParams = new URLSearchParams(params).toString();
-  const url = `${baseURL}${endpoint}?${queryParams}`;
-
+export async function callAudiusAPI(apiUrl: string, parameters: Record<string, any>, state: GraphState): Promise<any> {
   try {
-    const response = await fetch(url, {
-      method: "GET",
+    // Ensure we have a selected host
+    let baseUrl = state.selectedHost;
+
+    if (!baseUrl) {
+      // Fetch available hosts and select one
+      baseUrl = await getAudiusHost();
+      state.selectedHost = baseUrl; // Store in state for reuse
+    }
+
+    // Include the required app_name parameter
+    parameters.app_name = process.env.AUDIUS_APP_NAME || 'YOUR_APP_NAME';
+
+    // Construct the full URL
+    const url = new URL(apiUrl, baseUrl);
+
+    // Append query parameters for GET requests
+    if (Object.keys(parameters).length > 0) {
+      Object.entries(parameters).forEach(([key, value]) => {
+        url.searchParams.append(key, String(value));
+      });
+    }
+
+    console.log('Constructed URL:', url.toString());
+
+    // Make the API request
+    const response = await fetch(url.toString(), {
+      method: 'GET', // Assuming GET; adjust if needed
       headers: {
-        "X-API-KEY": process.env.AUDIUS_API_KEY,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
+        // Include API key if required
       },
     });
 
     if (!response.ok) {
-      let resText: string;
-      try {
-        resText = JSON.stringify(await response.json(), null, 2);
-      } catch (_) {
-        try {
-          resText = await response.text();
-        } catch (_) {
-          resText = response.statusText;
-        }
-      }
-      throw new Error(`Failed to fetch data from ${endpoint}.\nResponse: ${resText}`);
+      const text = await response.text();
+      console.error(`Error calling Audius API: ${response.status} ${response.statusText}`);
+      console.error(`Response body: ${text}`);
+      throw new Error(`Audius API request failed with status ${response.status}`);
     }
 
-    const data: Output = await response.json();
+    const data = await response.json();
     return data;
   } catch (error) {
-    console.error(`Error in callAudiusAPI: ${(error as Error).message}`);
+    console.error('Error in callAudiusAPI:', error);
     throw error;
   }
+}
+
+function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 /**
@@ -64,41 +91,30 @@ export async function callAudiusAPI<Output extends Record<string, any> = Record<
  * @returns {Promise<Partial<GraphState>>} - The updated graph state with the selected API.
  */
 export async function selectApi(state: GraphState): Promise<Partial<GraphState>> {
-  const { llm, query, apis } = state;
+  const { apis, isEntityQuery, entityType } = state;
 
   if (!apis || apis.length === 0) {
     throw new Error("No APIs available for selection.");
   }
 
-  const prompt = ChatPromptTemplate.fromMessages([
-    [
-      "system",
-      `You are an expert software engineer assisting in selecting the most suitable Audius API for the given query.
-Given the user's query, utilize the 'Select_API' tool to determine the best API.`,
-    ],
-    ["human", `Query: ${query}`],
-  ]);
+  let bestApi: DatasetSchema | undefined;
 
-  const selectTool = createSelectAPITool(apis, query!);
-  const modelWithTools = llm!.withStructuredOutput(selectTool);
-  const chain = prompt.pipe(modelWithTools).pipe(selectTool);
+  if (isEntityQuery && entityType) {
+    // Select the 'Get [Entity]' API
+    const getApiName = `Get ${capitalize(entityType)}`;
+    bestApi = apis.find(api => api.api_name === getApiName);
 
-  try {
-    const response = await chain.invoke({
-      api: "", // The LLM will populate this based on the prompt
-    });
-    const bestApi: DatasetSchema = JSON.parse(response as string);
-    return {
-      bestApi,
-    };
-  } catch (error) {
-    console.error(`Error in selectApi: ${(error as Error).message}`);
-    throw error;
+    if (!bestApi) {
+      throw new Error(`No API found for ${getApiName}`);
+    }
+  } else {
+    // Existing logic for non-entity queries
+    // For simplicity, select the first API as a default
+    bestApi = apis[0];
   }
+
+  return { bestApi };
 }
-
-
-
 
 // READ/PARSE USER INPUT -> EXTRACT PARAMS -> REQUEST PARAMS
 
@@ -107,9 +123,6 @@ Given the user's query, utilize the 'Select_API' tool to determine the best API.
  * Format for user input: <name>,<value>:::<name>,<value>
  */
 const paramsFormat = `<name>,<value>:::<name>,<value>`;
-
-
-
 
 /**
  * Tool to read user input from the command line.
@@ -406,12 +419,8 @@ Optional parameters: {optionalParams}`,
     })
     .describe("The extracted parameters from the query.");
 
-  // Define the extractParamsTool within tools.ts
   const extractParamsTool = tool(
     async (input: { requiredParams: string; optionalParams: string; query: string }) => {
-      // This function should interact with the LLM to extract parameters
-      // Implementation details would depend on the specific LLM setup
-      // For demonstration, returning an empty object
       return JSON.stringify({});
     },
     {
@@ -426,22 +435,21 @@ Optional parameters: {optionalParams}`,
     }
   );
 
-  // Bind the extractParamsTool to the language model
   const modelWithTools = llm!.withStructuredOutput(extractParamsTool);
 
-  // Create the chain by piping the prompt through the model and tool
-  const chain = prompt.pipe(modelWithTools).pipe(extractParamsTool);
+  // Safely access required and optional parameters
+  const requiredParams = (bestApi?.required_parameters || [])
+    .map(
+      (p) => `Name: ${p.name}, Description: ${p.description}, Type: ${p.type}`
+    )
+    .join("\n");
+  const optionalParams = (bestApi?.optional_parameters || [])
+    .map(
+      (p) => `Name: ${p.name}, Description: ${p.description}, Type: ${p.type}`
+    )
+    .join("\n");
 
-  const requiredParams = bestApi?.required_parameters
-    .map(
-      (p) => `Name: ${p.name}, Description: ${p.description}, Type: ${p.type}`
-    )
-    .join("\n");
-  const optionalParams = bestApi?.optional_parameters
-    .map(
-      (p) => `Name: ${p.name}, Description: ${p.description}, Type: ${p.type}`
-    )
-    .join("\n");
+  const chain = prompt.pipe(modelWithTools).pipe(extractParamsTool);
 
   const response = await chain.invoke({
     query,
@@ -493,21 +501,58 @@ export const ExtractHighLevelCategoriesTool = tool(
 );
 
 /**
+ * Extracts the entity name from the user's query.
+ *
+ * @param {string} query - The user's query.
+ * @param {EntityType} entityType - The type of the entity ('track', 'user', or 'playlist').
+ * @returns {string | null} - The extracted entity name or null if not found.
+ */
+function extractEntityNameFromQuery(query: string, entityType: EntityType): string | null {
+  const doc = nlp(query);
+  let entityName: string | null = null;
+
+  switch (entityType) {
+    case 'track':
+      // Look for track-related terms and extract entity name
+      entityName = doc.match('track [#A-Z]+').normalize().out('text');
+      break;
+    case 'user':
+      // Look for user-related terms and extract entity name
+      entityName = doc.match('user [#A-Z]+').normalize().out('text');
+      break;
+    case 'playlist':
+      // Look for playlist-related terms and extract entity name
+      entityName = doc.match('playlist [#A-Z]+').normalize().out('text');
+      break;
+    default:
+      break;
+  }
+
+  if (!entityName) {
+    // As a fallback, extract proper nouns which are likely entity names
+    const nouns = doc.nouns().toTitleCase().out('array');
+    if (nouns.length > 0) {
+      entityName = nouns.join(' ');
+    }
+  }
+
+  return entityName || null;
+}
+
+/**
  * Extracts high-level categories based on the user's query using the ExtractHighLevelCategoriesTool.
  *
  * @param {GraphState} state - The current state of the graph.
  * @returns {Promise<Partial<GraphState>>} - The updated graph state with extracted categories.
  */
-export async function extractCategory(
-  state: GraphState
-): Promise<Partial<GraphState>> {
+export async function extractCategory(state: GraphState): Promise<Partial<GraphState>> {
   // Prepare the prompt with categories and tools
-  const allApis: DatasetSchema[] = JSON.parse(
-    fs.readFileSync(TRIMMED_CORPUS_PATH, "utf-8")
-  );
+  const allApis: AudiusCorpus = JSON.parse(fs.readFileSync(TRIMMED_CORPUS_PATH, "utf-8"));
+
+  // Access the endpoints array
   const categoriesAndTools = Object.entries(HIGH_LEVEL_CATEGORY_MAPPING)
     .map(([high, low]) => {
-      const allTools = allApis.filter((api) => low.includes(api.category_name));
+      const allTools = allApis.endpoints.filter((api) => low.includes(api.category_name));
       return `High Level Category: ${high}\nTools:\n${allTools
         .map((item) => `Name: ${item.tool_name}`)
         .join("\n")}`;
@@ -523,30 +568,97 @@ export async function extractCategory(
 
 Currently, you are helping a fellow engineer select the best category of APIs based on their query.
 You are only presented with a list of high level API categories, and their query.
+Additionally, you need to determine if the query is about a specific entity (track, user, or playlist). If it is, identify the entity type and the entity name.
+
 Think slowly, and carefully select the best category for the query.
+
 Here are all the high level categories, and every tool name that falls under them:
 ${categoriesAndTools}`,
     ],
     ["human", `Query: ${query}`],
   ]);
 
-
-  // Bind the tool to the language model
-  const modelWithTools = llm!.withStructuredOutput([ExtractHighLevelCategoriesTool]);
-
-  // Create the chain by piping the prompt through the model and tool
-  const chain = prompt.pipe(modelWithTools).pipe(ExtractHighLevelCategoriesTool);
-
-  // Invoke the chain with the query and categories/tools mapping
-  const response = await chain.invoke({
-    highLevelCategories: [], // The LLM will populate this based on the prompt
+  const schema = z.object({
+    categories: z.array(z.string()).describe("The high-level categories that best match the query."),
+    isEntityQuery: z.boolean().describe("Whether the query is about a specific entity."),
+    entityType: z.enum(['track', 'user', 'playlist']).nullable().describe("The type of the entity if applicable."),
+    entityName: z.string().nullable().describe("The name of the entity if applicable."),
   });
 
-  // Parse the response to get high-level categories
-  const highLevelCategories: string[] = JSON.parse(response);
+  const modelWithStructuredOutput = llm!.withStructuredOutput(schema, {
+    name: "extract_category",
+  });
+
+  const chain = prompt.pipe(modelWithStructuredOutput);
+
+  const res = await chain.invoke({});
+
+  let { categories, isEntityQuery, entityType, entityName } = res;
+
+  // If isEntityQuery is undefined, determine it based on categories
+  if (typeof isEntityQuery !== 'boolean') {
+    isEntityQuery = false;
+    if (categories) {
+      if (categories.includes('Tracks')) {
+        isEntityQuery = true;
+        entityType = 'track';
+      } else if (categories.includes('Users')) {
+        isEntityQuery = true;
+        entityType = 'user';
+      } else if (categories.includes('Playlists')) {
+        isEntityQuery = true;
+        entityType = 'playlist';
+      }
+    }
+  }
+
+  // If entityName is null, attempt to extract it from the query
+  if (isEntityQuery && !entityName) {
+    entityName = extractEntityNameFromQuery(state.query!, entityType as EntityType);
+  }
 
   return {
-    categories: highLevelCategories,
+    categories,
+    isEntityQuery,
+    entityType,
+    entityName,
+  };
+}
+
+export async function searchEntity(state: GraphState): Promise<Partial<GraphState>> {
+  const { entityType, entityName } = state;
+
+  if (!entityType || !entityName) {
+    throw new Error("Entity type or name is missing in state.");
+  }
+
+  // Construct parameters for the search API
+  const parameters = { query: entityName };
+
+  // Select the appropriate "Search [Entity]" API
+  const searchApiName = `Search ${capitalize(entityType)}s`;
+
+  const searchApi = state.apis?.find(api => api.api_name === searchApiName);
+
+  if (!searchApi) {
+    throw new Error(`No API found for ${searchApiName}`);
+  }
+
+  // Call the search API
+  const response = await callAudiusAPI(searchApi.api_url, parameters, state);
+
+  // Extract the entity ID from the response
+  const entityId = response.data?.[0]?.id;
+
+  if (!entityId) {
+    throw new Error(`Could not find ${entityType} with name "${entityName}"`);
+  }
+
+  // Update parameters for the next API call
+  const updatedParameters = { ...state.parameters, [`${entityType}_id`]: entityId };
+
+  return {
+    parameters: updatedParameters,
   };
 }
 
@@ -628,68 +740,38 @@ const initialQuery: string = "Find popular playlists for jazz music.";
 // Instantiate the SelectAPITool
 const selectAPIToolInstance = createSelectAPITool(existingApis, initialQuery);
 
+
 /**
  * @param {GraphState} state
  */
-export async function createFetchRequest(
-  state: GraphState
-): Promise<Partial<GraphState>> {
-  const { params, bestApi } = state;
+export async function createFetchRequest(state: GraphState): Promise<Partial<GraphState>> {
+  const { bestApi, parameters } = state;
+
   if (!bestApi) {
     throw new Error("No best API found");
   }
 
-  let response: any = null;
-  try {
-    if (!params) {
-      const fetchRes = await fetch(bestApi.api_url, {
-        method: bestApi.method,
-      });
-      response = fetchRes.ok ? await fetchRes.json() : await fetchRes.text();
-    } else {
-      let fetchOptions: Record<string, any> = {
-        method: bestApi.method,
-      };
-      let parsedUrl = bestApi.api_url;
-
-      const paramKeys = Object.entries(params);
-      paramKeys.forEach(([key, value]) => {
-        if (parsedUrl.includes(`{${key}}`)) {
-          parsedUrl = parsedUrl.replace(`{${key}}`, value);
-          delete params[key];
-        }
-      });
-
-      const url = new URL(parsedUrl);
-
-      if (["GET", "HEAD"].includes(bestApi.method)) {
-        Object.entries(params).forEach(([key, value]) =>
-          url.searchParams.append(key, value)
-        );
-      } else {
-        fetchOptions = {
-          ...fetchOptions,
-          body: JSON.stringify(params),
-        };
-      }
-
-      const fetchRes = await fetch(url, fetchOptions);
-      response = fetchRes.ok ? await fetchRes.json() : await fetchRes.text();
-    }
-
-    if (response) {
-      return {
-        response,
-      };
-    }
-  } catch (e) {
-    console.error("Error fetching API");
-    console.error(e);
+  if (!bestApi.api_url) {
+    console.error("API URL is undefined for bestApi:", bestApi);
+    throw new Error("API URL is undefined");
   }
 
-  return {
-    response: null,
-  };
+  // Replace placeholders in the URL with actual parameters
+  let parsedUrl = bestApi.api_url;
+
+  const paramKeys = Object.entries(parameters || {});
+  paramKeys.forEach(([key, value]) => {
+    if (parsedUrl.includes(`{${key}}`)) {
+      parsedUrl = parsedUrl.replace(`{${key}}`, encodeURIComponent(value));
+      // Remove the parameter since it's used in the URL
+      delete parameters![key];
+    }
+  });
+
+  // Call the Audius API with the updated URL and parameters
+  const response = await callAudiusAPI(parsedUrl, parameters || {}, state);
+
+  return { response };
 }
 
 
@@ -705,6 +787,8 @@ export const ALL_TOOLS_LIST: { [key: string]: StructuredToolInterface | Runnable
   selectApi: selectAPIToolInstance, // Use the instantiated tool
   // Add other tools here as needed
 };
+
+
 
 
 

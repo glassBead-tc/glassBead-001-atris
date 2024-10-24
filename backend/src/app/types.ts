@@ -46,15 +46,16 @@ export interface GraphState {
   complexity: string | null;
   isEntityQuery: boolean;
   entityName: string | null;
-  entity: AudiusData | null;
-  error: boolean;
+  entityType: EntityType | null;
   parameters: Record<string, any> | null;
+  error: boolean;
+  selectedHost: string | null;
+  entity: AudiusData | null;
   secondaryApi: DatasetSchema | null;
   secondaryResponse: any | null;
   multiStepHandled: boolean;
   initialState: GraphState | null;
   formattedResponse: string | null;
-  entityType: 'user' | 'playlist' | 'track' | null;
   message: string | null;
 }
 
@@ -212,6 +213,7 @@ export const initialGraphState: GraphState = {
   multiStepHandled: false, 
   initialState: null,
   entityType: null,
+  selectedHost: null
 };
 
 export type NodeNames =
@@ -238,5 +240,33 @@ export interface SelectAPIResponse {
   api: DatasetSchema;
   parameters: Record<string, any>;
   error: boolean | null;
+}
 
+interface ApiEndpoint {
+  id: string;
+  category_name: string;
+  tool_name: string;
+  api_name: string;
+  api_description: string;
+  required_parameters: Array<{
+    name: string;
+    type: string;
+    description: string;
+    default: string;
+  }>;
+  optional_parameters: Array<{
+    name: string;
+    type: string;
+    description: string;
+    default: string;
+  }>;
+  method: string;
+  template_response: {
+    data: any; // Adjust this type based on your actual data structure
+  };
+  api_url: string;
+}
+
+export interface AudiusCorpus {
+  endpoints: ApiEndpoint[];
 }

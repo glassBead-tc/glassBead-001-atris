@@ -1,10 +1,9 @@
-
 import { logger } from "./logger.js";
 import { ChatOpenAI } from "@langchain/openai";
-import { ComplexityLevel, DatasetSchema, EntityType } from "./types.js";
+import { ComplexityLevel, DatasetSchema, EntityType, AudiusCorpus } from "./types.js";
 import fs from "fs";
 import dotenv from 'dotenv';
-import { ALL_TOOLS_LIST, extractCategory, extractParameters, createFetchRequest, selectApi, requestParameters } from "./tools/tools.js";
+import { ALL_TOOLS_LIST, extractCategory, extractParameters, createFetchRequest, selectApi, requestParameters, searchEntity } from "./tools/tools.js";
 import { StateGraph, END, START } from "@langchain/langgraph";
 import { TRIMMED_CORPUS_PATH } from "./constants.js";
 import { findMissingParams } from "./utils.js";
@@ -100,9 +99,7 @@ const verifyParams = (
   if (!parameters) {
     return "human_loop_node";
   }
-  const requiredParamsKeys = bestApi.required_parameters.map(
-    ({ name }) => name
-  );
+  const requiredParamsKeys = (bestApi.required_parameters || []).map(({ name }) => name);
   const extractedParamsKeys = Object.keys(parameters);
   const missingKeys = findMissingParams(
     requiredParamsKeys,
@@ -121,13 +118,25 @@ function getApis(state: GraphState) {
   if (!categories || categories.length === 0) {
     throw new Error("No categories passed to get_apis_node");
   }
-  const allData: DatasetSchema[] = JSON.parse(
-    fs.readFileSync(TRIMMED_CORPUS_PATH, "utf8")
-  );
+
+  // Parse the JSON and access the endpoints array
+  const allData: AudiusCorpus = JSON.parse(fs.readFileSync(TRIMMED_CORPUS_PATH, "utf8"));
+  const endpoints = allData.endpoints;
+
+  console.log('Categories from state:', categories);
 
   const apis = categories
-    .map((c) => allData.filter((d) => d.category_name === c))
+    .map((c) => {
+      // Corrected to filter by category_name instead of api_name
+      const matchedApis = endpoints.filter((d) => d.category_name === c);
+      console.log(`Matched APIs for category "${c}":`, matchedApis);
+      return matchedApis;
+    })
     .flat();
+
+  if (apis.length === 0) {
+    throw new Error("No APIs available for selection.");
+  }
 
   return {
     apis,
@@ -144,12 +153,17 @@ function createGraph() {
     .addNode("extract_category_node", extractCategory)
     .addNode("get_apis_node", getApis)
     .addNode("select_api_node", selectApi)
+    .addNode("handle_entity_query_node", searchEntity)
     .addNode("extract_params_node", extractParameters)
     .addNode("human_loop_node", requestParameters)
     .addNode("execute_request_node", createFetchRequest)
     .addEdge("extract_category_node", "get_apis_node")
     .addEdge("get_apis_node", "select_api_node")
-    .addEdge("select_api_node", "extract_params_node")
+    // Conditional edge based on isEntityQuery
+    .addConditionalEdges("select_api_node", (state: GraphState) => {
+      return state.isEntityQuery ? "handle_entity_query_node" : "extract_params_node";
+    })
+    .addEdge("handle_entity_query_node", "extract_params_node")
     .addConditionalEdges("extract_params_node", verifyParams)
     .addConditionalEdges("human_loop_node", verifyParams)
     .addEdge(START, "extract_category_node")
