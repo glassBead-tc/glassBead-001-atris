@@ -55,7 +55,7 @@ export interface GraphState {
   initialState: GraphState | null;
   formattedResponse: string | null;
   entityType: 'user' | 'playlist' | 'track' | null;
-  stateMessages: string[] | null;
+  message: string | null;
 }
 
 export type QueryType =
