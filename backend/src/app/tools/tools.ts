@@ -44,15 +44,18 @@ export async function callAudiusAPI(apiUrl: string, parameters: Record<string, a
     // Include the required app_name parameter
     parameters.app_name = process.env.AUDIUS_APP_NAME || 'YOUR_APP_NAME';
 
+    // Ensure the apiUrl starts with '/v1'
+    if (!apiUrl.startsWith('/v1')) {
+      apiUrl = `/v1${apiUrl}`;
+    }
+
     // Construct the full URL
     const url = new URL(apiUrl, baseUrl);
 
-    // Append query parameters for GET requests
-    if (Object.keys(parameters).length > 0) {
-      Object.entries(parameters).forEach(([key, value]) => {
-        url.searchParams.append(key, String(value));
-      });
-    }
+    // Append query parameters
+    Object.entries(parameters).forEach(([key, value]) => {
+      url.searchParams.append(key, String(value));
+    });
 
     console.log('Constructed URL:', url.toString());
 
@@ -65,14 +68,15 @@ export async function callAudiusAPI(apiUrl: string, parameters: Record<string, a
       },
     });
 
+    const text = await response.text();
+
     if (!response.ok) {
-      const text = await response.text();
       console.error(`Error calling Audius API: ${response.status} ${response.statusText}`);
       console.error(`Response body: ${text}`);
       throw new Error(`Audius API request failed with status ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = JSON.parse(text);
     return data;
   } catch (error) {
     console.error('Error in callAudiusAPI:', error);
@@ -626,40 +630,54 @@ ${categoriesAndTools}`,
 }
 
 export async function searchEntity(state: GraphState): Promise<Partial<GraphState>> {
-  const { entityType, entityName } = state;
+  const { entityName } = state;
 
-  if (!entityType || !entityName) {
-    throw new Error("Entity type or name is missing in state.");
+  if (!entityName) {
+    throw new Error("Entity name is missing in state.");
   }
 
-  // Construct parameters for the search API
-  const parameters = { query: entityName };
+  // Assuming you have the Audius URL or can construct it
+  const audiusUrl = constructAudiusUrl(entityName);
 
-  // Select the appropriate "Search [Entity]" API
-  const searchApiName = `Search ${capitalize(entityType)}s`;
+  // Construct parameters for the resolve API
+  const parameters = {
+    url: audiusUrl,
+    app_name: process.env.AUDIUS_APP_NAME || 'YOUR_APP_NAME',
+  };
 
-  const searchApi = state.apis?.find(api => api.api_name === searchApiName);
+  // Use the resolve endpoint
+  const apiUrl = '/v1/resolve';
 
-  if (!searchApi) {
-    throw new Error(`No API found for ${searchApiName}`);
-  }
-
-  // Call the search API
-  const response = await callAudiusAPI(searchApi.api_url, parameters, state);
+  // Call the resolve API
+  const response = await callAudiusAPI(apiUrl, parameters, state);
 
   // Extract the entity ID from the response
-  const entityId = response.data?.[0]?.id;
+  const entityId = response.data?.track?.id;
 
   if (!entityId) {
-    throw new Error(`Could not find ${entityType} with name "${entityName}"`);
+    throw new Error(`Could not resolve track with name "${entityName}"`);
   }
 
   // Update parameters for the next API call
-  const updatedParameters = { ...state.parameters, [`${entityType}_id`]: entityId };
+  const updatedParameters = { ...state.parameters, track_id: entityId };
 
   return {
     parameters: updatedParameters,
   };
+}
+
+/**
+ * Constructs an Audius URL for a track based on the entity name.
+ * Assumes entityName is in the format "Track Title by Artist Handle"
+ */
+function constructAudiusUrl(entityName: string): string {
+  const match = entityName.match(/^(.*?) by (.*?)$/);
+  if (!match) {
+    throw new Error(`Invalid entity name format: "${entityName}"`);
+  }
+  const trackTitle = match[1].trim().replace(/\s+/g, '-').toLowerCase();
+  const artistHandle = match[2].trim().replace(/\s+/g, '').toLowerCase();
+  return `https://audius.co/${artistHandle}/${trackTitle}`;
 }
 
 /**
@@ -756,8 +774,14 @@ export async function createFetchRequest(state: GraphState): Promise<Partial<Gra
     throw new Error("API URL is undefined");
   }
 
+  // Ensure the API URL includes '/v1'
+  let apiUrl = bestApi.api_url;
+  if (!apiUrl.startsWith('/v1')) {
+    apiUrl = `/v1${apiUrl}`;
+  }
+
   // Replace placeholders in the URL with actual parameters
-  let parsedUrl = bestApi.api_url;
+  let parsedUrl = apiUrl;
 
   const paramKeys = Object.entries(parameters || {});
   paramKeys.forEach(([key, value]) => {
