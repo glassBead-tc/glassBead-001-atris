@@ -115,6 +115,7 @@ const verifyParams = (
 
 function getApis(state: GraphState) {
   const { categories } = state;
+  
   if (!categories || categories.length === 0) {
     throw new Error("No categories passed to get_apis_node");
   }
@@ -126,10 +127,10 @@ function getApis(state: GraphState) {
   console.log('Categories from state:', categories);
 
   const apis = categories
-    .map((c) => {
-      // Corrected to filter by category_name instead of api_name
-      const matchedApis = endpoints.filter((d) => d.category_name === c);
-      console.log(`Matched APIs for category "${c}":`, matchedApis);
+    .map((category) => {
+      // Filter APIs by category_name
+      const matchedApis = endpoints.filter((endpoint) => endpoint.category_name === category);
+      console.log(`Matched APIs for category "${category}":`, matchedApis);
       return matchedApis;
     })
     .flat();
@@ -173,7 +174,7 @@ function createGraph() {
   return graph.compile();
 }
 
-const datasetQuery = "How many plays does 115 SECONDS OF CLAMS by TRICK CHENEY. have on Audius?";
+const datasetQuery = "How many plays does 115 SECONDS OF CLAMS have on Audius?";
 
 async function main(query: string) {
   const app = createGraph();
@@ -214,5 +215,6 @@ async function main(query: string) {
 }
 
 main(datasetQuery);
+
 
 

@@ -33,16 +33,7 @@ async function getAudiusHost(): Promise<string> {
 export async function callAudiusAPI(apiUrl: string, parameters: Record<string, any>, state: GraphState): Promise<any> {
   try {
     // Ensure we have a selected host
-    let baseUrl = state.selectedHost;
-
-    if (!baseUrl) {
-      // Fetch available hosts and select one
-      baseUrl = await getAudiusHost();
-      state.selectedHost = baseUrl; // Store in state for reuse
-    }
-
-    // Include the required app_name parameter
-    parameters.app_name = process.env.AUDIUS_APP_NAME || 'YOUR_APP_NAME';
+    let baseUrl = state.selectedHost || 'https://discoveryprovider.audius.co';
 
     // Ensure the apiUrl starts with '/v1'
     if (!apiUrl.startsWith('/v1')) {
@@ -52,19 +43,28 @@ export async function callAudiusAPI(apiUrl: string, parameters: Record<string, a
     // Construct the full URL
     const url = new URL(apiUrl, baseUrl);
 
+    // Remove the app_name parameter if it exists
+    if (parameters.app_name) {
+      delete parameters.app_name;
+    }
+
     // Append query parameters
     Object.entries(parameters).forEach(([key, value]) => {
       url.searchParams.append(key, String(value));
     });
 
-    console.log('Constructed URL:', url.toString());
+    // Convert URL to string and replace '+' with '%20'
+    const urlString = url.toString().replace(/\+/g, '%20');
+
+    // Log the constructed URL and parameters
+    console.log('Constructed URL:', urlString);
+    console.log('Request Parameters:', JSON.stringify(parameters, null, 2));
 
     // Make the API request
-    const response = await fetch(url.toString(), {
-      method: 'GET', // Assuming GET; adjust if needed
+    const response = await fetch(urlString, {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
-        // Include API key if required
+        'Accept': 'application/json'
       },
     });
 
@@ -380,7 +380,7 @@ export async function requestParameters(
 
 
 /**
- * Tool to extract parameters from a user's query using the ExtractHighLevelCategoriesTool.
+ * Tool to extract parameters from a user's query.
  *
  * @param {GraphState} state - The current state of the graph.
  * @returns {Promise<Partial<GraphState>>} - The updated graph state with extracted parameters.
@@ -390,22 +390,39 @@ export async function extractParameters(
 ): Promise<Partial<GraphState>> {
   const { query } = state;
 
-  // Use regular expression to extract "Track Title by Artist Name"
-  const regex = /(?:how many plays does )?(.*? by .*?)(?: have on audius\??)?$/i;
+  // Update regex to extract track title and artist name separately
+  const regex = /how many plays does\s+(.*?)\s+by\s+(.*?)\s*(have|\?|$)/i;
   const match = query?.match(regex);
 
-  if (match && match[1]) {
-    const trackArtistQuery = match[1].trim();
+  if (match && match[1] && match[2]) {
+    // Remove trailing punctuation from track title and artist name
+    const trackTitle = match[1].trim().replace(/[^\w\s]|_/g, "");
+    const artistName = match[2].trim().replace(/[^\w\s]|_/g, "");
     return {
       parameters: {
-        trackArtistQuery,
+        trackTitle,
+        artistName,
       },
     };
   }
 
-  // If pattern doesn't match, return an error or empty parameters
-  throw new Error("Could not extract track and artist information from the query.");
-} 
+  // If pattern doesn't match, try to extract just the track title
+  const titleRegex = /how many plays does\s+(.*?)\s*(have|\?|$)/i;
+  const titleMatch = query?.match(titleRegex);
+
+  if (titleMatch && titleMatch[1]) {
+    const trackTitle = titleMatch[1].trim().replace(/[^\w\s]|_/g, "");
+    return {
+      parameters: {
+        trackTitle,
+      },
+    };
+  }
+
+  throw new Error(
+    "Could not extract track and artist information from the query."
+  );
+}
 
 // EXTRACT QUERY CATEGORY
 
@@ -559,6 +576,8 @@ ${categoriesAndTools}`,
     entityName = extractEntityNameFromQuery(state.query!, entityType as EntityType);
   }
 
+  console.log(categories, isEntityQuery, entityType, entityName);
+
   return {
     categories,
     isEntityQuery,
@@ -573,31 +592,53 @@ ${categoriesAndTools}`,
  * @param {GraphState} state - The current state of the graph.
  * @returns {Promise<Partial<GraphState>>} - The updated graph state with the track ID and details.
  */
-export async function searchEntity(state: GraphState): Promise<Partial<GraphState>> {
+export async function searchEntity(
+  state: GraphState
+): Promise<Partial<GraphState>> {
   const { parameters } = state;
 
-  const trackArtistQuery = parameters?.trackArtistQuery;
+  const trackTitle = parameters?.trackTitle;
+  const artistName = parameters?.artistName;
 
-  if (!trackArtistQuery) {
-    throw new Error("Track and artist query is missing in parameters.");
+  if (!trackTitle) {
+    throw new Error("Track title is missing in parameters.");
   }
 
-  const apiUrl = '/tracks/search';
+  const apiUrl = "/tracks/search";
 
-  const params = {
-    query: trackArtistQuery,
-    app_name: process.env.AUDIUS_APP_NAME || 'YOUR_APP_NAME',
+  const params: Record<string, string> = {
+    query: trackTitle,
+    app_name: process.env.AUDIUS_APP_NAME || "YOUR_APP_NAME",
   };
+
+  // Do not include 'filter' parameter in the API call
+  // The Audius API /tracks/search endpoint does not support 'filter'
 
   // Call the Audius API
   const response = await callAudiusAPI(apiUrl, params, state);
 
   if (!response.data || response.data.length === 0) {
-    throw new Error(`No tracks found for "${trackArtistQuery}"`);
+    throw new Error(`No tracks found for "${trackTitle}"`);
   }
 
-  // Assume the first result is the best match
-  const track = response.data[0];
+  // Find the track that matches both title and artist, if artist name is provided
+  let track = response.data[0];
+
+  if (artistName) {
+    const matchingTracks = response.data.filter(
+      (t: any) =>
+        t.user.handle.toLowerCase() === artistName.toLowerCase() ||
+        t.user.name.toLowerCase() === artistName.toLowerCase()
+    );
+    if (matchingTracks.length > 0) {
+      track = matchingTracks[0];
+    } else {
+      throw new Error(
+        `No tracks found for "${trackTitle}" by "${artistName}"`
+      );
+    }
+  }
+
   const trackId = track.id;
 
   // Update parameters for the next API call
@@ -606,7 +647,7 @@ export async function searchEntity(state: GraphState): Promise<Partial<GraphStat
   // Save the track data for use in the final response
   return {
     parameters: updatedParameters,
-    trackData: track, // Optionally store the entire track data
+    trackData: track,
   };
 }
 
@@ -779,6 +820,17 @@ export async function formatResponse(state: GraphState): Promise<Partial<GraphSt
     formattedResponse,
   };
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 
