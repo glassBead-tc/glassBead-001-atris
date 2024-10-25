@@ -1,73 +1,15 @@
 import { logger } from "./logger.js";
 import { ChatOpenAI } from "@langchain/openai";
-import { ComplexityLevel, DatasetSchema, EntityType, AudiusCorpus } from "./types.js";
+import { ComplexityLevel, DatasetSchema, EntityType, AudiusCorpus, GraphState } from "./types.js";
 import fs from "fs";
 import dotenv from 'dotenv';
 import { extractCategory, extractParameters, createFetchRequest, selectApi, searchEntity, formatResponse, readUserInputTool } from "./tools/tools.js";
 import { StateGraph, END, START } from "@langchain/langgraph";
 import { TRIMMED_CORPUS_PATH } from "./constants.js";
 import { findMissingParams } from "./utils.js";
+import { getTrack } from "./tools/getTrack.js"; 
 
 dotenv.config({ path: '../.env' });
-
-export type GraphState = {
-  /**
-   * The LLM to use for the graph
-   */
-  llm: ChatOpenAI;
-  /**
-   * The query to extract an API for
-   */
-  query: string;
-  /**
-   * The type of the query
-   */
-  queryType: string | null;
-  /**
-   * The relevant API categories for the query
-   */
-  categories: string[] | null;
-  /**
-   * The relevant APIs from the categories
-   */
-  apis: DatasetSchema[] | null;
-  /**
-   * The most relevant API for the query
-   */
-  bestApi: DatasetSchema | null;
-  /**
-   * The params for the API call
-   */
-  parameters: Record<string, string> | null;
-  /**
-   * The API response
-   */
-  response: Record<string, any> | null;
-  /**
-   * The error message
-   */
-  error: boolean;
-  /**
-   * The state messages
-   */
-  messages: string[] | null;
-  /**
-   * 
-   */
-  complexity: ComplexityLevel | null;
-  /**
-   * Is this an entity query?
-   */
-  isEntityQuery: boolean;
-  /**
-   * The name of the entity
-   */
-  entityName: string | null;
-  /**
-   * The type of the entity
-   */
-  entityType: EntityType | null;
-};
 
 const graphChannels = {
   llm: null,
@@ -78,13 +20,46 @@ const graphChannels = {
   bestApi: null,
   parameters: null,
   response: null,
-  error: null,
-  messages: null,
   complexity: null,
   isEntityQuery: null,
   entityName: null,
   entityType: null,
+  error: null,
+  messages: null,
+  selectedHost: null,
+  entity: null,
+  secondaryApi: null,
+  secondaryResponse: null,
+  multiStepHandled: null,
+  initialState: null,
+  formattedResponse: null,
+  message: null,
 };
+
+// export interface GraphState {
+//   llm: ChatOpenAI | null;
+//   query: string | null;
+//   queryType: string | null;
+//   categories: string[] | null;
+//   apis: DatasetSchema[] | null;
+//   bestApi: DatasetSchema | null;
+//   params: Record<string, string> | null;
+//   response: any | null;
+//   complexity: string | null;
+//   isEntityQuery: boolean;
+//   entityName: string | null;
+//   entityType: EntityType | null;
+//   parameters: Record<string, any> | null;
+//   error: boolean;
+//   selectedHost: string | null;
+//   entity: Track | User | Playlist | null;
+//   secondaryApi: DatasetSchema | null;
+//   secondaryResponse: any | null;
+//   multiStepHandled: boolean;
+//   initialState: GraphState | null;
+//   formattedResponse: string | null;
+//   message: string | null;
+// }
 
 /**
  * @param {GraphState} state
@@ -114,9 +89,10 @@ const verifyParams = (
 
 
 function getApis(state: GraphState) {
-  const { categories } = state;
+  logger.debug('getApis called with categories:', state.categories);
   
-  if (!categories || categories.length === 0) {
+  if (!state.categories || state.categories.length === 0) {
+    logger.error("No categories available in state for getApis.");
     throw new Error("No categories passed to get_apis_node");
   }
 
@@ -124,20 +100,23 @@ function getApis(state: GraphState) {
   const allData: AudiusCorpus = JSON.parse(fs.readFileSync(TRIMMED_CORPUS_PATH, "utf8"));
   const endpoints = allData.endpoints;
 
-  console.log('Categories from state:', categories);
+  logger.debug('All available APIs:', endpoints.map(api => api.api_name));
 
-  const apis = categories
+  const apis = state.categories
     .map((category) => {
       // Filter APIs by category_name
       const matchedApis = endpoints.filter((endpoint) => endpoint.category_name === category);
-      console.log(`Matched APIs for category "${category}":`, matchedApis);
+      logger.debug(`Matched APIs for category "${category}":`, matchedApis.map(api => api.api_name));
       return matchedApis;
     })
     .flat();
 
   if (apis.length === 0) {
+    logger.error("No APIs found for the given categories.");
     throw new Error("No APIs available for selection.");
   }
+
+  logger.debug('APIs selected for the query:', apis.map(api => api.api_name));
 
   return {
     apis,
@@ -155,21 +134,42 @@ function createGraph() {
     .addNode("get_apis_node", getApis)
     .addNode("select_api_node", selectApi)
     .addNode("extract_params_node", extractParameters)
-    .addNode("search_entity_node", searchEntity)
-    .addNode("human_loop_node", readUserInputTool) // Using the readUserInputTool for human input
+    .addNode("search_entity_node", async (state: GraphState) => {
+      logger.debug("search_entity_node received state:", {
+        trackTitle: state.parameters?.trackTitle,
+        track_id: state.parameters?.track_id,
+      });
+      const result = await searchEntity(state);
+      logger.debug("search_entity_node output:", result);
+      return result;
+    })
+    .addNode("get_track_node", async (state: GraphState) => {
+      logger.debug("get_track_node received state:", {
+        track_id: state.parameters?.track_id,
+      });
+      const result = await getTrack(state.parameters!.track_id);
+      logger.debug("get_track_node output:", result);
+      return {
+        trackDetails: result,
+      };
+    })
+    .addNode("human_loop_node", readUserInputTool)
     .addNode("execute_request_node", createFetchRequest)
     .addNode("format_response_node", formatResponse)
     .addEdge("extract_category_node", "get_apis_node")
     .addEdge("get_apis_node", "select_api_node")
     .addEdge("select_api_node", "extract_params_node")
     .addEdge("extract_params_node", "search_entity_node")
-    .addEdge("search_entity_node", "human_loop_node") // If parameters are missing, go to human loop
+    .addEdge("search_entity_node", "get_track_node") // 将 get_track_node 添加到流程中
+    .addEdge("get_track_node", "human_loop_node") // 如果需要人工输入，转到人工循环
     .addConditionalEdges("human_loop_node", (state: GraphState) => {
-      return state.error ? "execute_request_node" : "execute_request_node"; // Adjust based on your logic
+      return state.error ? "execute_request_node" : "execute_request_node"; // 根据需要调整逻辑
     })
     .addEdge("execute_request_node", "format_response_node")
     .addEdge("format_response_node", END)
     .addEdge(START, "extract_category_node");
+
+  logger.info("Graph created successfully.");
 
   return graph.compile();
 }
@@ -215,6 +215,9 @@ async function main(query: string) {
 }
 
 main(datasetQuery);
+
+
+
 
 
 

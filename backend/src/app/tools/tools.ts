@@ -218,7 +218,7 @@ export const ExtractCategoryTool = tool(
 
 export async function verifyParams(state: GraphState): Promise<Partial<GraphState>> {
   const requiredParameters = state.bestApi?.required_parameters?.map(param => param.name) || [];
-  const missingParams = findMissingParams(requiredParameters, Object.keys(state.params || {}));
+  const missingParams = findMissingParams(requiredParameters, Object.keys(state.parameters || {}));
 
   if (missingParams.length > 0) {
     logger.info("Additional information needed to answer the question accurately.");

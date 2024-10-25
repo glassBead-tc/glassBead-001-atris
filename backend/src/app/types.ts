@@ -41,7 +41,6 @@ export interface GraphState {
   categories: string[] | null;
   apis: DatasetSchema[] | null;
   bestApi: DatasetSchema | null;
-  params: Record<string, string> | null;
   response: any | null;
   complexity: string | null;
   isEntityQuery: boolean;
@@ -199,7 +198,6 @@ export const initialGraphState: GraphState = {
   apis: null,
   bestApi: null,
   secondaryApi: null,
-  params: null,
   response: null,
   secondaryResponse: null,  
   error: false,
