@@ -1,8 +1,8 @@
-import { TrackArtwork, User, ProfilePicture, CoverPhoto, Playlist, PlaylistAddedTimestamp, PlaylistArtwork, Access } from "@audius/sdk";
-import { ChatOpenAI, ChatOpenAICallOptions } from "@langchain/openai";
+import { ChatOpenAI } from '@langchain/openai';
+import { TrackArtwork, User, ProfilePicture, CoverPhoto, Playlist, PlaylistAddedTimestamp, PlaylistArtwork, Access, Track } from "@audius/sdk";
 
 export type ComplexityLevel = 'simple' | 'moderate' | 'complex';
-export type AudiusData = TrackData | UserData | PlaylistData | PopularTrackData | NoMatchData | null;
+
 
 export type QueryCategorization = {
   queryType: QueryType;
@@ -50,14 +50,13 @@ export interface GraphState {
   parameters: Record<string, any> | null;
   error: boolean;
   selectedHost: string | null;
-  entity: AudiusData | null;
+  entity: Track | User | Playlist | null;
   secondaryApi: DatasetSchema | null;
   secondaryResponse: any | null;
   multiStepHandled: boolean;
   initialState: GraphState | null;
   formattedResponse: string | null;
   message: string | null;
-  trackData: any | null;
 }
 
 export type QueryType =
@@ -214,8 +213,7 @@ export const initialGraphState: GraphState = {
   multiStepHandled: false, 
   initialState: null,
   entityType: null,
-  selectedHost: null,
-  trackData: null
+  selectedHost: null
 };
 
 export type NodeNames =
@@ -272,3 +270,5 @@ interface ApiEndpoint {
 export interface AudiusCorpus {
   endpoints: ApiEndpoint[];
 }
+
+// Similarly for Track and Playlist...

@@ -36,155 +36,236 @@
 
 ## Overview
 
-This document lists all instances where manual API configurations and calls are being used in the codebase, as well as the endpoints and functionalities covered by the custom implementation. The goal is to identify areas where the Audius SDK can replace manual implementations to simplify the codebase and reduce duplication.
+This document provides an audit of our current codebase with the goal of refactoring it to fully utilize the Audius SDK. By leveraging the SDK, we can simplify our code, improve maintainability, and ensure compatibility with the latest updates to the Audius API. The primary focus is on the four main files driving our application: `index.ts`, `tools.ts`, `types.ts`, and `constants.ts`.
 
 ---
 
-## Manual API Configurations and Calls
+## Areas for SDK Integration
 
-### 1. **`backend/app/audiusApiConfig.ts`**
+### 1. **`backend/src/app/tools/tools.ts`**
 
-- Contains manual definitions of API endpoints, required, and optional parameters.
-- Exposes `apiConfig` object with endpoint configurations.
-- Used throughout the application for constructing API requests manually.
+#### Current Implementation:
 
-### 2. **`backend/app/data/audius_corpus.json`**
+- **Manual API Calls:**
+  - Functions like `callAudiusAPI` construct API URLs manually and perform HTTP requests using `fetch`.
+  - The `searchEntity` function interacts with the Audius API by building parameters and parsing responses manually.
 
-- JSON file containing metadata about API endpoints.
-- Includes endpoint IDs, category names, tool names, API names, descriptions, parameters, methods, template responses, and API URLs.
-- Serves as a reference or documentation for the custom API implementation.
+#### Potential Improvements:
 
-### 3. **`backend/app/services/audiusApi.ts`**
+- **Replace Manual API Calls with SDK Methods:**
+  - Use the Audius SDK's built-in methods for API interactions.
+  - For example, replace `callAudiusAPI` with the SDK's client methods.
 
-- Custom implementation of API calls to Audius services.
-- Uses manual HTTP requests, possibly with `axios`, to interact with the Audius API.
-- Functions include:
+- **Example SDK Usage:**
+  ```typescript
+  import Audius from '@audius/sdk';
 
-  - `getUserTracks(userId: string, limit: number)`: Retrieves a user's tracks.
-  - `searchGenres(query: string, limit: number)`: Searches for genres.
-  - `searchTracks(query: string, limit: number)`: Searches for tracks.
-  - `searchUsers(query: string, limit: number)`: Searches for users.
-  - `searchPlaylists(query: string, limit: number)`: Searches for playlists.
-  - `getTrendingTracks(limit: number)`: Retrieves trending tracks.
-  - `getUserFollowers(userId: string, limit: number)`: Retrieves followers of a user.
-  - `getUserFollowing(userId: string, limit: number)`: Retrieves users that a specific user is following.
-  - `getTrackPlayCount(trackId: string)`: Retrieves the play count for a specific track.
+  // Initialize the Audius client
+  const sdk = new Audius({
+    appName: 'YourAppName',
+  });
 
-- Implements custom error handling and response parsing.
+  // Use the SDK method to search for tracks
+  const tracks = await sdk.tracks.searchTracks({
+    query: '115 SECONDS OF CLAMS',
+  });  ```
 
-### 4. **`backend/app/graph/process_api_response.ts`**
+- **Benefits:**
+  - Simplifies the code by removing manual URL construction and error handling.
+  - Ensures consistent handling of API changes and deprecations.
 
-- Processes API responses manually.
-- Contains functions like:
+### 2. **`backend/src/app/index.ts`**
 
-  - `processApiResponse(state: GraphState)`: Processes the response based on query type.
-  - `processUserQuery(state: GraphState)`: Generates formatted string for user queries.
-  - `formatTrendingTracks(tracks: TrackData[], limit: number)`: Formats trending tracks.
-  - `formatTrendingGenres(tracks: TrackData[], limit: number)`: Formats trending genres.
+#### Current Implementation:
 
-### 5. **`backend/app/tools/utils/formatResults.ts`**
+- **Custom Graph and State Management:**
+  - Manually manages state transitions and calls custom functions for each node in the graph.
+  - Uses custom logic to parse responses and handle errors.
 
-- Manually formats API responses.
-- Functions include:
+#### Potential Improvements:
 
-  - `formatTrackResults(response: any, originalQuery: string)`: Formats track results.
-  - `formatApiResults(response: any, apiName: string)`: Formats API results based on API name.
-  - `formatSearchTracks(tracks: any[], query: string)`: Formats search tracks results.
-  - `formatUserInfo(data: any, query: string)`: Formats user information.
-  - `formatPlaylistInfo(data: any[], query: string, fullPlaylistDetails?: any)`: Formats playlist information.
-  - `formatTrendingTracks(tracks: any[])`: Formats trending tracks.
-  - `formatTrendingPlaylists(data: any[])`: Formats trending playlists.
-  - `formatDetailedTrackInfo(tracks: any[])`: Formats detailed track information.
-  - `formatMultipleTracks(tracks: any[])`: Formats multiple tracks.
-  - `formatPlaylistResults(playlists: any[])`: Formats playlist results.
-  - `formatUserResults(users: any[])`: Formats user results.
-  - `formatTrendingResults(trending: any[], type: 'tracks' | 'playlists')`: Formats trending results.
+- **Integrate SDK in State Graph Nodes:**
+  - Replace custom API interaction within graph nodes with SDK methods.
+  - Update nodes like `search_entity_node`, `execute_request_node`, and `format_response_node` to utilize the SDK.
 
-### 6. **`backend/app/graph/nodes/handlerFunctions.ts`**
+- **Example Refactoring:**
+  ```typescript
+  import { sdk } from './sdkClient'; // Import the initialized SDK client
 
-- Contains handler functions that make manual API calls or use manual configurations.
-- Functions include:
+  // In the searchEntity function
+  export async function searchEntity(state: GraphState): Promise<Partial<GraphState>> {
+    const { trackTitle, artistName } = state.parameters;
 
-  - `handle_search_genres(state: GraphState)`: Handles genre search queries.
-  - `handle_entity_query(state: GraphState)`: Handles general entity queries.
-  - `handle_search_tracks(state: GraphState)`: Handles track search queries.
-  - `handle_playlist_info(state: GraphState)`: Handles playlist information queries.
-  - `handle_search_users(state: GraphState)`: Handles user search queries.
-  - `handle_trending_tracks(state: GraphState)`: Handles trending tracks queries.
+    // Use SDK to search for tracks
+    const { data: tracks } = await sdk.tracks.searchTracks({
+      query: trackTitle,
+      limit: 10,
+    });
 
-- These functions often construct API requests manually and process responses without using the SDK.
+    // Rest of the logic remains similar
+  }  ```
 
-### 7. **Utility Functions in `backend/app/tools/`**
+- **Benefits:**
+  - Simplifies the function by leveraging SDK's built-in methods.
+  - Reduces boilerplate code for handling requests and parsing responses.
 
-- **`extractParameters.ts`**: Manually extracts parameters from queries.
-- **`calculateGenrePopularity.ts`**: Manually calculates genre popularity from data.
-- **`audiusApiConfig.ts`** and related utilities: Used for mapping and configuring API endpoints manually.
+### 3. **`backend/src/app/types.ts`**
+
+#### Current Implementation:
+
+- **Custom Type Definitions:**
+  - Defines interfaces for `TrackData`, `UserData`, `PlaylistData`, etc.
+  - Manually maintains types that may overlap with SDK's types.
+
+#### Potential Improvements:
+
+- **Use SDK Types:**
+  - Import type definitions directly from the Audius SDK.
+  - Replace custom interfaces with SDK-provided types to ensure consistency.
+
+- **Example Refactoring:**
+  ```typescript
+  import { Track, User, Playlist } from '@audius/sdk';
+
+  export type TrackData = Track;
+  export type UserData = User;
+  export type PlaylistData = Playlist;  ```
+
+- **Benefits:**
+  - Ensures type consistency across the application.
+  - Reduces maintenance overhead for custom types.
+
+### 4. **`backend/src/app/constants.ts`**
+
+#### Current Implementation:
+
+- **Manual Constants Definitions:**
+  - Defines enums for `Genre`, `Mood`, `StemCategory`, etc.
+  - Manually updates values as needed.
+
+#### Potential Improvements:
+
+- **Use SDK Constants:**
+  - Utilize any constants or enums provided by the SDK.
+  - If SDK provides genre or mood lists, import and use them directly.
+
+- **Example Refactoring:**
+  ```typescript
+  import { Genres, Moods } from '@audius/sdk';
+
+  export const GENRES = Genres;
+  export const MOODS = Moods;  ```
+
+- **Benefits:**
+  - Ensures consistency with the Audius platform.
+  - Automatically updates when the SDK is updated.
 
 ---
 
-## Endpoints and Functionalities Covered by Custom Implementation
+## Mapping Custom Implementations to SDK Methods
 
-The custom implementation covers the following Audius API endpoints and functionalities:
+### A. **Track Operations**
 
-1. **Tracks**
+- **Search Tracks:**
+  - **Custom Implementation:** Uses `callAudiusAPI` with `/v1/tracks/search`.
+  - **SDK Method:** `sdk.tracks.searchTracks({ query, limit, offset })`
 
-   - **Get Track by ID** (`/v1/tracks/{track_id}`)
-     - Function: `getTrackById(trackId: string)`
-   - **Search Tracks** (`/v1/tracks/search`)
-     - Function: `searchTracks(query: string, limit: number)`
-   - **Get Trending Tracks** (`/v1/tracks/trending`)
-     - Function: `getTrendingTracks(limit: number)`
-   - **Get Trending Underground Tracks** (`/v1/tracks/trending/underground`)
-     - Not directly listed but may be included.
+- **Get Track by ID:**
+  - **Custom Implementation:** Manually constructs API call.
+  - **SDK Method:** `sdk.tracks.getTrack({ id })`
 
-2. **Users**
+### B. **User Operations**
 
-   - **Get User by ID** (`/v1/users/{user_id}`)
-     - Function: `getUserById(userId: string)`
-   - **Search Users** (`/v1/users/search`)
-     - Function: `searchUsers(query: string, limit: number)`
-   - **Get User Followers** (`/v1/users/{user_id}/followers`)
-     - Function: `getUserFollowers(userId: string, limit: number)`
-   - **Get User Following** (`/v1/users/{user_id}/following`)
-     - Function: `getUserFollowing(userId: string, limit: number)`
+- **Search Users:**
+  - **Custom Implementation:** Manual API call to `/v1/users/search`.
+  - **SDK Method:** `sdk.users.searchUsers({ query, limit, offset })`
 
-3. **Playlists**
+- **Get User by ID:**
+  - **Custom Implementation:** Manual API call.
+  - **SDK Method:** `sdk.users.getUser({ id })`
 
-   - **Get Playlist by ID** (`/v1/playlists/{playlist_id}`)
-     - Function: `getPlaylistById(playlistId: string)`
-   - **Search Playlists** (`/v1/playlists/search`)
-     - Function: `searchPlaylists(query: string, limit: number)`
-   - **Get Trending Playlists** (`/v1/playlists/trending`)
-     - Not explicitly listed but may be included.
+### C. **Playlist Operations**
 
-4. **Genres**
+- **Search Playlists:**
+  - **Custom Implementation:** Manual API call to `/v1/playlists/search`.
+  - **SDK Method:** `sdk.playlists.searchPlaylists({ query, limit, offset })`
 
-   - **Search Genres** (Custom Implementation)
-     - Function: `searchGenres(query: string, limit: number)`
-     - Note: The Audius API doesn't have a direct endpoint for genres; this may be a custom solution.
+- **Get Playlist by ID:**
+  - **Custom Implementation:** Manual API call.
+  - **SDK Method:** `sdk.playlists.getPlaylist({ id })`
 
-5. **Additional Functionalities**
+### D. **Trending Tracks and Playlists**
 
-   - **Get Track Play Count**
-     - Function: `getTrackPlayCount(trackId: string)`
-     - May involve aggregating data from multiple calls or custom calculations.
-   - **Calculate Genre Popularity**
-     - Custom calculation based on track data.
-   - **Process and Format API Responses**
-     - Custom logic to format responses for use in the application.
+- **Get Trending Tracks:**
+  - **Custom Implementation:** Manual API call.
+  - **SDK Method:** `sdk.tracks.getTrendingTracks({ genre, timeRange, limit, offset })`
+
+- **Get Trending Playlists:**
+  - **Custom Implementation:** Manual API call.
+  - **SDK Method:** `sdk.playlists.getTrendingPlaylists({ limit, offset })`
+
+---
+
+## Refactoring Plan
+
+1. **Initialize the Audius SDK Client:**
+   - Create a single instance of the SDK client, possibly in a separate module (`sdkClient.ts`), to be imported where needed.
+   ```typescript
+   // sdkClient.ts
+   import Audius from '@audius/sdk';
+
+   export const sdk = new Audius({
+     appName: 'YourAppName',
+   });   ```
+
+2. **Update API Calls in `tools.ts`:**
+   - Replace `callAudiusAPI` and related functions with SDK methods.
+   - Adjust functions like `searchEntity`, `extractParameters`, etc., to use the SDK.
+
+3. **Adjust State Graph Nodes in `index.ts`:**
+   - Modify nodes that interact with the Audius API to use the SDK.
+   - Ensure that error handling and state updates are consistent with the SDK's responses.
+
+4. **Replace Custom Types in `types.ts`:**
+   - Import and use types from the SDK.
+   - Remove or update custom type definitions that duplicate SDK types.
+
+5. **Use SDK Constants in `constants.ts`:**
+   - Import any available constants from the SDK.
+   - Remove manual definitions where applicable.
+
+6. **Testing and Validation:**
+   - Thoroughly test each updated function to ensure it behaves as expected.
+   - Check for any changes in response structures or error handling.
+
+7. **Update Documentation and Comments:**
+   - Revise code comments to reflect the use of the SDK.
+   - Update any documentation that references manual API interactions.
+
+---
+
+## Additional Considerations
+
+- **Error Handling:**
+  - The SDK provides its own error handling mechanisms.
+  - Review how errors are thrown and caught, and adjust application logic accordingly.
+
+- **Rate Limiting and Throttling:**
+  - Ensure that the application respects any rate limits imposed by the Audius API.
+  - The SDK may provide built-in support for handling rate limits.
+
+- **Asynchronous Operations:**
+  - The SDK methods are asynchronous and return Promises.
+  - Ensure all SDK calls are awaited properly, and update any related asynchronous logic.
+
+- **Deprecations and Updates:**
+  - Stay informed about updates to the SDK to leverage new features and handle deprecations.
+  - Regularly update the SDK to the latest version.
 
 ---
 
 ## Summary
 
-The codebase contains several instances where manual API configurations and calls are implemented instead of using the Audius SDK. Key areas include:
-
-- Manual endpoint definitions and parameter configurations.
-- Custom HTTP requests to the Audius API.
-- Custom error handling and response parsing.
-- Utility functions that replicate SDK functionalities.
-
-By refactoring the code to use the Audius SDK, we can simplify the codebase, reduce duplication, and leverage the robust features and error handling provided by the SDK.
+By refactoring our codebase to utilize the Audius SDK, we can greatly simplify our application code, improve maintainability, and ensure compatibility with the latest API changes. The four main files—`index.ts`, `tools.ts`, `types.ts`, and `constants.ts`—can be significantly streamlined by replacing manual implementations with SDK methods and types. This transition will enhance our development workflow and position our application for future growth and scalability.
 
 ---
-

@@ -1,34 +1,71 @@
-<!--
-   Recommendation
-   Given that the SDK is designed to handle all interactions with the Audius API efficiently and is maintained by the Audius team, it would be best to refactor your codebase to use only the SDK.
-   Refactoring Plan
-   Audit the Codebase:
-   Identify all instances where manual API configurations and calls are being used.
-   List out the endpoints and functionalities covered by your custom implementation.
-   Map Custom Implementations to SDK Methods:
-   For each custom API call in audiusApi.ts, find the equivalent method in the SDK.
-   Ensure that all functionalities you require are supported by the SDK.
-   Refactor API Calls:
-   Replace manual API calls with the corresponding SDK methods.
-   Update any custom logic that was handling parameters, error handling, or response parsing to align with the SDK's mechanisms.
-   Remove Redundant Configurations:
-   Delete audiusApiConfig.ts, audius_corpus.json, and any other files related to manual API configuration.
-   Ensure that any documentation or comments are updated to reflect the use of the SDK.
-   Update Import Paths:
-   Adjust import statements throughout the codebase to import functions and classes from the SDK rather than your custom modules.
-   Adjust Utility Functions:
-   Review utility functions in your tools directory that might be parsing responses or handling errors.
-   If the SDK provides built-in handling for these cases, consider removing or updating your utility functions accordingly.
-   Testing:
-   Thoroughly test all functionalities to ensure that replacing manual implementations with the SDK does not introduce any regressions.
-   Pay special attention to edge cases and error handling.
-   Performance Considerations:
-   Benchmark the application before and after refactoring to ensure that performance has not degraded.
-   The SDK is likely optimized, but it's good practice to verify.
-   Documentation:
-   Update your project's documentation to reflect the changes.
-   Provide guidelines for other developers on how to use the SDK within your project.
+# Refactoring API Calls to Utilize the Audius SDK
 
-   **Note to Future Assistant**: Remove this comment block once the task associated with this file ("refactor_api_calls.md") is complete.
-   -->
+## Overview
 
+To streamline the codebase and leverage the capabilities of the Audius SDK, we will refactor our tools to replace manual API calls with SDK methods. This will improve maintainability, ensure consistency, and reduce code complexity.
+
+## Refactoring Plan
+
+### 1. Remove Manual API Calls
+
+- **Action**: Eliminate the `callAudiusAPI` function from `tools.ts`.
+- **Reason**: The SDK provides methods for all necessary API interactions, making manual `fetch` calls unnecessary.
+
+### 2. Update `createFetchRequest` Function
+
+- **Action**: Replace `createFetchRequest` with a new function, `executeSdkRequest`, that uses the SDK.
+- **Code Changes**:
+  ```typescript
+  export async function executeSdkRequest(state: GraphState): Promise<Partial<GraphState>> {
+    const { bestApi, parameters } = state;
+
+    if (!bestApi) {
+      throw new Error("No best API found");
+    }
+
+    try {
+      let response;
+
+      if (bestApi.api_name === 'Get Track') {
+        const trackId = parameters?.track_id;
+        if (!trackId) {
+          throw new Error("Track ID is required");
+        }
+        response = await sdk.tracks.getTrack({ trackId });
+      }
+      // Handle other API endpoints...
+
+      return { response: response.data };
+    } catch (error) {
+      console.error('Error in executeSdkRequest:', error);
+      throw error;
+    }
+  }  ```
+
+### 3. Simplify Parameter Extraction
+
+- **Action**: Modify `extractParameters` to map extracted data directly to SDK method parameters.
+
+### 4. Adjust `selectApi` Function
+
+- **Action**: Update `selectApi` to map user queries directly to SDK methods rather than selecting from a list of APIs.
+
+### 5. Update Type Definitions
+
+- **Action**: Use types from the Audius SDK in `types.ts` where appropriate.
+
+### 6. Reorganize Tools
+
+- **Action**: Group tools in `tools.ts` based on SDK modules (`tracks`, `users`, `playlists`) for better organization.
+
+## Benefits
+
+- **Reduced Complexity**: By utilizing the SDK, we eliminate the need for manual API endpoint management.
+- **Improved Reliability**: SDK methods are maintained by Audius and handle underlying API changes.
+- **Easier Maintenance**: Future updates can focus on higher-level logic rather than low-level API interactions.
+
+## Next Steps
+
+- **Testing**: Thoroughly test all functionalities to ensure the refactored code works as expected.
+- **Documentation**: Update any documentation to reflect the changes made.
+- **Code Cleanup**: Remove any unused code and ensure all modules are properly imported.

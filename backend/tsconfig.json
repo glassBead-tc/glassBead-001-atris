@@ -2,7 +2,12 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "node",
+    "baseUrl": "./",
+       "paths": {
+         "*": ["node_modules/*"]
+       },
+       "typeRoots": ["node_modules/@types", "node_modules/@audius/sdk/dist/sdk/types"],
     "esModuleInterop": true,
     "declaration": true,
     "strict": true,
@@ -13,7 +18,7 @@
     "types": ["node", "jest"],
     "resolveJsonModule": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "global.d.ts"],
   "exclude": [
     "node_modules/",
     "dist/",

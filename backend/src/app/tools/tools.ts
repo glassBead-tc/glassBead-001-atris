@@ -3,111 +3,36 @@ import { RunnableToolLike } from "@langchain/core/runnables";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import nlp from "compromise";
 import { z } from "zod";
-import { GraphState, DatasetSchema, DatasetParameters, ComplexityLevel, EntityType, QueryType, AudiusCorpus } from "../types.js";
+import { GraphState, DatasetSchema, DatasetParameters, ComplexityLevel, EntityType, QueryType, AudiusCorpus, TrackData } from "../types.js";
 import { logger } from "../logger.js";
 import * as readline from "readline";
 import { findMissingParams } from "../utils.js";
 import fs from "fs";
 import { HIGH_LEVEL_CATEGORY_MAPPING, TRIMMED_CORPUS_PATH } from "../constants.js";
-import fetch from 'node-fetch';
-import { verify } from "crypto";
+import { sdk } from '../sdkClient.js';
+import { Track, User, Playlist } from '@audius/sdk';
 
-// Function to fetch and select an Audius API host
-async function getAudiusHost(): Promise<string> {
-  const response = await fetch('https://api.audius.co');
-  const data = await response.json();
-
-  if (!data.data || data.data.length === 0) {
-    throw new Error('No available Audius hosts');
-  }
-
-  // For simplicity, select the first host
-  // You might implement logic to select a host based on health or availability
-  const selectedHost = data.data[0];
-  return selectedHost;
-}
 
 /**
- * Utility function to call the Audius API.
- */
-export async function callAudiusAPI(apiUrl: string, parameters: Record<string, any>, state: GraphState): Promise<any> {
-  try {
-    // Ensure we have a selected host
-    let baseUrl = state.selectedHost || 'https://discoveryprovider.audius.co';
-
-    // Ensure the apiUrl starts with '/v1'
-    if (!apiUrl.startsWith('/v1')) {
-      apiUrl = `/v1${apiUrl}`;
-    }
-
-    // Construct the full URL
-    const url = new URL(apiUrl, baseUrl);
-
-    // Remove the app_name parameter if it exists
-    if (parameters.app_name) {
-      delete parameters.app_name;
-    }
-
-    // Append query parameters
-    Object.entries(parameters).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-
-    // Convert URL to string and replace '+' with '%20'
-    const urlString = url.toString().replace(/\+/g, '%20');
-
-    // Log the constructed URL and parameters
-    console.log('Constructed URL:', urlString);
-    console.log('Request Parameters:', JSON.stringify(parameters, null, 2));
-
-    // Make the API request
-    const response = await fetch(urlString, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json'
-      },
-    });
-
-    const text = await response.text();
-
-    if (!response.ok) {
-      console.error(`Error calling Audius API: ${response.status} ${response.statusText}`);
-      console.error(`Response body: ${text}`);
-      throw new Error(`Audius API request failed with status ${response.status}`);
-    }
-
-    const data = JSON.parse(text);
-    return data;
-  } catch (error) {
-    console.error('Error in callAudiusAPI:', error);
-    throw error;
-  }
-}
-
-function capitalize(text: string): string {
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
-/**
- * Selects the best Audius API based on the user's query.
+ * Selects the appropriate SDK function based on the user's query.
  *
  * @param {GraphState} state - The current state of the graph.
- * @returns {Promise<Partial<GraphState>>} - The updated graph state with the selected API.
+ * @returns {Promise<Partial<GraphState>>} - The updated graph state.
  */
 export async function selectApi(state: GraphState): Promise<Partial<GraphState>> {
-  const { apis } = state;
+  // Map query types to SDK methods
+  let bestApiName: string;
 
-  if (!apis || apis.length === 0) {
-    throw new Error("No APIs available for selection.");
+  if (state.queryType === 'search_tracks') {
+    bestApiName = 'Search Tracks';
+  } else if (state.queryType === 'trending_tracks') {
+    bestApiName = 'Get Trending Tracks';
+  } else {
+    bestApiName = 'Get Track';
   }
 
-  // Select the 'Get Track' API
-  const apiName = 'Get Track';
-  const bestApi = apis.find(api => api.api_name === apiName);
-
-  if (!bestApi) {
-    throw new Error(`No API found for ${apiName}`);
-  }
+  // Find corresponding API schema if needed
+  const bestApi = state.apis?.find(api => api.api_name === bestApiName) || null;
 
   return { bestApi };
 }
@@ -385,9 +310,7 @@ export async function requestParameters(
  * @param {GraphState} state - The current state of the graph.
  * @returns {Promise<Partial<GraphState>>} - The updated graph state with extracted parameters.
  */
-export async function extractParameters(
-  state: GraphState
-): Promise<Partial<GraphState>> {
+export async function extractParameters(state: GraphState): Promise<Partial<GraphState>> {
   const { query } = state;
 
   // Update regex to extract track title and artist name separately
@@ -415,6 +338,7 @@ export async function extractParameters(
     return {
       parameters: {
         trackTitle,
+        track_id: "", // Placeholder for track_id, as it's not provided in the query
       },
     };
   }
@@ -592,77 +516,59 @@ ${categoriesAndTools}`,
  * @param {GraphState} state - The current state of the graph.
  * @returns {Promise<Partial<GraphState>>} - The updated graph state with the track ID and details.
  */
-export async function searchEntity(
-  state: GraphState
-): Promise<Partial<GraphState>> {
-  const { parameters } = state;
-
-  const trackTitle = parameters?.trackTitle;
-  const artistName = parameters?.artistName;
+export async function searchEntity(state: GraphState): Promise<Partial<GraphState>> {
+  const parameters = state.parameters || {};
+  const trackTitle = parameters.trackTitle;
+  const artistName = parameters.artistName;
 
   if (!trackTitle) {
-    throw new Error("Track title is missing in parameters.");
+    throw new Error('Track title is required to search for a track.');
   }
 
-  const apiUrl = "/tracks/search";
+  try {
+    // Use the Audius SDK to search for tracks
+    const response = await sdk.tracks.searchTracks({
+      query: trackTitle
+    });
 
-  const params: Record<string, string> = {
-    query: trackTitle,
-    app_name: process.env.AUDIUS_APP_NAME || "YOUR_APP_NAME",
-  };
+    const tracks: Track[] = response.data!;
 
-  // Do not include 'filter' parameter in the API call
-  // The Audius API /tracks/search endpoint does not support 'filter'
-
-  // Call the Audius API
-  const response = await callAudiusAPI(apiUrl, params, state);
-
-  if (!response.data || response.data.length === 0) {
-    throw new Error(`No tracks found for "${trackTitle}"`);
-  }
-
-  // Find the track that matches both title and artist, if artist name is provided
-  let track = response.data[0];
-
-  if (artistName) {
-    const matchingTracks = response.data.filter(
-      (t: any) =>
-        t.user.handle.toLowerCase() === artistName.toLowerCase() ||
-        t.user.name.toLowerCase() === artistName.toLowerCase()
-    );
-    if (matchingTracks.length > 0) {
-      track = matchingTracks[0];
-    } else {
-      throw new Error(
-        `No tracks found for "${trackTitle}" by "${artistName}"`
-      );
+    if (!tracks || tracks.length === 0) {
+      throw new Error(`No tracks found for title "${trackTitle}".`);
     }
+
+    let track = tracks[0]; // Default to the first track
+
+    // If artistName is provided, try to find a track by the given artist
+    if (artistName) {
+      const lowerArtistName = artistName.toLowerCase();
+
+      const matchingTracks = tracks.filter((t) => {
+        const userName = t.user?.name?.toLowerCase();
+        const userHandle = t.user?.handle?.toLowerCase();
+        return userName === lowerArtistName || userHandle === lowerArtistName;
+      });
+
+      if (matchingTracks.length > 0) {
+        track = matchingTracks[0];
+      } else {
+        throw new Error(`No tracks found for title "${trackTitle}" by artist "${artistName}".`);
+      }
+    }
+
+    const trackId = track.id;
+
+    // Update the state with the track ID and track data
+    return {
+      parameters: {
+        ...state.parameters,
+        track_id: trackId,
+      },
+    };
+  } catch (error) {
+    console.error('Error in searchEntity:', error);
+    throw error;
   }
-
-  const trackId = track.id;
-
-  // Update parameters for the next API call
-  const updatedParameters = { ...parameters, track_id: trackId };
-
-  // Save the track data for use in the final response
-  return {
-    parameters: updatedParameters,
-    trackData: track,
-  };
-}
-
-/**
- * Constructs an Audius URL for a track based on the entity name.
- * Assumes entityName is in the format "Track Title by Artist Handle"
- */
-function constructAudiusUrl(entityName: string): string {
-  const match = entityName.match(/^(.*?) by (.*?)$/);
-  if (!match) {
-    throw new Error(`Invalid entity name format: "${entityName}"`);
-  }
-  const trackTitle = match[1].trim().replace(/\s+/g, '-').toLowerCase();
-  const artistHandle = match[2].trim().replace(/\s+/g, '').toLowerCase();
-  return `https://audius.co/${artistHandle}/${trackTitle}`;
 }
 
 /**
@@ -754,33 +660,180 @@ export async function createFetchRequest(state: GraphState): Promise<Partial<Gra
     throw new Error("No best API found");
   }
 
-  if (!bestApi.api_url) {
-    console.error("API URL is undefined for bestApi:", bestApi);
-    throw new Error("API URL is undefined");
-  }
+  try {
+    let response;
 
-  // Ensure the API URL includes '/v1'
-  let apiUrl = bestApi.api_url;
-  if (!apiUrl.startsWith('/v1')) {
-    apiUrl = `/v1${apiUrl}`;
-  }
+    switch (bestApi.api_name) {
+      // Tracks
+      case 'Get Track':
+        const trackId = parameters?.track_id;
+        if (!trackId) {
+          throw new Error("Track ID is required");
+        }
+        response = await sdk.tracks.getTrack({ trackId });
+        break;
 
-  // Replace placeholders in the URL with actual parameters
-  let parsedUrl = apiUrl;
+      case 'Search Tracks':
+        const trackTitle = parameters?.query || parameters?.trackTitle;
+        if (!trackTitle) {
+          throw new Error("Track title is required for searching tracks.");
+        }
+        response = await sdk.tracks.searchTracks({
+          query: trackTitle,
+          // limit and offset have been removed as they do not exist in SearchTracksRequest
+          onlyDownloadable: parameters?.onlyDownloadable,
+        });
+        break;
 
-  const paramKeys = Object.entries(parameters || {});
-  paramKeys.forEach(([key, value]) => {
-    if (parsedUrl.includes(`{${key}}`)) {
-      parsedUrl = parsedUrl.replace(`{${key}}`, encodeURIComponent(value));
-      // Remove the parameter since it's used in the URL
-      delete parameters![key];
+      case 'Get Trending Tracks':
+        response = await sdk.tracks.getTrendingTracks({
+          genre: parameters?.genre || 'all',
+          time: parameters?.time || 'week'
+        });
+        break;
+
+      case 'Get Bulk Tracks':
+        const trackIds = parameters?.track_ids;
+        if (!trackIds) {
+          throw new Error("Track IDs are required for bulk fetching.");
+        }
+        const idsArray = trackIds.split(',').map((ids: string) => ids.trim());
+        response = await sdk.tracks.getBulkTracks({ id: idsArray });
+        break;
+
+      case 'Get Underground Trending Tracks':
+        response = await sdk.tracks.getTrendingTracks({
+          genre: parameters?.genre || 'all',
+          time: parameters?.time || 'week'
+        });
+        break;
+
+      case 'Stream Track':
+        const streamTrackId = parameters?.track_id;
+        if (!streamTrackId) {
+          throw new Error("Track ID is required for streaming.");
+        }
+        // Assuming the SDK provides a method to get stream URL
+        response = await sdk.tracks.getTrackStreamUrl({ trackId: streamTrackId });
+        break;
+
+      // Users
+      case 'Get User':
+        const userId = parameters?.user_id;
+        if (!userId) {
+          throw new Error("User ID is required");
+        }
+        response = await sdk.users.getUser({ id: userId });
+        break;
+
+      case 'Search Users':
+        const userQuery = parameters?.query;
+        if (!userQuery) {
+          throw new Error("Search query is required for searching users.");
+        }
+        response = await sdk.users.searchUsers({
+          query: userQuery
+        });
+        break;
+
+      case 'Get User By Handle':
+        const handle = parameters?.handle;
+        if (!handle) {
+          throw new Error("User handle is required");
+        }
+        response = await sdk.users.getUserByHandle({ handle });
+        break;
+
+      case 'Get User ID from Wallet':
+        const walletAddress = parameters?.associated_wallet;
+        if (!walletAddress) {
+          throw new Error("Associated wallet address is required");
+        }
+        response = await sdk.users.getUserIDFromWallet({ associatedWallet: walletAddress });
+        break;
+
+      case "Get User's Favorite Tracks":
+        const favoriteUserId = parameters?.user_id;
+        if (!favoriteUserId) {
+          throw new Error("User ID is required to fetch favorite tracks.");
+        }
+        response = await sdk.users.getFavorites({ id: favoriteUserId });
+        break;
+
+      case "Get User's Reposts":
+        const repostUserId = parameters?.user_id;
+        if (!repostUserId) {
+          throw new Error("User ID is required to fetch reposts.");
+        }
+        response = await sdk.users.getReposts({ id: repostUserId });
+        break;
+
+      case "Get User's Most Used Track Tags":
+        const tagsUserId = parameters?.user_id;
+        if (!tagsUserId) {
+          throw new Error("User ID is required to fetch most used track tags.");
+        }
+        response = await sdk.users.getTopTrackTags({ id: tagsUserId, limit: parameters?.limit ? Number(parameters.limit) : 10 });
+        break;
+
+      // Playlists
+      case 'Get Playlist':
+        const playlistId = parameters?.playlist_id;
+        if (!playlistId) {
+          throw new Error("Playlist ID is required");
+        }
+        response = await sdk.playlists.getPlaylist({ playlistId });
+        break;
+
+      case 'Search Playlists':
+        const playlistQuery = parameters?.query;
+        if (!playlistQuery) {
+          throw new Error("Search query is required for searching playlists.");
+        }
+        response = await sdk.playlists.searchPlaylists({
+          query: playlistQuery
+        });
+        break;
+
+      case 'Get Trending Playlists':
+        response = await sdk.playlists.getTrendingPlaylists({
+          time: parameters?.time || 'week',
+
+        });
+        break;
+
+      // General
+      case 'Audius Web Search':
+        const webSearchQuery = parameters?.["web-search"];
+        if (!webSearchQuery) {
+          throw new Error("Web search query is required.");
+        }
+        // Since this is an external API, use fetch directly
+        response = await fetch(`https://api.tavily.com/search?q=${encodeURIComponent(webSearchQuery)}`);
+        if (!response.ok) {
+          throw new Error(`Audius Web Search failed with status ${response.status}`);
+        }
+        response = await response.json();
+        break;
+
+      // Tips
+      case 'Get Tips':
+        const tipsUserId = parameters?.user_id;
+        if (!tipsUserId) {
+          throw new Error("User ID is required to fetch tips.");
+        }
+        response = await sdk.tips.getTips({ userId: tipsUserId, limit: parameters?.limit ? Number(parameters.limit) : 10, offset: parameters?.offset ? Number(parameters.offset) : 0 });
+        break;
+
+      default:
+        throw new Error(`Unsupported API: ${bestApi.api_name}`);
     }
-  });
 
-  // Call the Audius API with the updated URL and parameters
-  const response = await callAudiusAPI(parsedUrl, parameters || {}, state);
-
-  return { response };
+    return { response };
+  } catch (error) {
+    console.error('Error in createFetchRequest:', error);
+    throw error;
+  }
 }
 
 
@@ -805,21 +858,39 @@ export const ALL_TOOLS_LIST: { [key: string]: StructuredToolInterface | Runnable
  * @returns {Promise<Partial<GraphState>>} - The updated graph state with the formatted response.
  */
 export async function formatResponse(state: GraphState): Promise<Partial<GraphState>> {
-  const { parameters, trackData } = state;
+  const { response } = state;
 
-  if (!trackData) {
-    throw new Error("Track data is missing.");
+  if (!response) {
+    throw new Error("No response data available.");
   }
 
-  const { title, user, play_count } = trackData;
-  const artistName = user.name;
+  const track = response;
+  const { title, user, play_count } = track;
+  const artistName = user?.name || user?.handle || "Unknown Artist";
 
-  const formattedResponse = `${title} by ${artistName} has ${play_count} plays on Audius.`;
+  const formattedResponse = `${title} by ${artistName} has ${play_count ?? 'an unknown number of'} plays on Audius.`;
 
   return {
     formattedResponse,
   };
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
