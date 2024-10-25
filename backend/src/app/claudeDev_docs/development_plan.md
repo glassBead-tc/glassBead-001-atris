@@ -1,15 +1,37 @@
 # Development Plan
 
 ## Development Phases
-1. **Phase 1: Agent MVP**
-   - Develop the core LangGraph.js agent to handle basic queries.
-2. **Phase 2: Front-end MVP**
+
+1. **Phase 1: Agent MVP** *(Completed)*
+   - Developed the core LangGraph.js agent to handle basic queries.
+   - Implemented trending tracks functionality.
+   - Resolved recursion and logging issues.
+   - Added number parsing for limit queries.
+
+2. **Phase 2: Expanded Features** *(In Progress)*
+   - Implemented playlist search and retrieval.
+   - Added user search and profile retrieval.
+   - Connected to Audius discovery nodes via the SDK.
+
+3. **Phase 3: Advanced Search and CLI Interface**
+   - Implement track search functionality with genre and mood filters.
+   - Develop a user-friendly CLI interface for interaction.
+
+4. **Phase 4: Optimization and Error Handling**
+   - Implement robust error handling and retry mechanisms.
+   - Introduce caching for frequently requested data.
+
+5. **Phase 5: Front-end Integration**
    - Create a basic user interface using Next.js for interaction.
-3. **Phase 3: Design Implementation**
+   - Develop frontend components to display fetched data.
+
+6. **Phase 6: Design Implementation**
    - Implement detailed design elements and enhance user experience.
-4. **Phase 4: Code Cleaning and Documentation**
+
+7. **Phase 7: Code Cleaning and Documentation**
    - Refine the codebase for efficiency and maintain comprehensive documentation.
-5. **Phase 5: Deployment to Production on Vercel**
+
+8. **Phase 8: Deployment to Production on Vercel**
    - Deploy the application to production using Vercel for scalability and reliability.
 
 ## Query Classification System
@@ -34,20 +56,13 @@ Implemented in `queryClassifier.ts`, this system categorizes user queries relate
 - General platform information
 
 ### Recent Developments
-1. **Compiler Errors Resolved**: Fixed TypeScript errors in `audiusApi.ts` and related handler functions.
-2. **Resolved Recursion Issue**: Fixed infinite loops in LangGraph by updating `createGraph.ts` to prevent entity queries from looping.
-3. **Enhanced Logging**: Added detailed logs in `select_api.ts` and other tools for better debugging.
-4. **Connecting to Discovery Nodes**: Initiated the connection to Audius discovery nodes via the SDK.
-5. **Successful Testing**: Completed end-to-end tests confirming the resolution of recursion issues and accurate query processing.
+1. **Playlist Search and Retrieval**: Implemented functionality to search for playlists and retrieve playlist details.
+2. **User Profile Retrieval**: Added the ability to search for users and fetch user profile information.
+3. **SDK Integration**: Successfully connected to Audius discovery nodes via the SDK.
 
 ## Next Steps
-1. **Phase 2: Front-end MVP**
-   - Develop the basic user interface with Next.js.
-   - Connect the frontend to the AudiusApi service.
-2. **Implement Playlist and User Profile Search Functionalities**
-3. **Expand `AudiusApi` Class with Additional Methods**
-4. **Implement Caching for Frequently Requested Data**
-5. **Refine Error Handling Mechanisms for Enhanced System Resilience**
-6. **Prepare for Deployment to Production on Vercel**
-7. **Develop Detailed Design Elements and Enhance User Experience**
-8. **Code Cleaning and Comprehensive Documentation**
+1. Implement advanced track search functionality.
+2. Develop the CLI interface for easier testing and interaction.
+3. Enhance error handling and introduce retry mechanisms.
+4. Implement caching strategies to optimize performance.
+5. Begin frontend development with Next.js.

@@ -2,7 +2,7 @@
   "docker_compose_file": "./docker-compose.yml",
   "dockerfile_lines": [],
   "graphs": {
-    "atris": "./app/graph/createAtris.ts:graph"
+    "graph": "./app/index.ts:graph"
   },
   "env": [
     "OPENAI_API_KEY",

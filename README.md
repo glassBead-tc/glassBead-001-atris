@@ -12,7 +12,7 @@ Atris can now:
 1. Interpret user queries about Audius data.
 2. Extract categories and parameters from queries.
 3. Select and interact with appropriate Audius API endpoints.
-4. Retrieve and process data for trending tracks and genres, including number parsing for limit queries.
+4. Retrieve and process data for trending tracks, playlists, and user profiles.
 5. Handle basic error scenarios and API rate limiting.
 6. Resolve recursion issues in the query processing flow to ensure stable operations.
 7. Enhance logging mechanisms to avoid exposing backend logic to users.
@@ -22,7 +22,7 @@ Atris can now:
 
 ## Development Status
 
-We are currently in **Phase 2: Front-end MVP** of our project roadmap, having completed Phase 1 as follows:
+We are currently in **Phase 2: Expanded Features** of our project roadmap, having completed Phase 1 as follows:
 - Developed core LangGraph.js agent.
 - Implemented basic query pipeline.
 - Implemented trending tracks and genres functionality.
@@ -33,8 +33,9 @@ We are currently in **Phase 2: Front-end MVP** of our project roadmap, having co
 - Implemented response sanitization and default timeframe settings.
 
 ### Current Progress in Phase 2:
-- Connecting to Audius discovery nodes via the SDK.
-- Developing the basic user interface with Next.js.
+- Implemented playlist search and retrieval.
+- Added user search and profile retrieval.
+- Connected to Audius discovery nodes via the SDK.
 
 ## Development Phases
 
@@ -48,34 +49,48 @@ We are currently in **Phase 2: Front-end MVP** of our project roadmap, having co
    - Successful end-to-end testing of key functionalities.
    - Implemented response sanitization and default timeframe settings.
 
-2. **Phase 2: Front-end MVP** *(In Progress)*
-   - Create a basic user interface using Next.js for interaction.
+2. **Phase 2: Expanded Features** *(In Progress)*
+   - Implement playlist search and retrieval.
+   - Add user search and profile retrieval.
    - Connect to Audius discovery nodes via the SDK.
+
+3. **Phase 3: Advanced Search and CLI Interface** *(Upcoming)*
+   - Implement track search functionality with genre and mood filters.
+   - Develop a user-friendly CLI interface for interaction.
+
+4. **Phase 4: Optimization and Error Handling** *(Upcoming)*
+   - Implement robust error handling and retry mechanisms.
+   - Introduce caching for frequently requested data.
+
+5. **Phase 5: Front-end Integration** *(Upcoming)*
+   - Create a basic user interface using Next.js for interaction.
    - Develop frontend components to display fetched data.
 
-3. **Phase 3: Design Implementation** *(Pending)*
+6. **Phase 6: Design Implementation** *(Upcoming)*
    - Implement detailed design elements and enhance user experience.
 
-4. **Phase 4: Code Cleaning and Documentation** *(Upcoming)*
+7. **Phase 7: Code Cleaning and Documentation** *(Upcoming)*
    - Refine the codebase for efficiency and maintain comprehensive documentation.
 
-5. **Phase 5: Deployment to Production on Vercel** *(Planned)*
+8. **Phase 8: Deployment to Production on Vercel** *(Planned)*
    - Deploy the application to production using Vercel for scalability and reliability.
 
 ## Next Steps
 
-1. **Phase 2: Front-end MVP**
-   - Complete connection to Audius discovery nodes via the SDK.
-   - Develop the basic user interface with Next.js.
+1. **Phase 2: Expanded Features**
+   - Complete user profile search and retrieval.
+   - Finalize connection to Audius discovery nodes via the SDK.
 
-2. **Phase 3: Design Implementation**
-   - Implement detailed design elements and enhance user experience.
+2. **Phase 3: Advanced Search and CLI Interface**
+   - Implement track search functionality with genre and mood filters.
+   - Develop a user-friendly CLI interface for interaction.
 
-3. **Phase 4: Code Cleaning and Documentation**
-   - Refine the codebase for efficiency and maintain comprehensive documentation.
+3. **Phase 4: Optimization and Error Handling**
+   - Implement robust error handling and retry mechanisms.
+   - Introduce caching for frequently requested data.
 
-4. **Phase 5: Deployment to Production on Vercel**
-   - Deploy the application to production using Vercel for scalability and reliability.
+4. **Phase 5: Front-end Integration**
+   - Begin frontend development with Next.js.
 
 5. **Additional Goals:**
    - Implement playlist search and retrieval.

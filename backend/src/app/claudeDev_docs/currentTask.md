@@ -4,30 +4,20 @@
 Developing an Audius API integration system using LangGraph.js and Next.js.
 
 ## Active Tasks
-1. Resolve any build issues in the project to ensure it compiles successfully.
-2. Connect to Audius Discovery Nodes via the SDK.
-3. Implement a variety of test queries in `queryHandler.ts`.
-4. Develop a readline interface for interactive testing.
-5. Refine error handling and response formatting.
-6. Expand API coverage to handle more complex queries.
-7. Improve user name extraction from queries.
-8. Enhance API selection for user-related queries.
-9. Implement response sanitization and default timeframe settings for genre queries.
-10. Limit genre results to a specified number (defaulting to 5) and remove scores from responses.
-11. Set default timeframe to 'week' unless specified otherwise in genre queries.
+1. Implement track search functionality.
+2. Create a user-friendly CLI interface for interactive testing.
+3. Develop error handling and retry mechanisms for improved resilience.
+4. Enhance caching strategies for frequently requested data.
+5. Implement advanced features like genre-based and mood-based searches.
+6. Prepare to integrate frontend components using Next.js.
 
 ## Context
-Conditional error handling in the graph structure has been implemented, improving the application's flow. The focus is now on resolving build issues and connecting to Audius discovery nodes via the SDK. Recent updates include response sanitization for genre queries and setting default timeframe parameters to enhance user experience. Additionally, we've resolved compiler errors and are now preparing to connect to Audius discovery nodes.
+Recent progress includes successfully implementing playlist search and retrieval, as well as user search and profile retrieval functionalities. The system now handles queries related to playlists and user profiles, expanding its capabilities beyond trending tracks. We've connected to the Audius discovery nodes via the SDK and integrated these new features into the existing query pipeline.
 
 ## Next Steps
-1. Resolve any build issues to ensure the project compiles successfully.
-2. Connect to Audius discovery nodes via the SDK and integrate into existing services.
-3. Create comprehensive test queries covering different Audius API functionalities.
-4. Implement a readline interface for interactive testing.
-5. Analyze and refine responses to complex queries.
-6. Identify and handle edge cases.
-7. Update documentation to reflect new testing capabilities.
-8. Develop playlist and user profile search functionalities.
-9. Expand `AudiusApi` class with additional methods.
-10. Enhance error handling mechanisms for improved system resilience.
-11. Prepare for integration with the frontend using Next.js.
+1. Focus on implementing advanced track search functionality, including genre and mood filters.
+2. Develop a command-line interface for easier interaction and testing.
+3. Improve error handling to manage edge cases and unexpected API responses.
+4. Implement caching mechanisms to optimize performance for frequent queries.
+5. Begin planning for frontend integration using Next.js to provide a user-friendly web interface.
+6. Update documentation to reflect new features and changes.

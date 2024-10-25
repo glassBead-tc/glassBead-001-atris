@@ -6,7 +6,7 @@
     "graph": "./app/index.ts:graph"
     },
   "env": [
-    "../.env"
+    "./.env"
   ],
   "node_version": "20"
 }
