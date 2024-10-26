@@ -1,6 +1,6 @@
 import { logger } from "./logger.js";
 import { ChatOpenAI } from "@langchain/openai";
-import { GraphState, QueryType, EntityType } from "./types.js";
+import { GraphState } from "./types.js";
 import fs from "fs";
 import dotenv from 'dotenv';
 import {
@@ -14,7 +14,6 @@ import {
 import { StateGraph, END, START } from "@langchain/langgraph";
 import { TRIMMED_CORPUS_PATH } from "./constants.js";
 import { findMissingParams } from "./utils.js";
-import { string } from "zod";
 
 dotenv.config({ path: '../.env' });
 
@@ -128,12 +127,17 @@ function createGraph() {
     .addNode("search_entity_node", searchEntityTool)
     .addNode("human_loop_node", readUserInputTool)
     .addNode("execute_request_node", createFetchRequestTool)
-    // Removed format_response_node
+    .addConditionalEdges("extract_category_node", (state: GraphState) => {
+      return state.categories && state.categories.length > 0 ? "get_apis_node" : "human_loop_node";
+    })
+    .addEdge("get_apis_node", "select_api_node")
+    .addEdge("select_api_node", "extract_params_node")
+    .addEdge("extract_params_node", "search_entity_node")
     .addConditionalEdges("search_entity_node", (state: GraphState) => {
       return verifyParams(state) as "human_loop_node" | "execute_request_node";
     })
     .addEdge("human_loop_node", "execute_request_node")
-    .addEdge("execute_request_node", END) // Directly end after execute_request_node
+    .addEdge("execute_request_node", END)
     .addEdge(START, "extract_category_node");
 
   logger.info("Graph created successfully.");
@@ -155,6 +159,7 @@ async function main(query: string) {
   });
 
   const stream = await app.stream({
+    llm,
     query,
   });
 

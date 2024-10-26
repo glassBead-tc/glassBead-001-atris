@@ -384,7 +384,7 @@ export const ExtractHighLevelCategoriesTool = tool(
   {
     name: "ExtractHighLevelCategories",
     description:
-      "Given a user query, extract the high level category which best represents the query.",
+      "Given a user query, extract the high-level category which best represents the query.",
     schema: z.object({
       highLevelCategories: z
         .array(
@@ -394,7 +394,7 @@ export const ExtractHighLevelCategoriesTool = tool(
             )
             .describe("An enum of all categories which best match the query.")
         )
-        .describe("The high level categories to extract from the query."),
+        .describe("The high-level categories to extract from the query."),
     }),
   }
 );
@@ -439,10 +439,7 @@ function extractEntityNameFromQuery(query: string, entityType: EntityType): stri
 }
 
 /**
- * Extracts high-level categories based on the user's query using the ExtractHighLevelCategoriesTool.
- *
- * @param {GraphState} state - The current state of the graph.
- * @returns {Promise<Partial<GraphState>>} - The updated graph state with extracted categories.
+ * Modifies the extractCategory function to return only the first category.
  */
 export async function extractCategory(state: GraphState): Promise<Partial<GraphState>> {
   // Prepare the prompt with categories and tools
@@ -518,8 +515,9 @@ ${categoriesAndTools}`,
 
   console.log(categories, isEntityQuery, entityType, entityName);
 
+  // Ensure only one category is selected
   return {
-    categories,
+    categories: [categories[0]], // Select the first category as the most relevant
     isEntityQuery,
     entityType,
     entityName,
@@ -982,6 +980,8 @@ export const ALL_TOOLS_LIST: { [key: string]: StructuredToolInterface | Runnable
   readUserInput: readUserInputTool // Use the instantiated tool
   // Add other tools here as needed
 };
+
+
 
 
 
