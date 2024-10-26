@@ -19,23 +19,36 @@ import { Track, User, Playlist } from '@audius/sdk';
  * @param {GraphState} state - The current state of the graph.
  * @returns {Promise<Partial<GraphState>>} - The updated graph state.
  */
-export async function selectApi(state: GraphState): Promise<Partial<GraphState>> {
-  // Map query types to SDK methods
-  let bestApiName: string;
+export const selectApiTool = tool(
+  async ({ parameters }: { parameters: { queryType: string; apis: DatasetSchema[] } }): Promise<{ bestApi: DatasetSchema | null }> => {
+    const { queryType, apis } = parameters;
+    let bestApiName: string;
 
-  if (state.queryType === 'search_tracks') {
-    bestApiName = 'Search Tracks';
-  } else if (state.queryType === 'trending_tracks') {
-    bestApiName = 'Get Trending Tracks';
-  } else {
-    bestApiName = 'Get Track';
+    if (queryType === 'search_tracks') {
+      bestApiName = 'Search Tracks';
+    } else if (queryType === 'trending_tracks') {
+      bestApiName = 'Get Trending Tracks';
+    } else {
+      bestApiName = 'Get Track';
+    }
+
+    const bestApi = apis.find(api => api.api_name === bestApiName) || null;
+
+    logger.debug(`Selected API: ${bestApi ? bestApi.api_name : 'None'}`);
+
+    return { bestApi };
+  },
+  {
+    name: 'select_api',
+    description: 'Selects the best API based on the query type and available APIs.',
+    schema: z.object({
+      parameters: z.object({
+        queryType: z.string().describe('The type of the query, e.g., search_tracks, trending_tracks.'),
+        apis: z.array(z.any()).describe('The list of available APIs.'),
+      }),
+    }),
   }
-
-  // Find corresponding API schema if needed
-  const bestApi = state.apis?.find(api => api.api_name === bestApiName) || null;
-
-  return { bestApi };
-}
+);
 
 // READ/PARSE USER INPUT -> EXTRACT PARAMS -> REQUEST PARAMS
 
@@ -225,12 +238,12 @@ export async function verifyParams(state: GraphState): Promise<Partial<GraphStat
     logger.debug(`Missing parameters: ${missingParams.join(', ')}`);
     return {
       error: true,
-      message: "Missing parameters",
+      messages: "Missing parameters",
     };
   }
   return {
     error: false,
-    message: "Parameters verified successfully.",
+    messages: "Parameters verified successfully.",
   };
 }
 
@@ -321,6 +334,7 @@ export async function extractParameters(state: GraphState): Promise<Partial<Grap
     // Remove trailing punctuation from track title and artist name
     const trackTitle = match[1].trim().replace(/[^\w\s]|_/g, "");
     const artistName = match[2].trim().replace(/[^\w\s]|_/g, "");
+    console.log('extractParameters extracted parameters:', { trackTitle, artistName }); // Moved logging before return
     return {
       parameters: {
         trackTitle,
@@ -335,14 +349,16 @@ export async function extractParameters(state: GraphState): Promise<Partial<Grap
 
   if (titleMatch && titleMatch[1]) {
     const trackTitle = titleMatch[1].trim().replace(/[^\w\s]|_/g, "");
+    console.log('extractParameters extracted parameters:', { trackTitle, artistName: null }); // Added logging for missing artistName
     return {
       parameters: {
         trackTitle,
-        track_id: "", // Placeholder for track_id, as it's not provided in the query
+        artistName: null, // Explicitly set artistName to null
       },
     };
   }
 
+  console.log('extractParameters failed to extract parameters from query:', query); // Added logging for failure
   throw new Error(
     "Could not extract track and artist information from the query."
   );
@@ -516,60 +532,66 @@ ${categoriesAndTools}`,
  * @param {GraphState} state - The current state of the graph.
  * @returns {Promise<Partial<GraphState>>} - The updated graph state with the track ID and details.
  */
-export async function searchEntity(state: GraphState): Promise<Partial<GraphState>> {
-  const parameters = state.parameters || {};
-  const trackTitle = parameters.trackTitle;
-  const artistName = parameters.artistName;
+export const searchEntityTool = tool(
+  async ({ parameters }: { parameters?: { trackTitle: string; artistName?: string | null; track_id?: string } }): Promise<Partial<GraphState>> => {
+    const trackTitle = parameters?.trackTitle;
+    const artistName = parameters?.artistName;
+    const track_id = parameters?.track_id || '';
 
-  if (!trackTitle) {
-    throw new Error('Track title is required to search for a track.');
-  }
+    console.log('searchEntity received parameters:', parameters);
 
-  try {
-    // Use the Audius SDK to search for tracks
-    const response = await sdk.tracks.searchTracks({
-      query: trackTitle
-    });
-
-    const tracks: Track[] = response.data!;
-
-    if (!tracks || tracks.length === 0) {
-      throw new Error(`No tracks found for title "${trackTitle}".`);
+    if (!trackTitle) {
+      throw new Error('Track title is required to search for a track.');
     }
 
-    let track = tracks[0]; // Default to the first track
+    try {
+      const response = await sdk.tracks.searchTracks({ query: trackTitle });
+      const tracks: Track[] = response.data!;
 
-    // If artistName is provided, try to find a track by the given artist
-    if (artistName) {
-      const lowerArtistName = artistName.toLowerCase();
-
-      const matchingTracks = tracks.filter((t) => {
-        const userName = t.user?.name?.toLowerCase();
-        const userHandle = t.user?.handle?.toLowerCase();
-        return userName === lowerArtistName || userHandle === lowerArtistName;
-      });
-
-      if (matchingTracks.length > 0) {
-        track = matchingTracks[0];
-      } else {
-        throw new Error(`No tracks found for title "${trackTitle}" by artist "${artistName}".`);
+      if (!tracks || tracks.length === 0) {
+        throw new Error(`No tracks found for title "${trackTitle}".`);
       }
+
+      let track = tracks[0];
+
+      if (artistName) { // artistName could be null, which is falsy
+        const lowerArtistName = artistName.toLowerCase();
+        const matchingTracks = tracks.filter((t) => {
+          const userName = t.user?.name?.toLowerCase();
+          const userHandle = t.user?.handle?.toLowerCase();
+          return userName === lowerArtistName || userHandle === lowerArtistName;
+        });
+
+        if (matchingTracks.length > 0) {
+          track = matchingTracks[0];
+        } else {
+          throw new Error(`No tracks found for title "${trackTitle}" by artist "${artistName}".`);
+        }
+      }
+
+      return {
+        parameters: {
+          ...parameters,
+          track_id: track.id,
+        },
+      };
+    } catch (error) {
+      console.error('Error in searchEntity:', error);
+      throw error;
     }
-
-    const trackId = track.id;
-
-    // Update the state with the track ID and track data
-    return {
-      parameters: {
-        ...state.parameters,
-        track_id: trackId,
-      },
-    };
-  } catch (error) {
-    console.error('Error in searchEntity:', error);
-    throw error;
+  },
+  {
+    name: "search_entity",
+    description: "Searches for a track using the title and optional artist name",
+    schema: z.object({
+      parameters: z.object({
+        trackTitle: z.string().describe("The title of the track to search for"),
+        artistName: z.string().optional().nullable().describe("The name of the artist"),
+        track_id: z.string().optional().describe("The ID of the found track")
+      }).optional()
+    })
   }
-}
+);
 
 /**
  * Factory function to create the SelectAPITool.
@@ -836,6 +858,116 @@ export async function createFetchRequest(state: GraphState): Promise<Partial<Gra
   }
 }
 
+/**
+ * Tool to create and execute API fetch requests, including response formatting.
+ *
+ * @param {object} parameters - The parameters object containing necessary API parameters.
+ * @returns {Promise<{ response: string }>} - The formatted response string.
+ */
+export const createFetchRequestTool = tool(
+  async ({ parameters }: { parameters?: { track_id?: string; playlist_id?: string; [key: string]: any } }): Promise<{ response: string }> => {
+    try {
+      const { track_id, playlist_id } = parameters || {};
+
+      let apiResponse: any;
+
+      if (track_id) {
+        logger.debug(`Fetching track with ID: ${track_id}`);
+        apiResponse = await sdk.tracks.getTrack({ trackId: track_id });
+      } else if (playlist_id) {
+        logger.debug(`Fetching playlist with ID: ${playlist_id}`);
+        apiResponse = await sdk.playlists.getPlaylist({ playlistId: playlist_id });
+      } else {
+        throw new Error("No valid API parameters provided.");
+      }
+
+      logger.debug(`API Response: ${JSON.stringify(apiResponse)}`);
+
+      // Format the response
+      if (!apiResponse) {
+        throw new Error("No response data available.");
+      }
+
+      const track = apiResponse;
+      const { title, user, play_count } = track;
+      const artistName = user?.name || user?.handle || "Unknown Artist";
+
+      const formattedResponse = `${title} by ${artistName} has ${play_count ?? 'an unknown number of'} plays on Audius.`;
+
+      logger.debug(`Formatted Response: "${formattedResponse}"`);
+
+      return {
+        response: formattedResponse,
+      };
+    } catch (error) {
+      logger.error('Error in createFetchRequestTool:', error);
+      throw error;
+    }
+  },
+  {
+    name: "create_fetch_request",
+    description: "Creates and executes API fetch requests based on provided parameters and formats the response.",
+    schema: z.object({
+      parameters: z.object({
+        track_id: z.string().optional().describe("The ID of the track to fetch."),
+        playlist_id: z.string().optional().describe("The ID of the playlist to fetch."),
+        // Add other parameters as needed
+      }).optional(),
+    }),
+  }
+);
+
+/**
+ * Tool to extract parameters from user query.
+ *
+ * @param {object} parameters - The parameters object containing the user's query.
+ * @returns {Promise<{ parameters: { trackTitle: string; artistName?: string | null } }>} - The extracted parameters.
+ */
+export const extractParametersTool = tool(
+  async ({ parameters }: { parameters: { query: string } }): Promise<{ parameters: { trackTitle: string; artistName?: string | null } }> => {
+    const { query } = parameters;
+    let trackTitle = '';
+    let artistName: string | null = null;
+
+    // Regex to extract track title and artist name
+    const regex = /how many plays does\s+(.*?)\s+by\s+(.*?)\s*(have|\?|$)/i;
+    const match = query.match(regex);
+
+    if (match && match[1]) {
+      trackTitle = match[1].trim();
+      if (match[2]) {
+        artistName = match[2].trim();
+      }
+    } else {
+      // Handle cases without artist name
+      const simpleRegex = /how many plays does\s+(.*?)\s*(have|\?|$)/i;
+      const simpleMatch = query.match(simpleRegex);
+      if (simpleMatch && simpleMatch[1]) {
+        trackTitle = simpleMatch[1].trim();
+      } else {
+        throw new Error("Could not extract track title from the query.");
+      }
+    }
+
+    logger.debug(`Extracted Parameters: Track Title - "${trackTitle}", Artist Name - "${artistName}"`);
+
+    return {
+      parameters: {
+        trackTitle,
+        artistName,
+      },
+    };
+  },
+  {
+    name: "extract_parameters",
+    description: "Extracts parameters like track title and artist name from the user query.",
+    schema: z.object({
+      parameters: z.object({
+        query: z.string().describe("The user's query from which to extract parameters."),
+      }),
+    }),
+  }
+);
 
 /**
  * List of all tools used in the ecosystem.
@@ -850,77 +982,6 @@ export const ALL_TOOLS_LIST: { [key: string]: StructuredToolInterface | Runnable
   readUserInput: readUserInputTool // Use the instantiated tool
   // Add other tools here as needed
 };
-
-/**
- * Formats the final response to the user.
- *
- * @param {GraphState} state - The current state of the graph.
- * @returns {Promise<Partial<GraphState>>} - The updated graph state with the formatted response.
- */
-export async function formatResponse(state: GraphState): Promise<Partial<GraphState>> {
-  const { response } = state;
-
-  if (!response) {
-    throw new Error("No response data available.");
-  }
-
-  const track = response;
-  const { title, user, play_count } = track;
-  const artistName = user?.name || user?.handle || "Unknown Artist";
-
-  const formattedResponse = `${title} by ${artistName} has ${play_count ?? 'an unknown number of'} plays on Audius.`;
-
-  return {
-    formattedResponse,
-  };
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

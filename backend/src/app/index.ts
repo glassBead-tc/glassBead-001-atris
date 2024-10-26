@@ -1,13 +1,20 @@
 import { logger } from "./logger.js";
 import { ChatOpenAI } from "@langchain/openai";
-import { ComplexityLevel, DatasetSchema, EntityType, AudiusCorpus, GraphState } from "./types.js";
+import { GraphState, QueryType, EntityType } from "./types.js";
 import fs from "fs";
 import dotenv from 'dotenv';
-import { extractCategory, extractParameters, createFetchRequest, selectApi, searchEntity, formatResponse, readUserInputTool } from "./tools/tools.js";
+import {
+  extractCategory,
+  searchEntityTool,
+  readUserInputTool,
+  selectApiTool,
+  extractParametersTool,
+  createFetchRequestTool,
+} from "./tools/tools.js";
 import { StateGraph, END, START } from "@langchain/langgraph";
 import { TRIMMED_CORPUS_PATH } from "./constants.js";
 import { findMissingParams } from "./utils.js";
-import { getTrack } from "./tools/getTrack.js"; 
+import { string } from "zod";
 
 dotenv.config({ path: '../.env' });
 
@@ -36,33 +43,11 @@ const graphChannels = {
   message: null,
 };
 
-// export interface GraphState {
-//   llm: ChatOpenAI | null;
-//   query: string | null;
-//   queryType: string | null;
-//   categories: string[] | null;
-//   apis: DatasetSchema[] | null;
-//   bestApi: DatasetSchema | null;
-//   params: Record<string, string> | null;
-//   response: any | null;
-//   complexity: string | null;
-//   isEntityQuery: boolean;
-//   entityName: string | null;
-//   entityType: EntityType | null;
-//   parameters: Record<string, any> | null;
-//   error: boolean;
-//   selectedHost: string | null;
-//   entity: Track | User | Playlist | null;
-//   secondaryApi: DatasetSchema | null;
-//   secondaryResponse: any | null;
-//   multiStepHandled: boolean;
-//   initialState: GraphState | null;
-//   formattedResponse: string | null;
-//   message: string | null;
-// }
-
 /**
- * @param {GraphState} state
+ * Verifies the presence of required parameters.
+ *
+ * @param {GraphState} state - The current state of the graph.
+ * @returns {string} - Determines the next node based on parameter verification.
  */
 const verifyParams = (
   state: GraphState
@@ -86,8 +71,12 @@ const verifyParams = (
   return "execute_request_node";
 };
 
-
-
+/**
+ * Fetches the list of available APIs based on the extracted categories.
+ *
+ * @param {GraphState} state - The current state of the graph.
+ * @returns {Partial<GraphState>} - The updated state with the list of APIs.
+ */
 function getApis(state: GraphState) {
   logger.debug('getApis called with categories:', state.categories);
   
@@ -97,16 +86,16 @@ function getApis(state: GraphState) {
   }
 
   // Parse the JSON and access the endpoints array
-  const allData: AudiusCorpus = JSON.parse(fs.readFileSync(TRIMMED_CORPUS_PATH, "utf8"));
+  const allData: any = JSON.parse(fs.readFileSync(TRIMMED_CORPUS_PATH, "utf8"));
   const endpoints = allData.endpoints;
 
-  logger.debug('All available APIs:', endpoints.map(api => api.api_name));
+  logger.debug('All available APIs:', endpoints.map((api: { api_name: string }) => api.api_name));
 
   const apis = state.categories
     .map((category) => {
       // Filter APIs by category_name
-      const matchedApis = endpoints.filter((endpoint) => endpoint.category_name === category);
-      logger.debug(`Matched APIs for category "${category}":`, matchedApis.map(api => api.api_name));
+      const matchedApis = endpoints.filter((endpoint: any) => endpoint.category_name === category);
+      logger.debug(`Matched APIs for category "${category}":`, matchedApis.map((api: any) => api.api_name));
       return matchedApis;
     })
     .flat();
@@ -116,7 +105,7 @@ function getApis(state: GraphState) {
     throw new Error("No APIs available for selection.");
   }
 
-  logger.debug('APIs selected for the query:', apis.map(api => api.api_name));
+  logger.debug('APIs selected for the query:', apis.map((api: any) => api.api_name));
 
   return {
     apis,
@@ -124,7 +113,9 @@ function getApis(state: GraphState) {
 }
 
 /**
- * TODO: implement
+ * Creates and configures the graph.
+ *
+ * @returns {CompiledStateGraph} - The compiled state graph.
  */
 function createGraph() {
   const graph = new StateGraph<GraphState>({
@@ -132,41 +123,17 @@ function createGraph() {
   })
     .addNode("extract_category_node", extractCategory)
     .addNode("get_apis_node", getApis)
-    .addNode("select_api_node", selectApi)
-    .addNode("extract_params_node", extractParameters)
-    .addNode("search_entity_node", async (state: GraphState) => {
-      logger.debug("search_entity_node received state:", {
-        trackTitle: state.parameters?.trackTitle,
-        track_id: state.parameters?.track_id,
-      });
-      const result = await searchEntity(state);
-      logger.debug("search_entity_node output:", result);
-      return result;
-    })
-    .addNode("get_track_node", async (state: GraphState) => {
-      logger.debug("get_track_node received state:", {
-        track_id: state.parameters?.track_id,
-      });
-      const result = await getTrack(state.parameters!.track_id);
-      logger.debug("get_track_node output:", result);
-      return {
-        trackDetails: result,
-      };
-    })
+    .addNode("select_api_node", selectApiTool)
+    .addNode("extract_params_node", extractParametersTool)
+    .addNode("search_entity_node", searchEntityTool)
     .addNode("human_loop_node", readUserInputTool)
-    .addNode("execute_request_node", createFetchRequest)
-    .addNode("format_response_node", formatResponse)
-    .addEdge("extract_category_node", "get_apis_node")
-    .addEdge("get_apis_node", "select_api_node")
-    .addEdge("select_api_node", "extract_params_node")
-    .addEdge("extract_params_node", "search_entity_node")
-    .addEdge("search_entity_node", "get_track_node") // 将 get_track_node 添加到流程中
-    .addEdge("get_track_node", "human_loop_node") // 如果需要人工输入，转到人工循环
-    .addConditionalEdges("human_loop_node", (state: GraphState) => {
-      return state.error ? "execute_request_node" : "execute_request_node"; // 根据需要调整逻辑
+    .addNode("execute_request_node", createFetchRequestTool)
+    // Removed format_response_node
+    .addConditionalEdges("search_entity_node", (state: GraphState) => {
+      return verifyParams(state) as "human_loop_node" | "execute_request_node";
     })
-    .addEdge("execute_request_node", "format_response_node")
-    .addEdge("format_response_node", END)
+    .addEdge("human_loop_node", "execute_request_node")
+    .addEdge("execute_request_node", END) // Directly end after execute_request_node
     .addEdge(START, "extract_category_node");
 
   logger.info("Graph created successfully.");
@@ -174,8 +141,11 @@ function createGraph() {
   return graph.compile();
 }
 
-const datasetQuery = "How many plays does 115 SECONDS OF CLAMS have on Audius?";
-
+/**
+ * Processes the query through the graph.
+ *
+ * @param {string} query - The user's query.
+ */
 async function main(query: string) {
   const app = createGraph();
 
@@ -185,40 +155,34 @@ async function main(query: string) {
   });
 
   const stream = await app.stream({
-    llm,
     query,
   });
 
   let finalResult: GraphState | null = null;
   for await (const event of stream) {
     console.log("\n------\n");
-    if (Object.keys(event)[0] === "execute_request_node") {
+    const eventName = Object.keys(event)[0];
+    console.log("Stream event:", eventName);
+
+    // Log the state after each event
+    console.log("State after event:", event[eventName]);
+
+    if (eventName === "execute_request_node") {
       console.log("---FINISHED---");
       finalResult = event.execute_request_node;
-    } else {
-      console.log("Stream event: ", Object.keys(event)[0]);
-      // Uncomment the line below to see the values of the event.
-      // console.log("Value(s): ", Object.values(event)[0]);
     }
   }
 
   if (!finalResult) {
     throw new Error("No final result");
   }
-  if (!finalResult.bestApi) {
-    throw new Error("No best API found");
-  }
 
-
-  console.log("---FETCH RESULT---");
+  console.log("---FORMATTED RESPONSE---");
   console.log(finalResult.response);
 }
 
-main(datasetQuery);
+const datasetQuery = "How many plays does 115 SECONDS OF CLAMS have on Audius?";
 
-
-
-
-
-
-
+main(datasetQuery).catch(error => {
+  logger.error(`Error during execution: ${error.message}`);
+});

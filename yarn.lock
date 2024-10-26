@@ -3395,6 +3395,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@langchain/core@npm:^0.3.15":
+  version: 0.3.15
+  resolution: "@langchain/core@npm:0.3.15"
+  dependencies:
+    ansi-styles: "npm:^5.0.0"
+    camelcase: "npm:6"
+    decamelize: "npm:1.2.0"
+    js-tiktoken: "npm:^1.0.12"
+    langsmith: "npm:^0.2.0"
+    mustache: "npm:^4.2.0"
+    p-queue: "npm:^6.6.2"
+    p-retry: "npm:4"
+    uuid: "npm:^10.0.0"
+    zod: "npm:^3.22.4"
+    zod-to-json-schema: "npm:^3.22.3"
+  checksum: 10c0/aa85257298a98778165fe0f026edf1ac3603f31f0c6b1f1933db3ebd8107efc598617ce89ea89657501ab60b2b60051b5e21ada81150351740e0861966b3e130
+  languageName: node
+  linkType: hard
+
 "@langchain/langgraph-checkpoint@npm:~0.0.10":
   version: 0.0.10
   resolution: "@langchain/langgraph-checkpoint@npm:0.0.10"
@@ -3417,6 +3436,20 @@ __metadata:
   peerDependencies:
     "@langchain/core": ">=0.2.36 <0.3.0 || >=0.3.9 < 0.4.0"
   checksum: 10c0/692e2c00a80f6cf0896f2e611d2dfde887490365f19ee9c8c747af0373e26cd16fba880cca0e00d630f6424172007db08e1c97c35546f97e76b476606687a6a9
+  languageName: node
+  linkType: hard
+
+"@langchain/langgraph@npm:^0.2.18":
+  version: 0.2.18
+  resolution: "@langchain/langgraph@npm:0.2.18"
+  dependencies:
+    "@langchain/langgraph-checkpoint": "npm:~0.0.10"
+    double-ended-queue: "npm:^2.1.0-0"
+    uuid: "npm:^10.0.0"
+    zod: "npm:^3.23.8"
+  peerDependencies:
+    "@langchain/core": ">=0.2.36 <0.3.0 || >=0.3.9 < 0.4.0"
+  checksum: 10c0/b896b5e6bbd8b507c403d909155b8c9c99a05342150cd87863726a4a7b95b9df995bd98fd23849a50a470e49bfbc903499312e45c62c2ab7bbe730e91e8a3560
   languageName: node
   linkType: hard
 
@@ -5295,6 +5328,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/punycode@npm:^2":
+  version: 2.1.4
+  resolution: "@types/punycode@npm:2.1.4"
+  checksum: 10c0/0472cc871783a22859ad83fe7cb62d23226ff78694b9807d2a3ec37571d46b05409ca9282c8ccedfb59e58e4a4561b27463623ce95bcfd6bd9c11ac1ef3cd0d1
+  languageName: node
+  linkType: hard
+
 "@types/qs@npm:*":
   version: 6.9.16
   resolution: "@types/qs@npm:6.9.16"
@@ -6536,13 +6576,14 @@ __metadata:
     "@babel/preset-typescript": "npm:^7.18.6"
     "@improbable-eng/grpc-web": "npm:^0.15.0"
     "@langchain/community": "npm:^0.3.5"
-    "@langchain/core": "npm:^0.3.13"
-    "@langchain/langgraph": "npm:^0.2.16"
+    "@langchain/core": "npm:^0.3.15"
+    "@langchain/langgraph": "npm:^0.2.18"
     "@langchain/openai": "npm:^0.3.7"
     "@solana/wallet-adapter-base": "npm:^0.9.23"
     "@solana/web3.js": "npm:^1.3.0"
     "@types/jest": "npm:^29.5.14"
     "@types/node": "npm:^22.7.9"
+    "@types/punycode": "npm:^2"
     axgen: "npm:^0.0.23"
     axios: "npm:^1.7.7"
     babel-jest: "npm:^29.2.5"
@@ -6562,6 +6603,7 @@ __metadata:
     pg: "npm:^8.11.0"
     pg-query-stream: "npm:^4.7.0"
     prettier: "npm:^2.8.3"
+    punycode: "npm:^2.3.1"
     react: "npm:^18.3.1"
     react-dom: "npm:^18.3.1"
     react-is: "npm:^18.3.1"
@@ -11872,6 +11914,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"langsmith@npm:^0.2.0":
+  version: 0.2.1
+  resolution: "langsmith@npm:0.2.1"
+  dependencies:
+    "@types/uuid": "npm:^10.0.0"
+    commander: "npm:^10.0.1"
+    p-queue: "npm:^6.6.2"
+    p-retry: "npm:4"
+    semver: "npm:^7.6.3"
+    uuid: "npm:^10.0.0"
+  peerDependencies:
+    openai: "*"
+  peerDependenciesMeta:
+    openai:
+      optional: true
+  checksum: 10c0/fbce68970d5b693cb739aa240b993355aef4ce4634457240908e1aaf42d1890c4d673f7dcef2c1b81d69d2c2026706a14bd4137040202dfd63b650f9ccd49bba
+  languageName: node
+  linkType: hard
+
 "leven@npm:^3.1.0":
   version: 3.1.0
   resolution: "leven@npm:3.1.0"
@@ -13614,7 +13675,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"punycode@npm:^2.1.0, punycode@npm:^2.1.1":
+"punycode@npm:^2.1.0, punycode@npm:^2.1.1, punycode@npm:^2.3.1":
   version: 2.3.1
   resolution: "punycode@npm:2.3.1"
   checksum: 10c0/14f76a8206bc3464f794fb2e3d3cc665ae416c01893ad7a02b23766eb07159144ee612ad67af5e84fa4479ccfe67678c4feb126b0485651b302babf66f04f9e9

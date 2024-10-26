@@ -1,5 +1,6 @@
 import { ChatOpenAI } from '@langchain/openai';
 import { TrackArtwork, User, ProfilePicture, CoverPhoto, Playlist, PlaylistAddedTimestamp, PlaylistArtwork, Access, Track } from "@audius/sdk";
+import { Messages } from '@langchain/langgraph'
 
 export type ComplexityLevel = 'simple' | 'moderate' | 'complex';
 
@@ -55,7 +56,7 @@ export interface GraphState {
   multiStepHandled: boolean;
   initialState: GraphState | null;
   formattedResponse: string | null;
-  message: string | null;
+  messages: Messages | null;
 }
 
 export type QueryType =
@@ -202,7 +203,7 @@ export const initialGraphState: GraphState = {
   secondaryResponse: null,  
   error: false,
   formattedResponse: null,
-  message: null,
+  messages: null,
   isEntityQuery: false,
   entityName: null,
   entity: null,
