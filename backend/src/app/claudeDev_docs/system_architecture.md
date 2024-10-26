@@ -25,6 +25,7 @@
    - Genre-based Search: Processes genre-specific queries
    - Performer-based Search: Handles queries about specific artists
    - Play Count Retrieval: Fetches play count data for tracks
+   - Detailed Track Information Retrieval: Enhances query responses with detailed track data
 
 4. Error Handling
    - Centralized error handling system

@@ -19,6 +19,7 @@ Atris can now:
 8. Successfully handle end-to-end queries without encountering recursion limit errors.
 9. **Limit Results and Sanitize Output**: Restrict responses to a specified number of items (defaulting to 5) and remove sensitive details like scores for cleaner output.
 10. **Default Timeframe Setting**: Automatically default trending data to the last week unless a different timeframe is specified.
+11. **Fetch Detailed Track Information**: Successfully retrieve detailed track information, including play counts, for specific queries.
 
 ## Development Status
 
@@ -36,6 +37,7 @@ We are currently in **Phase 2: Expanded Features** of our project roadmap, havin
 - Implemented playlist search and retrieval.
 - Added user search and profile retrieval.
 - Connected to Audius discovery nodes via the SDK.
+- Successfully retrieved detailed track information for specific queries.
 
 ## Development Phases
 
@@ -53,6 +55,7 @@ We are currently in **Phase 2: Expanded Features** of our project roadmap, havin
    - Implement playlist search and retrieval.
    - Add user search and profile retrieval.
    - Connect to Audius discovery nodes via the SDK.
+   - Retrieve detailed track information for specific queries.
 
 3. **Phase 3: Advanced Search and CLI Interface** *(Upcoming)*
    - Implement track search functionality with genre and mood filters.

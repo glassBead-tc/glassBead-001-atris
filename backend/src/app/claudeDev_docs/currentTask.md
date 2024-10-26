@@ -12,7 +12,7 @@ Developing an Audius API integration system using LangGraph.js and Next.js.
 6. Prepare to integrate frontend components using Next.js.
 
 ## Context
-Recent progress includes successfully implementing playlist search and retrieval, as well as user search and profile retrieval functionalities. The system now handles queries related to playlists and user profiles, expanding its capabilities beyond trending tracks. We've connected to the Audius discovery nodes via the SDK and integrated these new features into the existing query pipeline.
+Recent progress includes successfully implementing playlist search and retrieval, as well as user search and profile retrieval functionalities. The system now handles queries related to playlists and user profiles, expanding its capabilities beyond trending tracks. We've connected to the Audius discovery nodes via the SDK and integrated these new features into the existing query pipeline. Additionally, detailed track information retrieval has been successfully implemented, enhancing the accuracy and completeness of query responses.
 
 ## Next Steps
 1. Focus on implementing advanced track search functionality, including genre and mood filters.

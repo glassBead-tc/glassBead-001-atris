@@ -19,6 +19,7 @@
    3.5 Genre-based Search
    3.6 Performer-based Search
    3.7 Play Count Retrieval
+   3.8 Detailed Track Information Retrieval
 
 4. Utility Components
    4.1 AudiusApi Class

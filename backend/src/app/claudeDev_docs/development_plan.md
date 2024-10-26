@@ -12,6 +12,7 @@
    - Implemented playlist search and retrieval.
    - Added user search and profile retrieval.
    - Connected to Audius discovery nodes via the SDK.
+   - Successfully implemented detailed track information retrieval.
 
 3. **Phase 3: Advanced Search and CLI Interface**
    - Implement track search functionality with genre and mood filters.
@@ -59,6 +60,7 @@ Implemented in `queryClassifier.ts`, this system categorizes user queries relate
 1. **Playlist Search and Retrieval**: Implemented functionality to search for playlists and retrieve playlist details.
 2. **User Profile Retrieval**: Added the ability to search for users and fetch user profile information.
 3. **SDK Integration**: Successfully connected to Audius discovery nodes via the SDK.
+4. **Detailed Track Information Retrieval**: Enhanced query responses by retrieving detailed track information, including play counts.
 
 ## Next Steps
 1. Implement advanced track search functionality.

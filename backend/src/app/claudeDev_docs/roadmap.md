@@ -3,10 +3,11 @@
 ## Phase 1: Core Functionality (Weeks 1-3)
 - [x] Implement basic query pipeline
 - [x] Develop trending tracks feature
-- [ ] Create playlist search and retrieval
+- [x] Create playlist search and retrieval
 
 ## Phase 2: Expanded Features (Weeks 4-6)
-- [ ] Implement user profile search and retrieval
+- [x] Implement user profile search and retrieval
+- [x] Retrieve detailed track information
 - [ ] Develop advanced track search
 - [ ] Create basic CLI interface
 

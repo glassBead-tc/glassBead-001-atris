@@ -5,11 +5,11 @@ import fs from "fs";
 import dotenv from 'dotenv';
 import {
   extractCategoryTool,
-  searchEntityTool,
   readUserInputTool,
   selectApiTool,
   extractParametersTool,
   createFetchRequestTool,
+  getApis
 } from "./tools/tools.js";
 import { StateGraph, END, START } from "@langchain/langgraph";
 import { TRIMMED_CORPUS_PATH } from "./constants.js";
@@ -80,77 +80,6 @@ const verifyParams = (
 
   return "execute_request_node";
 };
-
-/**
- * Fetches the list of available APIs based on the extracted categories.
- *
- * @param {GraphState} state - The current state of the graph.
- * @returns {Partial<GraphState>} - The updated state with the list of APIs.
- */
-function getApis(state: GraphState) {
-  logger.debug('getApis called with categories:', state.categories);
-  
-  if (!state.categories || state.categories.length === 0) {
-    logger.error("No categories available in state for getApis.");
-    throw new Error("No categories passed to get_apis_node");
-  }
-
-  // Parse the JSON and access the endpoints array
-  const allData: any = JSON.parse(fs.readFileSync(TRIMMED_CORPUS_PATH, "utf8"));
-  const endpoints = allData.endpoints;
-
-  logger.debug('All available APIs:', endpoints.map((api: { api_name: string }) => api.api_name));
-
-  // Remove duplicate APIs based on 'api_name'
-  const uniqueApis = Array.from(
-    new Map(endpoints.map((api: any) => [api.api_name, api])).values()
-  );
-
-  // Validate that each API has the required fields
-  const validatedApis = uniqueApis.filter((api: any) => {
-    const hasRequiredFields = api.api_name && Array.isArray(api.required_parameters);
-    if (!hasRequiredFields) {
-      logger.warn(`API "${api.api_name || 'Unnamed API'}" is missing required fields and will be excluded.`);
-    }
-    return hasRequiredFields;
-  });
-
-  // Transform validated APIs to match DatasetSchema
-  const transformedApis: DatasetSchema[] = validatedApis.map((api: any) => ({
-    id: api.id,
-    category_name: api.category_name,
-    tool_name: api.tool_name,
-    api_name: api.api_name,
-    api_description: api.api_description,
-    required_parameters: api.required_parameters,
-    optional_parameters: api.optional_parameters,
-    method: api.method,
-    template_response: api.template_response,
-    api_url: api.api_url,
-  }));
-
-  const apis = state.categories
-    .map((category) => {
-      // Filter APIs by category_name
-      const matchedApis = transformedApis.filter((endpoint: DatasetSchema) => endpoint.category_name === category);
-      logger.debug(`Matched APIs for category "${category}":`, matchedApis.map((api: DatasetSchema) => api.api_name));
-      return matchedApis;
-    })
-    .flat();
-
-  // Ensure 'apis' is not empty after filtering and validation
-  if (apis.length === 0) {
-    logger.error("No valid APIs found for the given categories after filtering.");
-    throw new Error("No valid APIs available for selection after filtering.");
-  }
-
-  logger.debug('APIs selected for the query:', apis.map((api: DatasetSchema) => api.api_name));
-
-  return {
-    ...state,
-    apis,
-  };
-}
 
 /**
  * Creates and configures the graph.
