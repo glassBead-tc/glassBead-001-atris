@@ -51,24 +51,33 @@ const graphChannels = {
 const verifyParams = (
   state: GraphState
 ): "human_loop_node" | "execute_request_node" => {
-  const { bestApi, parameters, isEntityQuery } = state;
+  const { bestApi, parameters } = state;
+  
   if (!bestApi) {
     throw new Error("No best API found");
   }
+  
   if (!parameters) {
     console.warn("Parameters are missing. Redirecting to human_loop_node.");
     return "human_loop_node";
   }
-  const requiredParamsKeys = (bestApi.required_parameters || []).map(({ name }) => name);
+
+  // Check if we have all required parameters for the selected API
+  const requiredParamsKeys = bestApi.required_parameters.map(({ name }) => name);
   const extractedParamsKeys = Object.keys(parameters);
-  const missingKeys = findMissingParams(
-    requiredParamsKeys,
-    extractedParamsKeys
-  );
+  
+  // For Search Tracks API, we need to use trackTitle as the query parameter
+  if (bestApi.api_name === 'Search Tracks' && parameters.trackTitle) {
+    parameters.query = parameters.trackTitle;
+  }
+
+  const missingKeys = findMissingParams(requiredParamsKeys, extractedParamsKeys);
+  
   if (missingKeys.length > 0) {
     console.warn(`Missing parameters: ${missingKeys.join(", ")}`);
     return "human_loop_node";
   }
+
   return "execute_request_node";
 };
 
@@ -184,6 +193,9 @@ async function main(query: string) {
     temperature: 0,
   });
 
+  console.log("\n=== Processing Query ===");
+  console.log(`Input: "${query}"`);
+
   const stream = await app.stream({
     llm,
     query,
@@ -191,28 +203,34 @@ async function main(query: string) {
 
   let finalResult: GraphState | null = null;
   for await (const event of stream) {
-    console.log("\n------\n");
     const eventName = Object.keys(event)[0];
-    console.log("Stream event:", eventName);
     const state = event[eventName];
-    console.log("State after event:", JSON.stringify(state, null, 2));
 
-    // Add logging to check for query and entityType
-    if (eventName === "select_api_node") {
-      console.log("After select_api_node, state contains:");
-      console.log("Query:", state.query);
-      console.log("EntityType:", state.entityType);
-    }
+    // Log detailed state transitions
+    switch(eventName) {
+      case "extract_category_node":
+        console.log("\n=== Query Analysis ===");
+        console.log(`Detected Entity Type: ${state.entityType}`);
+        console.log(`Categorized as: ${state.categories?.join(', ')}`);
+        break;
 
-    if (eventName === "extract_params_node") {
-      console.log("Before extract_params_node, state contains:");
-      console.log("Query:", state.query);
-      console.log("EntityType:", state.entityType);
-    }
+      case "select_api_node":
+        console.log("\n=== API Selection ===");
+        console.log(`Selected API: ${state.bestApi?.api_name}`);
+        break;
 
-    if (eventName === "execute_request_node") {
-      console.log("---FINISHED---");
-      finalResult = state;
+      case "extract_params_node":
+        console.log("\n=== Parameter Extraction ===");
+        Object.entries(state.parameters || {}).forEach(([key, value]) => {
+          console.log(`${key}: ${value}`);
+        });
+        break;
+
+      case "execute_request_node":
+        console.log("\n=== API Response ===");
+        console.log(state.response);
+        finalResult = state;
+        break;
     }
   }
 
@@ -220,12 +238,16 @@ async function main(query: string) {
     throw new Error("No final result");
   }
 
-  console.log("---FORMATTED RESPONSE---");
-  console.log(finalResult.response);
+  console.log("\n=== Processing Complete ===");
+
+
+  // {{ edit_2 }} Forcefully exit the process if necessary (use cautiously)
+  process.exit(0);
 }
 
 const datasetQuery = "How many plays does 115 SECONDS OF CLAMS have on Audius?";
 
 main(datasetQuery).catch(error => {
   logger.error(`Error during execution: ${error.message}`);
+  process.exit(1);
 });

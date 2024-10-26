@@ -47,8 +47,6 @@ export const selectApiTool = tool(
 
     const bestApi = bestApiName ? input.apis.find((api: DatasetSchema) => api.api_name === bestApiName) || null : null;
 
-    logger.debug(`Selected API: ${bestApi ? bestApi.api_name : 'None'}`);
-
     // Return the full state with updates
     return {
       ...input,
@@ -933,6 +931,35 @@ const selectAPIToolInstance = createSelectAPITool(existingApis, initialQuery);
 // }
 
 
+// Updated response formatters leveraging the types.ts definitions
+const responseFormatters: { [key: string]: (data: any) => string } = {
+  'Search Tracks': (data) => {
+    const { title, user, playCount } = data; // Changed play_count to playCount
+    const artistName = user?.name || user?.handle || "Unknown Artist";
+    if (typeof playCount === 'number') {
+      return `${title} by ${artistName} has ${playCount} plays on Audius.`;
+    } else {
+      logger.warn(`playCount is missing or invalid for track ID ${data.id}`);
+      return `${title} by ${artistName} has an unknown number of plays on Audius.`;
+    }
+  },
+  'Get User': (data) => {
+    const { name, handle, followerCount } = data; // Changed followers_count to followerCount
+    return `${name || handle} has ${followerCount} followers on Audius.`;
+  },
+  'Search Playlists': (data) => {
+    const { playlistName, trackCount, user } = data; // Changed title to playlistName and tracks_count to trackCount
+    const creator = user?.name || user?.handle || "Unknown Creator";
+    return `Playlist "${playlistName}" by ${creator} contains ${trackCount} tracks on Audius.`;
+  },
+  'Get Playlist Details': (data) => {
+    const { playlistName, trackCount, user, favoriteCount } = data;
+    const creator = user?.name || user?.handle || "Unknown Creator";
+    return `Playlist "${playlistName}" by ${creator} has ${trackCount} tracks and is favorited ${favoriteCount} times on Audius.`;
+  },
+  // Add more formatters as needed for other APIs
+};
+
 /**
  * Tool to create and execute API fetch requests based on `bestApi` and `parameters`, including response formatting.
  *
@@ -940,33 +967,46 @@ const selectAPIToolInstance = createSelectAPITool(existingApis, initialQuery);
  * @returns {Promise<{ response: string }>} - The formatted response string.
  */
 export const createFetchRequestTool = tool(
-  async ({ bestApi, parameters }: { bestApi: DatasetSchema; parameters: Record<string, any> }): Promise<{ response: string }> => {
-    logger.debug(`createFetchRequestTool invoked with bestApi: ${bestApi.api_name} and parameters: ${JSON.stringify(parameters)}`);
-    try {
-      if (!bestApi) {
-        throw new Error("No best API found");
-      }
+  async (input: Record<string, any>): Promise<Partial<GraphState>> => {
+    const { bestApi, parameters } = input;
 
+    if (!bestApi || !parameters) {
+      throw new Error("Missing required input properties");
+    }
+
+    try {
       let apiResponse: any;
 
       switch (bestApi.api_name) {
-        // Tracks
-        case 'Get Track':
-          const trackId = parameters?.track_id;
-          if (!trackId) {
-            throw new Error("Track ID is required");
-          }
-          apiResponse = await sdk.tracks.getTrack({ trackId });
-          break;
-
         case 'Search Tracks':
-          const trackTitle = parameters?.trackTitle || parameters?.query;
-          if (!trackTitle) {
-            throw new Error("Track title is required for searching tracks.");
+          const searchQuery = parameters.trackTitle || parameters.query;
+          if (!searchQuery) {
+            throw new Error("Track title or query is required for searching tracks.");
           }
-          apiResponse = await sdk.tracks.searchTracks({
-            query: trackTitle,
+          // Search for tracks matching the query
+          const searchResponse = await sdk.tracks.searchTracks({
+            query: searchQuery,
           });
+
+          // Check if tracks were found
+          if (searchResponse.data && searchResponse.data.length > 0) {
+            const track = searchResponse.data[0];
+            const trackId = track.id;
+
+            // Fetch detailed track information using track ID
+            const trackResponse = await sdk.tracks.getTrack({ trackId });
+            apiResponse = trackResponse;
+
+            // Ensure data is in expected format
+            if (!apiResponse.data) {
+              throw new Error("No track information available.");
+            }
+
+            // Log the detailed track information for debugging
+            logger.debug('Detailed Track Response:', JSON.stringify(apiResponse.data, null, 2));
+          } else {
+            throw new Error(`No tracks found for query "${searchQuery}".`);
+          }
           break;
 
         // Users
@@ -1026,72 +1066,23 @@ export const createFetchRequestTool = tool(
           throw new Error(`Unsupported API: ${bestApi.api_name}`);
       }
 
-      logger.debug(`API Response: ${JSON.stringify(apiResponse)}`);
+      // Format the response using the appropriate formatter
+      const formatter = responseFormatters[bestApi.api_name];
+      let formattedResponse = '';
 
-      // Format the response based on the API's response structure
-      let formattedResponse: string = '';
-
-      switch (bestApi.api_name) {
-        case 'Get Track':
-        case 'Search Tracks':
-          if (Array.isArray(apiResponse.data) && apiResponse.data.length > 0) {
-            const track = apiResponse.data[0];
-            const { title, user, play_count } = track;
-            const artistName = user?.name || user?.handle || "Unknown Artist";
-            formattedResponse = `${title} by ${artistName} has ${play_count ?? 'an unknown number of'} plays on Audius.`;
-          } else if (apiResponse.title) {
-            const { title, user, play_count } = apiResponse;
-            const artistName = user?.name || user?.handle || "Unknown Artist";
-            formattedResponse = `${title} by ${artistName} has ${play_count ?? 'an unknown number of'} plays on Audius.`;
-          } else {
-            formattedResponse = "No track information available.";
-          }
-          break;
-
-        case 'Get User':
-        case 'Search Users':
-          if (Array.isArray(apiResponse.data) && apiResponse.data.length > 0) {
-            const user = apiResponse.data[0];
-            const { name, follower_count } = user;
-            formattedResponse = `${name} has ${follower_count ?? 'an unknown number of'} followers on Audius.`;
-          } else if (apiResponse.name) {
-            const { name, follower_count } = apiResponse;
-            formattedResponse = `${name} has ${follower_count ?? 'an unknown number of'} followers on Audius.`;
-          } else {
-            formattedResponse = "No user information available.";
-          }
-          break;
-
-        case 'Get Playlist':
-        case 'Search Playlists':
-          if (Array.isArray(apiResponse.data) && apiResponse.data.length > 0) {
-            const playlist = apiResponse.data[0];
-            const { playlist_name, track_count } = playlist;
-            formattedResponse = `The playlist "${playlist_name}" contains ${track_count ?? 'an unknown number of'} tracks on Audius.`;
-          } else if (apiResponse.playlist_name) {
-            const { playlist_name, track_count } = apiResponse;
-            formattedResponse = `The playlist "${playlist_name}" contains ${track_count ?? 'an unknown number of'} tracks on Audius.`;
-          } else {
-            formattedResponse = "No playlist information available.";
-          }
-          break;
-
-        case 'Audius Web Search':
-          formattedResponse = `Web search results: ${JSON.stringify(apiResponse)}`;
-          break;
-
-        // Handle other cases...
-
-        default:
-          formattedResponse = "No information available.";
+      if (formatter && apiResponse.data) {
+        formattedResponse = formatter(apiResponse.data);
+      } else {
+        formattedResponse = "No information available to format the response.";
+        logger.warn(`No formatter found for API: ${bestApi.api_name} or apiResponse.data is missing.`);
       }
 
-      logger.debug(`Formatted Response: "${formattedResponse}"`);
-
       return {
+        ...input,
         response: formattedResponse,
+        parameters,
+        bestApi,
       };
-
     } catch (error) {
       logger.error('Error in createFetchRequestTool:', error);
       throw error;
@@ -1099,33 +1090,10 @@ export const createFetchRequestTool = tool(
   },
   {
     name: "create_fetch_request",
-    description: "Executes the selected API based on bestApi and parameters, and formats the response.",
+    description: "Executes the selected API and formats the response.",
     schema: z.object({
-      bestApi: z.object({
-        api_name: z.string(),
-        id: z.string(),
-        category_name: z.string(),
-        tool_name: z.string(),
-        api_description: z.string(),
-        required_parameters: z.array(z.object({
-          name: z.string(),
-          type: z.string(),
-          description: z.string(),
-          default: z.string(),
-        })),
-        optional_parameters: z.array(z.object({
-          name: z.string(),
-          type: z.string(),
-          description: z.string(),
-          default: z.string(),
-        })),
-        method: z.string(),
-        template_response: z.record(z.any()).optional(),
-        api_url: z.string(),
-      }).describe("The selected API to execute."),
-      parameters: z.object({
-        // Define your expected parameters here
-      }).passthrough(), // Allow additional properties
+      bestApi: z.any(),
+      parameters: z.record(z.any()),
     }).passthrough(),
   }
 );
@@ -1247,6 +1215,15 @@ export const ALL_TOOLS_LIST: { [key: string]: StructuredToolInterface | Runnable
   readUserInput: readUserInputTool // Use the instantiated tool
   // Add other tools here as needed
 };
+
+
+
+
+
+
+
+
+
 
 
 
