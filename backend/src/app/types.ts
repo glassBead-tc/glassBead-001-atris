@@ -38,7 +38,7 @@ export interface DatasetParameters {
 export interface GraphState {
   llm: ChatOpenAI | null;
   query: string | null;
-  queryType: string | null;
+  queryType: QueryType | null;
   categories: string[] | null;
   apis: DatasetSchema[] | null;
   bestApi: DatasetSchema | null;
@@ -66,7 +66,6 @@ export type QueryType =
   | 'search_playlists'
   | 'search_genres'
   | 'genre_info'
-  | 'entity_query'
   | 'playlist_info'
   | 'general';
 
@@ -271,3 +270,4 @@ export interface AudiusCorpus {
 }
 
 // Similarly for Track and Playlist...
+

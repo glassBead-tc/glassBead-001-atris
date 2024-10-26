@@ -4,7 +4,7 @@ import { GraphState } from "./types.js";
 import fs from "fs";
 import dotenv from 'dotenv';
 import {
-  extractCategory,
+  extractCategoryTool,
   searchEntityTool,
   readUserInputTool,
   selectApiTool,
@@ -152,23 +152,17 @@ function createGraph() {
   const graph = new StateGraph<GraphState>({
     channels: graphChannels,
   })
-    .addNode("extract_category_node", extractCategory)
+    .addNode("extract_category_node", extractCategoryTool)
     .addNode("get_apis_node", getApis)
     .addNode("select_api_node", selectApiTool)
     .addNode("extract_params_node", extractParametersTool)
-    .addNode("search_entity_node", searchEntityTool)
     .addNode("human_loop_node", readUserInputTool)
     .addNode("execute_request_node", createFetchRequestTool)
-    .addConditionalEdges("extract_category_node", (state: GraphState) => {
-      return state.categories && state.categories.length > 0 ? "get_apis_node" : "human_loop_node";
-    })
+    .addEdge("extract_category_node", "get_apis_node")
     .addEdge("get_apis_node", "select_api_node")
     .addEdge("select_api_node", "extract_params_node")
-    .addEdge("extract_params_node", "search_entity_node")
-    .addConditionalEdges("search_entity_node", (state: GraphState) => {
-      return verifyParams(state) as "human_loop_node" | "execute_request_node";
-    })
-    .addEdge("human_loop_node", "execute_request_node")
+    .addConditionalEdges("extract_params_node", verifyParams)
+    .addConditionalEdges("human_loop_node", verifyParams)
     .addEdge("execute_request_node", END)
     .addEdge(START, "extract_category_node");
 
@@ -186,7 +180,7 @@ async function main(query: string) {
   const app = createGraph();
 
   const llm = new ChatOpenAI({
-    modelName: "gpt-4o-mini",
+    modelName: "gpt-4",
     temperature: 0,
   });
 
@@ -200,13 +194,25 @@ async function main(query: string) {
     console.log("\n------\n");
     const eventName = Object.keys(event)[0];
     console.log("Stream event:", eventName);
+    const state = event[eventName];
+    console.log("State after event:", JSON.stringify(state, null, 2));
 
-    // Log the entire state for debugging
-    console.log("State after event:", JSON.stringify(event[eventName], null, 2));
+    // Add logging to check for query and entityType
+    if (eventName === "select_api_node") {
+      console.log("After select_api_node, state contains:");
+      console.log("Query:", state.query);
+      console.log("EntityType:", state.entityType);
+    }
+
+    if (eventName === "extract_params_node") {
+      console.log("Before extract_params_node, state contains:");
+      console.log("Query:", state.query);
+      console.log("EntityType:", state.entityType);
+    }
 
     if (eventName === "execute_request_node") {
       console.log("---FINISHED---");
-      finalResult = event.execute_request_node;
+      finalResult = state;
     }
   }
 
@@ -223,4 +229,3 @@ const datasetQuery = "How many plays does 115 SECONDS OF CLAMS have on Audius?";
 main(datasetQuery).catch(error => {
   logger.error(`Error during execution: ${error.message}`);
 });
-

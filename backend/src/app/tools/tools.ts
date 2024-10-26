@@ -16,17 +16,21 @@ import { Track, User, Playlist } from '@audius/sdk';
 /**
  * Selects the appropriate SDK function based on the user's query.
  *
- * @param {GraphState} state - The current state of the graph.
+ * @param {object} input - The input object containing state information.
  * @returns {Promise<Partial<GraphState>>} - The updated graph state.
  */
 export const selectApiTool = tool(
-  async ({ isEntityQuery, entityType, apis }: { isEntityQuery: boolean; entityType: EntityType; apis: DatasetSchema[] }): Promise<{ bestApi: DatasetSchema | null }> => {
+  async (input: Record<string, any>): Promise<Partial<GraphState>> => {
+    if (!input.isEntityQuery || !input.entityType || !input.apis || !input.query) {
+      throw new Error("Missing required input properties");
+    }
+
     let bestApiName: string | null = null;
 
-    if (isEntityQuery) {
-      switch (entityType) {
+    if (input.isEntityQuery) {
+      switch (input.entityType) {
         case 'track':
-          bestApiName = 'Search Tracks'; // Alternatively, implement logic to choose between 'Get Track' and 'Search Tracks'
+          bestApiName = 'Search Tracks';
           break;
         case 'user':
           bestApiName = 'Search Tracks';
@@ -38,23 +42,50 @@ export const selectApiTool = tool(
           bestApiName = null;
       }
     } else {
-      bestApiName = 'Audius Web Search'; // For non-entity queries
+      bestApiName = 'Audius Web Search';
     }
 
-    const bestApi = bestApiName ? apis.find(api => api.api_name === bestApiName) || null : null;
+    const bestApi = bestApiName ? input.apis.find((api: DatasetSchema) => api.api_name === bestApiName) || null : null;
 
     logger.debug(`Selected API: ${bestApi ? bestApi.api_name : 'None'}`);
 
-    return { bestApi };
+    // Return the full state with updates
+    return {
+      ...input,
+      bestApi,
+      parameters: {
+        ...(input.parameters || {}),
+        query: input.query,
+      },
+    };
   },
   {
     name: 'select_api',
     description: 'Selects the best API based on whether it is an entity query, the type of entity, and available APIs.',
     schema: z.object({
-      isEntityQuery: z.boolean().describe('Whether the query is an entity query.'),
-      entityType: z.enum(['track', 'user', 'playlist']).describe('The type of entity involved in the query.'),
-      apis: z.array(z.any()).describe('The list of available APIs.'),
-    }).passthrough(), // Allow additional properties
+      isEntityQuery: z.boolean(),
+      entityType: z.enum(['track', 'user', 'playlist']).nullable(),
+      apis: z.array(z.any()),
+      query: z.string(),
+      parameters: z.record(z.any()).nullable(),
+      categories: z.array(z.string()).nullable(),
+      llm: z.any().nullable(),
+      queryType: z.string().nullable(),
+      bestApi: z.any().nullable(),
+      response: z.any().nullable(),
+      complexity: z.string().nullable(),
+      entityName: z.string().nullable(),
+      error: z.boolean().nullable(),
+      messages: z.any().nullable(),
+      selectedHost: z.string().nullable(),
+      entity: z.any().nullable(),
+      secondaryApi: z.any().nullable(),
+      secondaryResponse: z.any().nullable(),
+      multiStepHandled: z.boolean().nullable(),
+      initialState: z.any().nullable(),
+      formattedResponse: z.string().nullable(),
+      message: z.any().nullable(),
+    }).passthrough(),
   }
 );
 
@@ -231,13 +262,45 @@ export const CategorizeQueryTool = tool(
   }
 );
 
-export const ExtractCategoryTool = tool(
-  async ({ state }: { state: { query: string } }): Promise<Partial<GraphState>> => {
-    return CategorizeQueryTool.invoke({ state });
+/**
+ * Tool to extract categories from the user's query.
+ */
+export const extractCategoryTool = tool(
+  async (input: { query: string }): Promise<Partial<GraphState>> => {
+    if (!input.query) {
+      throw new Error("Query is required");
+    }
+
+    // Use the query directly with CategorizeQueryTool
+    const result = await CategorizeQueryTool.invoke({
+      state: { 
+        query: input.query 
+      }
+    });
+
+    // Ensure we have categories based on entityType
+    let categories: string[] = [];
+    if (result.entityType === 'track') {
+      categories = ['Tracks'];
+    } else if (result.entityType === 'user') {
+      categories = ['Users'];
+    } else if (result.entityType === 'playlist') {
+      categories = ['Playlists'];
+    }
+
+    // Merge the result with the input state and ensure categories are set
+    return {
+      ...input,
+      ...result,
+      categories, // Explicitly set categories based on entityType
+    };
   },
   {
     name: "extract_category",
     description: "Extracts the category from the user's query.",
+    schema: z.object({
+      query: z.string().describe("The user's query string to classify"),
+    }).passthrough(),
   }
 );
 
@@ -292,7 +355,7 @@ export function parseUserInput(input: string): Record<string, string> {
 export async function requestParameters(
   state: GraphState
 ): Promise<Partial<GraphState>> {
-  const { bestApi, parameters, isEntityQuery } = state; // {{ edit_3 }} Removed queryType
+  const { bestApi, parameters } = state; // {{ edit_3 }} Removed queryType
   if (!bestApi) {
     throw new Error("No best API found");
   }
@@ -683,235 +746,352 @@ const initialQuery: string = "Find popular playlists for jazz music.";
 const selectAPIToolInstance = createSelectAPITool(existingApis, initialQuery);
 
 
+// /**
+//  * @param {GraphState} state
+//  */
+// export async function createFetchRequest(state: GraphState): Promise<Partial<GraphState>> {
+//   const { bestApi, parameters } = state;
+
+//   if (!bestApi) {
+//     throw new Error("No best API found");
+//   }
+
+//   try {
+//     let response;
+
+//     switch (bestApi.api_name) {
+//       // Tracks
+//       case 'Get Track':
+//         const trackId = parameters?.track_id;
+//         if (!trackId) {
+//           throw new Error("Track ID is required");
+//         }
+//         response = await sdk.tracks.getTrack({ trackId });
+//         break;
+
+//       case 'Search Tracks':
+//         const trackTitle = parameters?.query || parameters?.trackTitle;
+//         if (!trackTitle) {
+//           throw new Error("Track title is required for searching tracks.");
+//         }
+//         response = await sdk.tracks.searchTracks({
+//           query: trackTitle,
+//           // limit and offset have been removed as they do not exist in SearchTracksRequest
+//           onlyDownloadable: parameters?.onlyDownloadable,
+//         });
+//         break;
+
+//       case 'Get Trending Tracks':
+//         response = await sdk.tracks.getTrendingTracks({
+//           genre: parameters?.genre || 'all',
+//           time: parameters?.time || 'week'
+//         });
+//         break;
+
+//       case 'Get Bulk Tracks':
+//         const trackIds = parameters?.track_ids;
+//         if (!trackIds) {
+//           throw new Error("Track IDs are required for bulk fetching.");
+//         }
+//         const idsArray = trackIds.split(',').map((ids: string) => ids.trim());
+//         response = await sdk.tracks.getBulkTracks({ id: idsArray });
+//         break;
+
+//       case 'Get Underground Trending Tracks':
+//         response = await sdk.tracks.getTrendingTracks({
+//           genre: parameters?.genre || 'all',
+//           time: parameters?.time || 'week'
+//         });
+//         break;
+
+//       case 'Stream Track':
+//         const streamTrackId = parameters?.track_id;
+//         if (!streamTrackId) {
+//           throw new Error("Track ID is required for streaming.");
+//         }
+//         // Assuming the SDK provides a method to get stream URL
+//         response = await sdk.tracks.getTrackStreamUrl({ trackId: streamTrackId });
+//         break;
+
+//       // Users
+//       case 'Get User':
+//         const userId = parameters?.user_id;
+//         if (!userId) {
+//           throw new Error("User ID is required");
+//         }
+//         response = await sdk.users.getUser({ id: userId });
+//         break;
+
+//       case 'Search Users':
+//         const userQuery = parameters?.query;
+//         if (!userQuery) {
+//           throw new Error("Search query is required for searching users.");
+//         }
+//         response = await sdk.users.searchUsers({
+//           query: userQuery
+//         });
+//         break;
+
+//       case 'Get User By Handle':
+//         const handle = parameters?.handle;
+//         if (!handle) {
+//           throw new Error("User handle is required");
+//         }
+//         response = await sdk.users.getUserByHandle({ handle });
+//         break;
+
+//       case 'Get User ID from Wallet':
+//         const walletAddress = parameters?.associated_wallet;
+//         if (!walletAddress) {
+//           throw new Error("Associated wallet address is required");
+//         }
+//         response = await sdk.users.getUserIDFromWallet({ associatedWallet: walletAddress });
+//         break;
+
+//       case "Get User's Favorite Tracks":
+//         const favoriteUserId = parameters?.user_id;
+//         if (!favoriteUserId) {
+//           throw new Error("User ID is required to fetch favorite tracks.");
+//         }
+//         response = await sdk.users.getFavorites({ id: favoriteUserId });
+//         break;
+
+//       case "Get User's Reposts":
+//         const repostUserId = parameters?.user_id;
+//         if (!repostUserId) {
+//           throw new Error("User ID is required to fetch reposts.");
+//         }
+//         response = await sdk.users.getReposts({ id: repostUserId });
+//         break;
+
+//       case "Get User's Most Used Track Tags":
+//         const tagsUserId = parameters?.user_id;
+//         if (!tagsUserId) {
+//           throw new Error("User ID is required to fetch most used track tags.");
+//         }
+//         response = await sdk.users.getTopTrackTags({ id: tagsUserId, limit: parameters?.limit ? Number(parameters.limit) : 10 });
+//         break;
+
+//       // Playlists
+//       case 'Get Playlist':
+//         const playlistId = parameters?.playlist_id;
+//         if (!playlistId) {
+//           throw new Error("Playlist ID is required");
+//         }
+//         response = await sdk.playlists.getPlaylist({ playlistId });
+//         break;
+
+//       case 'Search Playlists':
+//         const playlistQuery = parameters?.query;
+//         if (!playlistQuery) {
+//           throw new Error("Search query is required for searching playlists.");
+//         }
+//         response = await sdk.playlists.searchPlaylists({
+//           query: playlistQuery
+//         });
+//         break;
+
+//       case 'Get Trending Playlists':
+//         response = await sdk.playlists.getTrendingPlaylists({
+//           time: parameters?.time || 'week',
+
+//         });
+//         break;
+
+//       // General
+//       case 'Audius Web Search':
+//         const webSearchQuery = parameters?.["web-search"];
+//         if (!webSearchQuery) {
+//           throw new Error("Web search query is required.");
+//         }
+//         // Since this is an external API, use fetch directly
+//         response = await fetch(`https://api.tavily.com/search?q=${encodeURIComponent(webSearchQuery)}`);
+//         if (!response.ok) {
+//           throw new Error(`Audius Web Search failed with status ${response.status}`);
+//         }
+//         response = await response.json();
+//         break;
+
+//       // Tips
+//       case 'Get Tips':
+//         const tipsUserId = parameters?.user_id;
+//         if (!tipsUserId) {
+//           throw new Error("User ID is required to fetch tips.");
+//         }
+//         response = await sdk.tips.getTips({ userId: tipsUserId, limit: parameters?.limit ? Number(parameters.limit) : 10, offset: parameters?.offset ? Number(parameters.offset) : 0 });
+//         break;
+
+//       default:
+//         throw new Error(`Unsupported API: ${bestApi.api_name}`);
+//     }
+
+//     return { response };
+//   } catch (error) {
+//     console.error('Error in createFetchRequest:', error);
+//     throw error;
+//   }
+// }
+
+
 /**
- * @param {GraphState} state
- */
-export async function createFetchRequest(state: GraphState): Promise<Partial<GraphState>> {
-  const { bestApi, parameters } = state;
-
-  if (!bestApi) {
-    throw new Error("No best API found");
-  }
-
-  try {
-    let response;
-
-    switch (bestApi.api_name) {
-      // Tracks
-      case 'Get Track':
-        const trackId = parameters?.track_id;
-        if (!trackId) {
-          throw new Error("Track ID is required");
-        }
-        response = await sdk.tracks.getTrack({ trackId });
-        break;
-
-      case 'Search Tracks':
-        const trackTitle = parameters?.query || parameters?.trackTitle;
-        if (!trackTitle) {
-          throw new Error("Track title is required for searching tracks.");
-        }
-        response = await sdk.tracks.searchTracks({
-          query: trackTitle,
-          // limit and offset have been removed as they do not exist in SearchTracksRequest
-          onlyDownloadable: parameters?.onlyDownloadable,
-        });
-        break;
-
-      case 'Get Trending Tracks':
-        response = await sdk.tracks.getTrendingTracks({
-          genre: parameters?.genre || 'all',
-          time: parameters?.time || 'week'
-        });
-        break;
-
-      case 'Get Bulk Tracks':
-        const trackIds = parameters?.track_ids;
-        if (!trackIds) {
-          throw new Error("Track IDs are required for bulk fetching.");
-        }
-        const idsArray = trackIds.split(',').map((ids: string) => ids.trim());
-        response = await sdk.tracks.getBulkTracks({ id: idsArray });
-        break;
-
-      case 'Get Underground Trending Tracks':
-        response = await sdk.tracks.getTrendingTracks({
-          genre: parameters?.genre || 'all',
-          time: parameters?.time || 'week'
-        });
-        break;
-
-      case 'Stream Track':
-        const streamTrackId = parameters?.track_id;
-        if (!streamTrackId) {
-          throw new Error("Track ID is required for streaming.");
-        }
-        // Assuming the SDK provides a method to get stream URL
-        response = await sdk.tracks.getTrackStreamUrl({ trackId: streamTrackId });
-        break;
-
-      // Users
-      case 'Get User':
-        const userId = parameters?.user_id;
-        if (!userId) {
-          throw new Error("User ID is required");
-        }
-        response = await sdk.users.getUser({ id: userId });
-        break;
-
-      case 'Search Users':
-        const userQuery = parameters?.query;
-        if (!userQuery) {
-          throw new Error("Search query is required for searching users.");
-        }
-        response = await sdk.users.searchUsers({
-          query: userQuery
-        });
-        break;
-
-      case 'Get User By Handle':
-        const handle = parameters?.handle;
-        if (!handle) {
-          throw new Error("User handle is required");
-        }
-        response = await sdk.users.getUserByHandle({ handle });
-        break;
-
-      case 'Get User ID from Wallet':
-        const walletAddress = parameters?.associated_wallet;
-        if (!walletAddress) {
-          throw new Error("Associated wallet address is required");
-        }
-        response = await sdk.users.getUserIDFromWallet({ associatedWallet: walletAddress });
-        break;
-
-      case "Get User's Favorite Tracks":
-        const favoriteUserId = parameters?.user_id;
-        if (!favoriteUserId) {
-          throw new Error("User ID is required to fetch favorite tracks.");
-        }
-        response = await sdk.users.getFavorites({ id: favoriteUserId });
-        break;
-
-      case "Get User's Reposts":
-        const repostUserId = parameters?.user_id;
-        if (!repostUserId) {
-          throw new Error("User ID is required to fetch reposts.");
-        }
-        response = await sdk.users.getReposts({ id: repostUserId });
-        break;
-
-      case "Get User's Most Used Track Tags":
-        const tagsUserId = parameters?.user_id;
-        if (!tagsUserId) {
-          throw new Error("User ID is required to fetch most used track tags.");
-        }
-        response = await sdk.users.getTopTrackTags({ id: tagsUserId, limit: parameters?.limit ? Number(parameters.limit) : 10 });
-        break;
-
-      // Playlists
-      case 'Get Playlist':
-        const playlistId = parameters?.playlist_id;
-        if (!playlistId) {
-          throw new Error("Playlist ID is required");
-        }
-        response = await sdk.playlists.getPlaylist({ playlistId });
-        break;
-
-      case 'Search Playlists':
-        const playlistQuery = parameters?.query;
-        if (!playlistQuery) {
-          throw new Error("Search query is required for searching playlists.");
-        }
-        response = await sdk.playlists.searchPlaylists({
-          query: playlistQuery
-        });
-        break;
-
-      case 'Get Trending Playlists':
-        response = await sdk.playlists.getTrendingPlaylists({
-          time: parameters?.time || 'week',
-
-        });
-        break;
-
-      // General
-      case 'Audius Web Search':
-        const webSearchQuery = parameters?.["web-search"];
-        if (!webSearchQuery) {
-          throw new Error("Web search query is required.");
-        }
-        // Since this is an external API, use fetch directly
-        response = await fetch(`https://api.tavily.com/search?q=${encodeURIComponent(webSearchQuery)}`);
-        if (!response.ok) {
-          throw new Error(`Audius Web Search failed with status ${response.status}`);
-        }
-        response = await response.json();
-        break;
-
-      // Tips
-      case 'Get Tips':
-        const tipsUserId = parameters?.user_id;
-        if (!tipsUserId) {
-          throw new Error("User ID is required to fetch tips.");
-        }
-        response = await sdk.tips.getTips({ userId: tipsUserId, limit: parameters?.limit ? Number(parameters.limit) : 10, offset: parameters?.offset ? Number(parameters.offset) : 0 });
-        break;
-
-      default:
-        throw new Error(`Unsupported API: ${bestApi.api_name}`);
-    }
-
-    return { response };
-  } catch (error) {
-    console.error('Error in createFetchRequest:', error);
-    throw error;
-  }
-}
-
-
-/**
- * Tool to create and execute API fetch requests, including response formatting.
+ * Tool to create and execute API fetch requests based on `bestApi` and `parameters`, including response formatting.
  *
- * @param {object} parameters - The parameters object containing necessary API parameters.
+ * @param {object} input - The input object containing `bestApi` and `parameters`.
  * @returns {Promise<{ response: string }>} - The formatted response string.
  */
 export const createFetchRequestTool = tool(
-  async ({ parameters }: { parameters?: { track_id?: string; playlist_id?: string; [key: string]: any } }): Promise<{ response: string }> => {
-    logger.debug(`createFetchRequestTool invoked with parameters: ${JSON.stringify(parameters)}`);
+  async ({ bestApi, parameters }: { bestApi: DatasetSchema; parameters: Record<string, any> }): Promise<{ response: string }> => {
+    logger.debug(`createFetchRequestTool invoked with bestApi: ${bestApi.api_name} and parameters: ${JSON.stringify(parameters)}`);
     try {
-      const { track_id, playlist_id } = parameters || {};
+      if (!bestApi) {
+        throw new Error("No best API found");
+      }
 
       let apiResponse: any;
 
-      if (track_id) {
-        logger.debug(`Fetching track with ID: ${track_id}`);
-        apiResponse = await sdk.tracks.getTrack({ trackId: track_id });
-      } else if (playlist_id) {
-        logger.debug(`Fetching playlist with ID: ${playlist_id}`);
-        apiResponse = await sdk.playlists.getPlaylist({ playlistId: playlist_id });
-      } else {
-        throw new Error("No valid API parameters provided.");
+      switch (bestApi.api_name) {
+        // Tracks
+        case 'Get Track':
+          const trackId = parameters?.track_id;
+          if (!trackId) {
+            throw new Error("Track ID is required");
+          }
+          apiResponse = await sdk.tracks.getTrack({ trackId });
+          break;
+
+        case 'Search Tracks':
+          const trackTitle = parameters?.trackTitle || parameters?.query;
+          if (!trackTitle) {
+            throw new Error("Track title is required for searching tracks.");
+          }
+          apiResponse = await sdk.tracks.searchTracks({
+            query: trackTitle,
+          });
+          break;
+
+        // Users
+        case 'Get User':
+          const userId = parameters?.user_id;
+          if (!userId) {
+            throw new Error("User ID is required");
+          }
+          apiResponse = await sdk.users.getUser({ id: userId });
+          break;
+
+        case 'Search Users':
+          const userQuery = parameters?.userName || parameters?.query;
+          if (!userQuery) {
+            throw new Error("User name is required for searching users.");
+          }
+          apiResponse = await sdk.users.searchUsers({
+            query: userQuery,
+          });
+          break;
+
+        // Playlists
+        case 'Get Playlist':
+          const playlistId = parameters?.playlist_id;
+          if (!playlistId) {
+            throw new Error("Playlist ID is required");
+          }
+          apiResponse = await sdk.playlists.getPlaylist({ playlistId });
+          break;
+
+        case 'Search Playlists':
+          const playlistQuery = parameters?.playlistName || parameters?.query;
+          if (!playlistQuery) {
+            throw new Error("Playlist name is required for searching playlists.");
+          }
+          apiResponse = await sdk.playlists.searchPlaylists({
+            query: playlistQuery,
+          });
+          break;
+
+        // General
+        case 'Audius Web Search':
+          const webSearchQuery = parameters?.["web-search"] || parameters?.query;
+          if (!webSearchQuery) {
+            throw new Error("Web search query is required.");
+          }
+          apiResponse = await fetch(`https://api.tavily.com/search?q=${encodeURIComponent(webSearchQuery)}`);
+          if (!apiResponse.ok) {
+            throw new Error(`Audius Web Search failed with status ${apiResponse.status}`);
+          }
+          apiResponse = await apiResponse.json();
+          break;
+
+        // Add other cases as needed...
+
+        default:
+          throw new Error(`Unsupported API: ${bestApi.api_name}`);
       }
 
       logger.debug(`API Response: ${JSON.stringify(apiResponse)}`);
 
-      // Format the response
-      if (!apiResponse) {
-        throw new Error("No response data available.");
+      // Format the response based on the API's response structure
+      let formattedResponse: string = '';
+
+      switch (bestApi.api_name) {
+        case 'Get Track':
+        case 'Search Tracks':
+          if (Array.isArray(apiResponse.data) && apiResponse.data.length > 0) {
+            const track = apiResponse.data[0];
+            const { title, user, play_count } = track;
+            const artistName = user?.name || user?.handle || "Unknown Artist";
+            formattedResponse = `${title} by ${artistName} has ${play_count ?? 'an unknown number of'} plays on Audius.`;
+          } else if (apiResponse.title) {
+            const { title, user, play_count } = apiResponse;
+            const artistName = user?.name || user?.handle || "Unknown Artist";
+            formattedResponse = `${title} by ${artistName} has ${play_count ?? 'an unknown number of'} plays on Audius.`;
+          } else {
+            formattedResponse = "No track information available.";
+          }
+          break;
+
+        case 'Get User':
+        case 'Search Users':
+          if (Array.isArray(apiResponse.data) && apiResponse.data.length > 0) {
+            const user = apiResponse.data[0];
+            const { name, follower_count } = user;
+            formattedResponse = `${name} has ${follower_count ?? 'an unknown number of'} followers on Audius.`;
+          } else if (apiResponse.name) {
+            const { name, follower_count } = apiResponse;
+            formattedResponse = `${name} has ${follower_count ?? 'an unknown number of'} followers on Audius.`;
+          } else {
+            formattedResponse = "No user information available.";
+          }
+          break;
+
+        case 'Get Playlist':
+        case 'Search Playlists':
+          if (Array.isArray(apiResponse.data) && apiResponse.data.length > 0) {
+            const playlist = apiResponse.data[0];
+            const { playlist_name, track_count } = playlist;
+            formattedResponse = `The playlist "${playlist_name}" contains ${track_count ?? 'an unknown number of'} tracks on Audius.`;
+          } else if (apiResponse.playlist_name) {
+            const { playlist_name, track_count } = apiResponse;
+            formattedResponse = `The playlist "${playlist_name}" contains ${track_count ?? 'an unknown number of'} tracks on Audius.`;
+          } else {
+            formattedResponse = "No playlist information available.";
+          }
+          break;
+
+        case 'Audius Web Search':
+          formattedResponse = `Web search results: ${JSON.stringify(apiResponse)}`;
+          break;
+
+        // Handle other cases...
+
+        default:
+          formattedResponse = "No information available.";
       }
-
-      const track = apiResponse;
-      const { title, user, play_count } = track;
-      const artistName = user?.name || user?.handle || "Unknown Artist";
-
-      const formattedResponse = `${title} by ${artistName} has ${play_count ?? 'an unknown number of'} plays on Audius.`;
 
       logger.debug(`Formatted Response: "${formattedResponse}"`);
 
       return {
         response: formattedResponse,
       };
+
     } catch (error) {
       logger.error('Error in createFetchRequestTool:', error);
       throw error;
@@ -919,27 +1099,49 @@ export const createFetchRequestTool = tool(
   },
   {
     name: "create_fetch_request",
-    description: "Creates and executes API fetch requests based on provided parameters and formats the response.",
+    description: "Executes the selected API based on bestApi and parameters, and formats the response.",
     schema: z.object({
+      bestApi: z.object({
+        api_name: z.string(),
+        id: z.string(),
+        category_name: z.string(),
+        tool_name: z.string(),
+        api_description: z.string(),
+        required_parameters: z.array(z.object({
+          name: z.string(),
+          type: z.string(),
+          description: z.string(),
+          default: z.string(),
+        })),
+        optional_parameters: z.array(z.object({
+          name: z.string(),
+          type: z.string(),
+          description: z.string(),
+          default: z.string(),
+        })),
+        method: z.string(),
+        template_response: z.record(z.any()).optional(),
+        api_url: z.string(),
+      }).describe("The selected API to execute."),
       parameters: z.object({
-        track_id: z.string().optional().describe("The ID of the track to fetch."),
-        playlist_id: z.string().optional().describe("The ID of the playlist to fetch."),
-        // Add other parameters as needed
-      }).optional(),
-    }).passthrough(), // {{ edit_1 }} Allow additional properties
+        // Define your expected parameters here
+      }).passthrough(), // Allow additional properties
+    }).passthrough(),
   }
 );
 
 /**
- * Tool to extract parameters from user query based on the entity type.
- *
- * @param {object} parameters - The parameters object containing the user's query and entity type.
- * @returns {Promise<{ parameters: Record<string, any> }>} - The extracted parameters.
+ * Tool to extract parameters from the user's query based on the entity type.
  */
 export const extractParametersTool = tool(
-  async ({ parameters }: { parameters: { query: string; entityType: EntityType } }): Promise<{ parameters: Record<string, any> }> => {
-    const { query, entityType } = parameters;
+  async (input: Record<string, any>): Promise<Partial<GraphState>> => {
+    if (!input.query || !input.entityType) {
+      throw new Error("Query and entityType are required");
+    }
+
     let extractedParams: Record<string, any> = {};
+    const query = input.query;
+    const entityType = input.entityType;
 
     logger.debug(`extractParametersTool invoked with query: "${query}" and entityType: "${entityType}"`);
 
@@ -994,18 +1196,41 @@ export const extractParametersTool = tool(
     logger.debug(`Extracted Parameters: ${JSON.stringify(extractedParams)}`);
 
     return {
-      parameters: extractedParams,
+      ...input,
+      parameters: {
+        ...(input.parameters || {}),
+        ...extractedParams,
+      },
     };
   },
   {
     name: "extract_parameters",
     description: "Extracts necessary parameters based on the entity type from the user query.",
     schema: z.object({
-      parameters: z.object({
-        query: z.string().describe("The user's query from which to extract parameters."),
-        entityType: z.enum(['track', 'user', 'playlist']).describe("The type of entity involved in the query."),
-      }),
-    }),
+      query: z.string(),
+      entityType: z.enum(['track', 'user', 'playlist']),
+      parameters: z.record(z.any()).nullable(),
+      isEntityQuery: z.boolean(),
+      apis: z.array(z.any()),
+      categories: z.array(z.string()),
+      bestApi: z.any(),
+      // Include other state properties as nullable
+      llm: z.any().nullable(),
+      queryType: z.string().nullable(),
+      response: z.any().nullable(),
+      complexity: z.string().nullable(),
+      entityName: z.string().nullable(),
+      error: z.boolean().nullable(),
+      messages: z.any().nullable(),
+      selectedHost: z.string().nullable(),
+      entity: z.any().nullable(),
+      secondaryApi: z.any().nullable(),
+      secondaryResponse: z.any().nullable(),
+      multiStepHandled: z.boolean().nullable(),
+      initialState: z.any().nullable(),
+      formattedResponse: z.string().nullable(),
+      message: z.any().nullable(),
+    }).passthrough(),
   }
 );
 
@@ -1013,15 +1238,33 @@ export const extractParametersTool = tool(
  * List of all tools used in the ecosystem.
  */
 export const ALL_TOOLS_LIST: { [key: string]: StructuredToolInterface | RunnableToolLike | Promise<Partial<GraphState>> | ((state: GraphState) => Promise<Partial<GraphState>>) } = {
-  extractCategory: ExtractCategoryTool,
+  extractCategory: extractCategoryTool,
   extractParameters: extractParameters,
   readUserInputTool,
   ExtractHighLevelCategoriesTool,
-  createFetchRequest,
+  createFetchRequest: createFetchRequestTool,
   selectApi: selectAPIToolInstance,
   readUserInput: readUserInputTool // Use the instantiated tool
   // Add other tools here as needed
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
