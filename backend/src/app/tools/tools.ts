@@ -20,16 +20,28 @@ import { Track, User, Playlist } from '@audius/sdk';
  * @returns {Promise<Partial<GraphState>>} - The updated graph state.
  */
 export const selectApiTool = tool(
-  async ({ isEntityQuery, apis }: { isEntityQuery: boolean; apis: DatasetSchema[] }): Promise<{ bestApi: DatasetSchema | null }> => {
-    let bestApiName: string;
+  async ({ isEntityQuery, entityType, apis }: { isEntityQuery: boolean; entityType: EntityType; apis: DatasetSchema[] }): Promise<{ bestApi: DatasetSchema | null }> => {
+    let bestApiName: string | null = null;
 
     if (isEntityQuery) {
-      bestApiName = 'Get Track'; // Adjust logic as needed based on isEntityQuery
+      switch (entityType) {
+        case 'track':
+          bestApiName = 'Search Tracks'; // Alternatively, implement logic to choose between 'Get Track' and 'Search Tracks'
+          break;
+        case 'user':
+          bestApiName = 'Search Tracks';
+          break;
+        case 'playlist':
+          bestApiName = 'Search Playlists';
+          break;
+        default:
+          bestApiName = null;
+      }
     } else {
       bestApiName = 'Audius Web Search'; // For non-entity queries
     }
 
-    const bestApi = apis.find(api => api.api_name === bestApiName) || null;
+    const bestApi = bestApiName ? apis.find(api => api.api_name === bestApiName) || null : null;
 
     logger.debug(`Selected API: ${bestApi ? bestApi.api_name : 'None'}`);
 
@@ -37,11 +49,12 @@ export const selectApiTool = tool(
   },
   {
     name: 'select_api',
-    description: 'Selects the best API based on whether it is an entity query and available APIs.',
+    description: 'Selects the best API based on whether it is an entity query, the type of entity, and available APIs.',
     schema: z.object({
       isEntityQuery: z.boolean().describe('Whether the query is an entity query.'),
+      entityType: z.enum(['track', 'user', 'playlist']).describe('The type of entity involved in the query.'),
       apis: z.array(z.any()).describe('The list of available APIs.'),
-    }).passthrough(), // {{ edit_2 }} Allow additional properties
+    }).passthrough(), // Allow additional properties
   }
 );
 
@@ -70,14 +83,20 @@ export const readUserInputTool = tool(
         .join("\n----\n");
       const question = `LangTool couldn't find all the required params for the API.\nMissing params:\n${missingParamsString}\nPlease provide the missing params in the following format:\n<name>,<value>:::<name>,<value>\n`;
 
-      return new Promise<string>((resolve) => {
-        rl.question(question, (answer) => {
+      logger.debug(`Prompting user for input: ${question}`);
+
+      const answer: string = await new Promise<string>((resolve) => {
+        rl.question(question, (response) => {
           rl.close();
-          resolve(answer);
+          resolve(response);
         });
       });
+
+      logger.debug(`User provided input: ${answer}`);
+
+      return answer;
     } catch (e: any) {
-      console.error(e);
+      logger.error('Error in readUserInputTool:', e);
       return "";
     }
   },
@@ -90,13 +109,11 @@ export const readUserInputTool = tool(
         .array(
           z.object({
             name: z.string().describe("The name of the missing parameter."),
-            description: z
-              .string()
-              .describe("A description of the missing parameter."),
+            description: z.string().describe("A description of the missing parameter."),
           })
         )
         .describe("A list of missing parameters with their descriptions."),
-    }),
+    }).passthrough(), // Allow additional properties
   }
 );
 
@@ -510,12 +527,13 @@ ${categoriesAndTools}`,
 
   console.log(categories, isEntityQuery, entityType, entityName);
 
-  // Ensure only one category is selected
+  // Ensure only one category is selected and include queryType
   return {
     categories: [categories[0]], // Select the first category as the most relevant
     isEntityQuery,
     entityType,
     entityName,
+    queryType: isEntityQuery ? `search_${entityType}s` as QueryType : 'general' as QueryType, // Ensure queryType is appropriately set based on your logic
   };
 }
 
@@ -582,7 +600,7 @@ export const searchEntityTool = tool(
         artistName: z.string().optional().nullable().describe("The name of the artist"),
         track_id: z.string().optional().describe("The ID of the found track")
       }).optional()
-    })
+    }).passthrough(), // Allow additional properties
   }
 );
 
@@ -851,6 +869,7 @@ export async function createFetchRequest(state: GraphState): Promise<Partial<Gra
   }
 }
 
+
 /**
  * Tool to create and execute API fetch requests, including response formatting.
  *
@@ -859,6 +878,7 @@ export async function createFetchRequest(state: GraphState): Promise<Partial<Gra
  */
 export const createFetchRequestTool = tool(
   async ({ parameters }: { parameters?: { track_id?: string; playlist_id?: string; [key: string]: any } }): Promise<{ response: string }> => {
+    logger.debug(`createFetchRequestTool invoked with parameters: ${JSON.stringify(parameters)}`);
     try {
       const { track_id, playlist_id } = parameters || {};
 
@@ -911,52 +931,79 @@ export const createFetchRequestTool = tool(
 );
 
 /**
- * Tool to extract parameters from user query.
+ * Tool to extract parameters from user query based on the entity type.
  *
- * @param {object} parameters - The parameters object containing the user's query.
- * @returns {Promise<{ parameters: { trackTitle: string; artistName?: string | null } }>} - The extracted parameters.
+ * @param {object} parameters - The parameters object containing the user's query and entity type.
+ * @returns {Promise<{ parameters: Record<string, any> }>} - The extracted parameters.
  */
 export const extractParametersTool = tool(
-  async ({ parameters }: { parameters: { query: string } }): Promise<{ parameters: { trackTitle: string; artistName?: string | null } }> => {
-    const { query } = parameters;
-    let trackTitle = '';
-    let artistName: string | null = null;
+  async ({ parameters }: { parameters: { query: string; entityType: EntityType } }): Promise<{ parameters: Record<string, any> }> => {
+    const { query, entityType } = parameters;
+    let extractedParams: Record<string, any> = {};
 
-    // Regex to extract track title and artist name
-    const regex = /how many plays does\s+(.*?)\s+by\s+(.*?)\s*(have|\?|$)/i;
-    const match = query.match(regex);
+    logger.debug(`extractParametersTool invoked with query: "${query}" and entityType: "${entityType}"`);
 
-    if (match && match[1]) {
-      trackTitle = match[1].trim();
-      if (match[2]) {
-        artistName = match[2].trim();
-      }
-    } else {
-      // Handle cases without artist name
-      const simpleRegex = /how many plays does\s+(.*?)\s*(have|\?|$)/i;
-      const simpleMatch = query.match(simpleRegex);
-      if (simpleMatch && simpleMatch[1]) {
-        trackTitle = simpleMatch[1].trim();
-      } else {
-        throw new Error("Could not extract track title from the query.");
-      }
+    switch(entityType) {
+      case 'track':
+        // Extract trackTitle and artistName
+        const trackRegex = /how many plays does\s+(.*?)\s+by\s+(.*?)\s*(have|\?|$)/i;
+        const trackMatch = query.match(trackRegex);
+        if (trackMatch && trackMatch[1]) {
+          extractedParams.trackTitle = trackMatch[1].trim();
+          if (trackMatch[2]) {
+            extractedParams.artistName = trackMatch[2].trim();
+          }
+        } else {
+          // Handle cases without artist name
+          const simpleTrackRegex = /how many plays does\s+(.*?)\s*(have|\?|$)/i;
+          const simpleTrackMatch = query.match(simpleTrackRegex);
+          if (simpleTrackMatch && simpleTrackMatch[1]) {
+            extractedParams.trackTitle = simpleTrackMatch[1].trim();
+          } else {
+            throw new Error("Could not extract track title from the query.");
+          }
+        }
+        break;
+
+      case 'user':
+        // Extract userName
+        const userRegex = /how many followers does\s+(.*?)\s*(have|\?|$)/i;
+        const userMatch = query.match(userRegex);
+        if (userMatch && userMatch[1]) {
+          extractedParams.userName = userMatch[1].trim();
+        } else {
+          throw new Error("Could not extract user name from the query.");
+        }
+        break;
+
+      case 'playlist':
+        // Extract playlistName
+        const playlistRegex = /how many tracks are in\s+(.*?)\s*(have|\?|$)/i;
+        const playlistMatch = query.match(playlistRegex);
+        if (playlistMatch && playlistMatch[1]) {
+          extractedParams.playlistName = playlistMatch[1].trim();
+        } else {
+          throw new Error("Could not extract playlist name from the query.");
+        }
+        break;
+
+      default:
+        throw new Error(`Unsupported entityType: ${entityType}`);
     }
 
-    logger.debug(`Extracted Parameters: Track Title - "${trackTitle}", Artist Name - "${artistName}"`);
+    logger.debug(`Extracted Parameters: ${JSON.stringify(extractedParams)}`);
 
     return {
-      parameters: {
-        trackTitle,
-        artistName,
-      },
+      parameters: extractedParams,
     };
   },
   {
     name: "extract_parameters",
-    description: "Extracts parameters like track title and artist name from the user query.",
+    description: "Extracts necessary parameters based on the entity type from the user query.",
     schema: z.object({
       parameters: z.object({
         query: z.string().describe("The user's query from which to extract parameters."),
+        entityType: z.enum(['track', 'user', 'playlist']).describe("The type of entity involved in the query."),
       }),
     }),
   }
@@ -975,6 +1022,8 @@ export const ALL_TOOLS_LIST: { [key: string]: StructuredToolInterface | Runnable
   readUserInput: readUserInputTool // Use the instantiated tool
   // Add other tools here as needed
 };
+
+
 
 
 

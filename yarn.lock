@@ -6355,6 +6355,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"audius@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "audius@npm:1.1.1"
+  dependencies:
+    node-fetch: "npm:^2.6.1"
+  checksum: 10c0/73c2588692fa4d0daea2a82cb99e748416be60995d466b830c8c40fdaf6873dbab7d94c2acfc27f575c90755c72074fdc95ad2a016550b576736dac1f979d915
+  languageName: node
+  linkType: hard
+
 "available-typed-arrays@npm:^1.0.7":
   version: 1.0.7
   resolution: "available-typed-arrays@npm:1.0.7"
@@ -6584,6 +6593,7 @@ __metadata:
     "@types/jest": "npm:^29.5.14"
     "@types/node": "npm:^22.7.9"
     "@types/punycode": "npm:^2"
+    audius: "npm:^1.1.1"
     axgen: "npm:^0.0.23"
     axios: "npm:^1.7.7"
     babel-jest: "npm:^29.2.5"
