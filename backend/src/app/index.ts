@@ -14,8 +14,9 @@ import {
 import { StateGraph, END, START } from "@langchain/langgraph";
 import { TRIMMED_CORPUS_PATH } from "./constants.js";
 import { findMissingParams } from "./utils.js";
+import { DatasetSchema } from "./types.js";
 
-dotenv.config({ path: '../.env' });
+dotenv.config({ path: '../.env' }); // Confirm this path is accurate based on your project structure
 
 const graphChannels = {
   llm: null,
@@ -51,11 +52,12 @@ const graphChannels = {
 const verifyParams = (
   state: GraphState
 ): "human_loop_node" | "execute_request_node" => {
-  const { bestApi, parameters } = state;
+  const { bestApi, parameters, isEntityQuery } = state;
   if (!bestApi) {
     throw new Error("No best API found");
   }
   if (!parameters) {
+    console.warn("Parameters are missing. Redirecting to human_loop_node.");
     return "human_loop_node";
   }
   const requiredParamsKeys = (bestApi.required_parameters || []).map(({ name }) => name);
@@ -65,6 +67,7 @@ const verifyParams = (
     extractedParamsKeys
   );
   if (missingKeys.length > 0) {
+    console.warn(`Missing parameters: ${missingKeys.join(", ")}`);
     return "human_loop_node";
   }
   return "execute_request_node";
@@ -90,23 +93,53 @@ function getApis(state: GraphState) {
 
   logger.debug('All available APIs:', endpoints.map((api: { api_name: string }) => api.api_name));
 
+  // Remove duplicate APIs based on 'api_name'
+  const uniqueApis = Array.from(
+    new Map(endpoints.map((api: any) => [api.api_name, api])).values()
+  );
+
+  // Validate that each API has the required fields
+  const validatedApis = uniqueApis.filter((api: any) => {
+    const hasRequiredFields = api.api_name && Array.isArray(api.required_parameters);
+    if (!hasRequiredFields) {
+      logger.warn(`API "${api.api_name || 'Unnamed API'}" is missing required fields and will be excluded.`);
+    }
+    return hasRequiredFields;
+  });
+
+  // Transform validated APIs to match DatasetSchema
+  const transformedApis: DatasetSchema[] = validatedApis.map((api: any) => ({
+    id: api.id,
+    category_name: api.category_name,
+    tool_name: api.tool_name,
+    api_name: api.api_name,
+    api_description: api.api_description,
+    required_parameters: api.required_parameters,
+    optional_parameters: api.optional_parameters,
+    method: api.method,
+    template_response: api.template_response,
+    api_url: api.api_url,
+  }));
+
   const apis = state.categories
     .map((category) => {
       // Filter APIs by category_name
-      const matchedApis = endpoints.filter((endpoint: any) => endpoint.category_name === category);
-      logger.debug(`Matched APIs for category "${category}":`, matchedApis.map((api: any) => api.api_name));
+      const matchedApis = transformedApis.filter((endpoint: DatasetSchema) => endpoint.category_name === category);
+      logger.debug(`Matched APIs for category "${category}":`, matchedApis.map((api: DatasetSchema) => api.api_name));
       return matchedApis;
     })
     .flat();
 
+  // Ensure 'apis' is not empty after filtering and validation
   if (apis.length === 0) {
-    logger.error("No APIs found for the given categories.");
-    throw new Error("No APIs available for selection.");
+    logger.error("No valid APIs found for the given categories after filtering.");
+    throw new Error("No valid APIs available for selection after filtering.");
   }
 
-  logger.debug('APIs selected for the query:', apis.map((api: any) => api.api_name));
+  logger.debug('APIs selected for the query:', apis.map((api: DatasetSchema) => api.api_name));
 
   return {
+    ...state,
     apis,
   };
 }
@@ -169,8 +202,8 @@ async function main(query: string) {
     const eventName = Object.keys(event)[0];
     console.log("Stream event:", eventName);
 
-    // Log the state after each event
-    console.log("State after event:", event[eventName]);
+    // Log the entire state for debugging
+    console.log("State after event:", JSON.stringify(event[eventName], null, 2));
 
     if (eventName === "execute_request_node") {
       console.log("---FINISHED---");

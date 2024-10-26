@@ -20,16 +20,13 @@ import { Track, User, Playlist } from '@audius/sdk';
  * @returns {Promise<Partial<GraphState>>} - The updated graph state.
  */
 export const selectApiTool = tool(
-  async ({ parameters }: { parameters: { queryType: string; apis: DatasetSchema[] } }): Promise<{ bestApi: DatasetSchema | null }> => {
-    const { queryType, apis } = parameters;
+  async ({ isEntityQuery, apis }: { isEntityQuery: boolean; apis: DatasetSchema[] }): Promise<{ bestApi: DatasetSchema | null }> => {
     let bestApiName: string;
 
-    if (queryType === 'search_tracks') {
-      bestApiName = 'Search Tracks';
-    } else if (queryType === 'trending_tracks') {
-      bestApiName = 'Get Trending Tracks';
+    if (isEntityQuery) {
+      bestApiName = 'Get Track'; // Adjust logic as needed based on isEntityQuery
     } else {
-      bestApiName = 'Get Track';
+      bestApiName = 'Audius Web Search'; // For non-entity queries
     }
 
     const bestApi = apis.find(api => api.api_name === bestApiName) || null;
@@ -40,13 +37,11 @@ export const selectApiTool = tool(
   },
   {
     name: 'select_api',
-    description: 'Selects the best API based on the query type and available APIs.',
+    description: 'Selects the best API based on whether it is an entity query and available APIs.',
     schema: z.object({
-      parameters: z.object({
-        queryType: z.string().describe('The type of the query, e.g., search_tracks, trending_tracks.'),
-        apis: z.array(z.any()).describe('The list of available APIs.'),
-      }),
-    }),
+      isEntityQuery: z.boolean().describe('Whether the query is an entity query.'),
+      apis: z.array(z.any()).describe('The list of available APIs.'),
+    }).passthrough(), // {{ edit_2 }} Allow additional properties
   }
 );
 
@@ -280,7 +275,7 @@ export function parseUserInput(input: string): Record<string, string> {
 export async function requestParameters(
   state: GraphState
 ): Promise<Partial<GraphState>> {
-  const { bestApi, parameters } = state;
+  const { bestApi, parameters, isEntityQuery } = state; // {{ edit_3 }} Removed queryType
   if (!bestApi) {
     throw new Error("No best API found");
   }
@@ -911,7 +906,7 @@ export const createFetchRequestTool = tool(
         playlist_id: z.string().optional().describe("The ID of the playlist to fetch."),
         // Add other parameters as needed
       }).optional(),
-    }),
+    }).passthrough(), // {{ edit_1 }} Allow additional properties
   }
 );
 
@@ -980,6 +975,9 @@ export const ALL_TOOLS_LIST: { [key: string]: StructuredToolInterface | Runnable
   readUserInput: readUserInputTool // Use the instantiated tool
   // Add other tools here as needed
 };
+
+
+
 
 
 
