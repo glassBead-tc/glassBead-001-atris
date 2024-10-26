@@ -6,20 +6,21 @@
 The initial problem was that backend logic and technical details were being exposed to the user in the responses. This was evident from the terminal output showing internal processing steps, API selections, and technical error messages.
 
 ### File Selection Process
-1. I first examined the progressTracker.md file to understand the current state of the project and identify any related issues or planned improvements.
-2. Based on the issue description, I determined that the problem was likely in the API response processing, which led me to focus on the process_api_response.ts file.
+1. I first examined the `progressTracker.md` file to understand the current state of the project and identify any related issues or planned improvements.
+2. Based on the issue description, I determined that the problem was likely in the API response processing, which led me to focus on the `tools.ts` file.
 3. I chose to update this file because it's responsible for formatting the final response that the user sees, making it the ideal place to abstract away backend logic.
 
 ### Reasoning Behind Changes
-1. **Error Message Refinement**: I replaced technical error messages with user-friendly alternatives to avoid exposing internal system details.
-   - **Rationale**: Users don't need to know about internal errors; they need clear, actionable information.
-   - **Implementation**: Updated `process_api_response.ts` to format errors appropriately.
+1. **Restricting Categories to a Single Relevant Category**:
+   - **Modification Location:** Inside the `extractCategory` function in `tools.ts`.
+   - **Change Made:** Adjusted the return statement to include only the first category from the `categories` array.
+   - **Purpose:** This ensures that the `categories` array in the state contains only one category (e.g., `'Tracks'`), preventing ambiguity in subsequent processing steps.
 
 ### Recursion Issue Resolution
 1. **Issue Identification**: Detected that `select_api` was being called recursively, leading to a recursion limit error.
 2. **Cause Analysis**: Found that the LangGraph flow was incorrectly routing entity queries back to `handle_entity_query`, creating an infinite loop.
 3. **Solution Implementation**:
-   - Updated `createGraph.ts` to ensure that after `select_api` is called for entity queries, the flow proceeds to `extract_parameters` instead of looping back.
+   - Updated `tools.ts` to ensure that after selecting the API, the flow proceeds correctly without looping back.
    - Verified that `select_api` is invoked correctly without causing recursion.
 
 ### Key Takeaways

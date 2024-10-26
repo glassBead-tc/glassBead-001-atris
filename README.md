@@ -42,7 +42,7 @@ We are currently in **Phase 2: Expanded Features** of our project roadmap, havin
 1. **Phase 1: Agent MVP** *(Completed)*
    - Developed the core LangGraph.js agent to handle basic queries.
    - Implemented basic query pipeline.
-   - Trending tracks and genres functionality.
+   - Implemented trending tracks and genres functionality.
    - Number parsing for limit queries.
    - Resolved recursion issues in LangGraph flow.
    - Enhanced logging to abstract backend logic from user responses.
@@ -121,26 +121,26 @@ For detailed setup instructions, please refer to the documents in the `backend/a
 
 ## Technology Stack
 
-- Backend: Node.js, TypeScript, LangGraph.js
-- API Integration: Axios
-- Natural Language Processing: GPT-4 via LangChain
-- Frontend (Future): Next.js
-- Testing: Jest
-- Version Control: Git
-- Package Management: Yarn
-- Environment Management: dotenv
+- **Backend:** Node.js, TypeScript, LangGraph.js
+- **API Integration:** Axios
+- **Natural Language Processing:** GPT-4 via LangChain
+- **Frontend (Future):** Next.js
+- **Testing:** Jest
+- **Version Control:** Git
+- **Package Management:** Yarn
+- **Environment Management:** dotenv
 
 ## Error Handling and Logging
 
 The project implements comprehensive error handling and logging:
-- **Error Handling**: Each major operation is wrapped in try-catch blocks to capture and manage errors gracefully. User-friendly error messages are generated to provide clear feedback without exposing internal system details.
-- **Logging**: Enhanced logging mechanisms ensure that detailed backend processing steps are not exposed to users. Logs are structured to facilitate debugging and monitoring while maintaining abstraction from user-facing components.
-- **Recursion Issue Resolution**: Fixed infinite loops in the LangGraph flow by updating `createGraph.ts`, ensuring that entity queries do not cause recursion limit errors.
+- **Error Handling:** Each major operation is wrapped in try-catch blocks to capture and manage errors gracefully. User-friendly error messages are generated to provide clear feedback without exposing internal system details.
+- **Logging:** Enhanced logging mechanisms ensure that detailed backend processing steps are not exposed to users. Logs are structured to facilitate debugging and monitoring while maintaining abstraction from user-facing components.
+- **Recursion Issue Resolution:** Fixed infinite loops in the LangGraph flow by updating `tools.ts`, ensuring that entity queries do not cause recursion limit errors.
 
 ## Timeout and Retry Mechanism
 
-- **Timeouts**: Long-running operations are protected by timeouts to prevent indefinite hanging, ensuring that the system remains responsive.
-- **Retries**: Certain operations, such as API calls, implement a retry mechanism to handle transient failures, enhancing the robustness of the system.
+- **Timeouts:** Long-running operations are protected by timeouts to prevent indefinite hanging, ensuring that the system remains responsive.
+- **Retries:** Certain operations, such as API calls, implement a retry mechanism to handle transient failures, enhancing the robustness of the system.
 
 ## Documentation
 

@@ -24,7 +24,7 @@ LangGraph's low-level functionalities are pivotal in the detailed execution of q
 - **Nodes and Edges:** Represent specific actions (nodes) and the pathways (edges) connecting them, dictating the flow based on dynamic conditions.
 - **Conditional Logic:** Enables dynamic routing based on the current state, such as directing moderate complexity queries to multi-step handlers.
 
-In our implementation, the `createAtrisGraph.ts` file sets up the state graph, defining nodes like `classify_query`, `fetch_apis`, `select_api`, and `handle_multi_step_query`. Each node encapsulates a specific function, ensuring modularity and ease of maintenance.
+In our implementation, the `tools.ts` file sets up the state graph, defining nodes like `extract_category_node`, `get_apis_node`, `select_api_node`, `extract_params_node`, and `execute_request_node`. Each node encapsulates a specific function, ensuring modularity and ease of maintenance.
 
 ### Agentic Concepts
 
@@ -117,4 +117,3 @@ LangGraph's support for streaming data will be pivotal in implementing real-time
 ## Conclusion
 
 LangGraph.js is instrumental in shaping the functionality and scalability of our Audius API integration. By leveraging its high-level workflow management, modular design, and dynamic routing capabilities, Atris efficiently transforms natural language queries into precise and relevant API interactions. As we continue to enhance Atris, incorporating advanced LangGraph features like multi-agent systems, persistent memory, and streaming data handling will propel the agent towards greater intelligence and user-centricity. This strategic alignment with LangGraph's concepts ensures that our system remains robust, adaptable, and primed for future advancements in the ever-evolving landscape of music information platforms.
-
