@@ -8,12 +8,13 @@ import {
   selectApiTool,
   extractParametersTool,
   createFetchRequestTool,
-  getApis
+  getApis,
+  verifyParams
 } from "./tools/tools.js";
 import { StateGraph, END, START } from "@langchain/langgraph";
 import { findMissingParams } from "./utils.js";
 
-dotenv.config({ path: '../.env' }); // Confirm this path is accurate based on your project structure
+dotenv.config({ path: '../.env' });
 const graphChannels = {
   llm: null,
   query: null,
@@ -37,45 +38,6 @@ const graphChannels = {
   initialState: null,
   formattedResponse: null,
   message: null,
-};
-
-/**
- * Verifies the presence of required parameters.
- *
- * @param {GraphState} state - The current state of the graph.
- * @returns {string} - Determines the next node based on parameter verification.
- */
-const verifyParams = (
-  state: GraphState
-): "human_loop_node" | "execute_request_node" => {
-  const { bestApi, parameters } = state;
-  
-  if (!bestApi) {
-    throw new Error("No best API found");
-  }
-  
-  if (!parameters) {
-    console.warn("Parameters are missing. Redirecting to human_loop_node.");
-    return "human_loop_node";
-  }
-
-  // Check if we have all required parameters for the selected API
-  const requiredParamsKeys = bestApi.required_parameters.map(({ name }) => name);
-  const extractedParamsKeys = Object.keys(parameters);
-  
-  // Use only trackTitle for Search Tracks API
-  if (bestApi.api_name === 'Search Tracks' && parameters.trackTitle) {
-    parameters.query = parameters.trackTitle;
-  }
-
-  const missingKeys = findMissingParams(requiredParamsKeys, extractedParamsKeys);
-  
-  if (missingKeys.length > 0) {
-    console.warn(`Missing parameters: ${missingKeys.join(", ")}`);
-    return "human_loop_node";
-  }
-
-  return "execute_request_node";
 };
 
 /**
@@ -115,7 +77,7 @@ async function main(queries: string[]) {
   const app = createGraph();
 
   const llm = new ChatOpenAI({
-    modelName: "gpt-4",
+    modelName: "gpt-3.5-turbo",
     temperature: 0,
   });
 
@@ -123,62 +85,79 @@ async function main(queries: string[]) {
     console.log("\n=== Processing Query ===");
     console.log(`Input: "${query}"`);
 
-    const stream = await app.stream({
-      llm,
-      query,
-    });
+    try {
+      const stream = await app.stream({
+        llm,
+        query,
+      });
 
-    let finalResult: GraphState | null = null;
-    for await (const event of stream) {
-      const eventName = Object.keys(event)[0];
-      const state = event[eventName];
+      let finalResult: GraphState | null = null;
+      for await (const event of stream) {
+        const eventName = Object.keys(event)[0];
+        const state = event[eventName];
 
-      // Log detailed state transitions
-      switch(eventName) {
-        case "extract_category_node":
-          console.log("\n=== Query Analysis ===");
-          console.log(`Detected Entity Type: ${state.entityType}`);
-          console.log(`Categorized as: ${state.categories?.join(', ')}`);
-          break;
+        // Log detailed state transitions
+        switch(eventName) {
+          case "extract_category_node":
+            console.log("\n=== Query Analysis ===");
+            console.log(`Detected Entity Type: ${state.entityType}`);
+            console.log(`Categorized as: ${state.categories?.join(', ')}`);
+            if (state.queryType === 'trending_tracks') {
+              console.log(`Query Type: ${state.queryType}`);
+            }
+            break;
 
-        case "select_api_node":
-          console.log("\n=== API Selection ===");
-          console.log(`Selected API: ${state.bestApi?.api_name}`);
-          break;
+          case "select_api_node":
+            console.log("\n=== API Selection ===");
+            console.log(`Selected API: ${state.bestApi?.api_name}`);
+            break;
 
-        case "extract_params_node":
-          console.log("\n=== Parameter Extraction ===");
-          Object.entries(state.parameters || {}).forEach(([key, value]) => {
-            console.log(`${key}: ${value}`);
-          });
-          break;
+          case "extract_params_node":
+            console.log("\n=== Parameter Extraction ===");
+            if (state.queryType === 'trending_tracks') {
+              console.log("Processing trending tracks query...");
+            }
+            Object.entries(state.parameters || {}).forEach(([key, value]) => {
+              console.log(`${key}: ${value}`);
+            });
+            break;
 
-        case "execute_request_node":
-          console.log("\n=== API Response ===");
-          console.log(state.response);
-          finalResult = state;
-          break;
+          case "execute_request_node":
+            console.log("\n=== API Response ===");
+            if (state.error) {
+              console.error("Error in API response:", state.error);
+            } else {
+              console.log(state.response);
+            }
+            finalResult = state;
+            break;
+        }
       }
-    }
 
-    if (!finalResult) {
-      throw new Error("No final result");
-    }
+      if (!finalResult) {
+        throw new Error("No final result");
+      }
 
-    console.log("\n=== Processing Complete ===");
+      console.log("\n=== Processing Complete ===");
+    } catch (error: any) {
+      console.error(`Error processing query "${query}":`, error instanceof Error ? error.message : String(error));
+      logger.error(`Failed to process query: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
-  // {{ edit_2 }} Forcefully exit the process if necessary (use cautiously)
+  // Clean exit
   process.exit(0);
 }
 
 const datasetQuery = [
   "How many plays does 115 SECONDS OF CLAMS have on Audius?",
   "How many followers does TRICK CHENEY. have?",
-  "How many songs does the playlist glassBead's got game, vol. 1 have in it?"
+  "How many songs does the playlist glassBead's got game, vol. 1 have in it?",
+  "What is the genre of the song 115 SECONDS OF CLAMS?",
+  "What are the top ten trending tracks on Audius right now?"
 ];
 
-main(datasetQuery).catch(error => {
+main(datasetQuery).catch((error: Error) => {
   logger.error(`Error during execution: ${error.message}`);
   process.exit(1);
 });
