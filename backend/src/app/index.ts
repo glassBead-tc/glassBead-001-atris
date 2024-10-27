@@ -1,7 +1,6 @@
 import { logger } from "./logger.js";
 import { ChatOpenAI } from "@langchain/openai";
 import { GraphState } from "./types.js";
-import fs from "fs";
 import dotenv from 'dotenv';
 import {
   extractCategoryTool,
@@ -12,9 +11,7 @@ import {
   getApis
 } from "./tools/tools.js";
 import { StateGraph, END, START } from "@langchain/langgraph";
-import { TRIMMED_CORPUS_PATH } from "./constants.js";
 import { findMissingParams } from "./utils.js";
-import { DatasetSchema } from "./types.js";
 
 dotenv.config({ path: '../.env' }); // Confirm this path is accurate based on your project structure
 const graphChannels = {
@@ -66,7 +63,7 @@ const verifyParams = (
   const requiredParamsKeys = bestApi.required_parameters.map(({ name }) => name);
   const extractedParamsKeys = Object.keys(parameters);
   
-  // For Search Tracks API, we need to use trackTitle as the query parameter
+  // Use only trackTitle for Search Tracks API
   if (bestApi.api_name === 'Search Tracks' && parameters.trackTitle) {
     parameters.query = parameters.trackTitle;
   }
@@ -110,11 +107,11 @@ function createGraph() {
 }
 
 /**
- * Processes the query through the graph.
+ * Processes each query through the graph.
  *
- * @param {string} query - The user's query.
+ * @param {string[]} queries - The user's queries.
  */
-async function main(query: string) {
+async function main(queries: string[]) {
   const app = createGraph();
 
   const llm = new ChatOpenAI({
@@ -122,59 +119,64 @@ async function main(query: string) {
     temperature: 0,
   });
 
-  console.log("\n=== Processing Query ===");
-  console.log(`Input: "${query}"`);
+  for (const query of queries) {
+    console.log("\n=== Processing Query ===");
+    console.log(`Input: "${query}"`);
 
-  const stream = await app.stream({
-    llm,
-    query,
-  });
+    const stream = await app.stream({
+      llm,
+      query,
+    });
 
-  let finalResult: GraphState | null = null;
-  for await (const event of stream) {
-    const eventName = Object.keys(event)[0];
-    const state = event[eventName];
+    let finalResult: GraphState | null = null;
+    for await (const event of stream) {
+      const eventName = Object.keys(event)[0];
+      const state = event[eventName];
 
-    // Log detailed state transitions
-    switch(eventName) {
-      case "extract_category_node":
-        console.log("\n=== Query Analysis ===");
-        console.log(`Detected Entity Type: ${state.entityType}`);
-        console.log(`Categorized as: ${state.categories?.join(', ')}`);
-        break;
+      // Log detailed state transitions
+      switch(eventName) {
+        case "extract_category_node":
+          console.log("\n=== Query Analysis ===");
+          console.log(`Detected Entity Type: ${state.entityType}`);
+          console.log(`Categorized as: ${state.categories?.join(', ')}`);
+          break;
 
-      case "select_api_node":
-        console.log("\n=== API Selection ===");
-        console.log(`Selected API: ${state.bestApi?.api_name}`);
-        break;
+        case "select_api_node":
+          console.log("\n=== API Selection ===");
+          console.log(`Selected API: ${state.bestApi?.api_name}`);
+          break;
 
-      case "extract_params_node":
-        console.log("\n=== Parameter Extraction ===");
-        Object.entries(state.parameters || {}).forEach(([key, value]) => {
-          console.log(`${key}: ${value}`);
-        });
-        break;
+        case "extract_params_node":
+          console.log("\n=== Parameter Extraction ===");
+          Object.entries(state.parameters || {}).forEach(([key, value]) => {
+            console.log(`${key}: ${value}`);
+          });
+          break;
 
-      case "execute_request_node":
-        console.log("\n=== API Response ===");
-        console.log(state.response);
-        finalResult = state;
-        break;
+        case "execute_request_node":
+          console.log("\n=== API Response ===");
+          console.log(state.response);
+          finalResult = state;
+          break;
+      }
     }
+
+    if (!finalResult) {
+      throw new Error("No final result");
+    }
+
+    console.log("\n=== Processing Complete ===");
   }
-
-  if (!finalResult) {
-    throw new Error("No final result");
-  }
-
-  console.log("\n=== Processing Complete ===");
-
 
   // {{ edit_2 }} Forcefully exit the process if necessary (use cautiously)
   process.exit(0);
 }
 
-const datasetQuery = "How many plays does 115 SECONDS OF CLAMS have on Audius?";
+const datasetQuery = [
+  "How many plays does 115 SECONDS OF CLAMS have on Audius?",
+  "How many followers does TRICK CHENEY. have?",
+  "How many songs does the playlist glassBead's got game, vol. 1 have in it?"
+];
 
 main(datasetQuery).catch(error => {
   logger.error(`Error during execution: ${error.message}`);

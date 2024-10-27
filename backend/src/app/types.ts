@@ -30,9 +30,9 @@ export interface DatasetSchema {
 
 export interface DatasetParameters {
   name: string;
-  type: string;
   description: string;
-  default: string;
+  type: string;    // Must match the type sent to the API
+  default: any;    // Default value for the parameter
 }
 
 export interface GraphState {
@@ -270,4 +270,6 @@ export interface AudiusCorpus {
 }
 
 // Similarly for Track and Playlist...
+
+
 
