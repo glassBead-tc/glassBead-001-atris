@@ -1,3 +1,4 @@
+import React from 'react';
 import { fetchAgentData } from '../lib/api';
 
 export default async function Page() {
