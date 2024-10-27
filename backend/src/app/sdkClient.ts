@@ -1,5 +1,5 @@
 import { sdk as createSdk, AudiusSdk } from '@audius/sdk';
-import { SdkConfig } from '../../../node_modules/@audius/sdk/dist/sdk/types.js';
+import { SdkConfig } from '@audius/sdk/dist/sdk/types.js';
 import { getAudiusApiKey, getAudiusApiSecret } from './config.js';
 
 // Store original write function
