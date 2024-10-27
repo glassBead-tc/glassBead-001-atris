@@ -970,26 +970,23 @@ export const createFetchRequestTool = tool(
         logger.debug("Calling Get Trending Tracks API with parameters:", parameters);
 
         const maxRetries = 3;
-        const timeout = 30000; // Increased timeout to 30 seconds
+        const timeout = 10000; // Reduced timeout to 10 seconds
         let lastError: Error | null = null;
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
           try {
             logger.debug(`Attempt ${attempt} of ${maxRetries}`);
 
-            // Add timeout promise
-            const timeoutPromise = new Promise((_, reject) => {
-              setTimeout(() => reject(new Error('API request timed out')), timeout);
-            });
-
-            // API call promise
-            const apiCallPromise = sdk.tracks.getTrendingTracks({
-              time: parameters?.time || 'week',
-              genre: parameters?.genre || undefined
-            });
-
-            // Race between timeout and API call
-            apiResponse = await Promise.race([apiCallPromise, timeoutPromise]);
+            // API call without limit parameter since it's not supported
+            apiResponse = await Promise.race([
+              sdk.tracks.getTrendingTracks({
+                time: parameters?.time || 'week',
+                genre: parameters?.genre || undefined
+              }),
+              new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('API request timed out')), timeout);
+              })
+            ]);
             
             logger.debug("Raw API Response:", JSON.stringify(apiResponse, null, 2));
 
@@ -999,11 +996,18 @@ export const createFetchRequestTool = tool(
             lastError = error as Error;
             logger.error(`Attempt ${attempt} failed:`, error);
             
-            if (attempt < maxRetries) {
-              // Wait before retrying (exponential backoff)
-              const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
-              await new Promise(resolve => setTimeout(resolve, delay));
+            // Check if it's a timeout error
+            if (error instanceof Error && error.message === 'API request timed out') {
+              if (attempt < maxRetries) {
+                logger.debug(`Retrying after timeout (attempt ${attempt})`);
+                const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
+              }
             }
+            
+            // If it's not a timeout error or we've exhausted retries, throw the error
+            throw error;
           }
         }
 
@@ -1021,7 +1025,7 @@ export const createFetchRequestTool = tool(
           throw new Error("Invalid response format from Trending Tracks API");
         }
 
-        const tracks = apiResponse.data.slice(0, 10); // Take first 10 tracks
+        const tracks = apiResponse.data.slice(0, 10); // Take first 10 tracks after successful response
         
         if (tracks.length === 0) {
           return {

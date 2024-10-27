@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
+    "@types/react-toastify": "^4.1.0",
     "turbo": "latest"
   },
   "resolutions": {
@@ -31,9 +32,12 @@
     "@types/joi": "^17.2.2",
     "@types/react": "^18.3.11",
     "@types/winston": "^2.4.4",
+    "ai": "^3.4.20",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "joi": "^17.13.3",
+    "next": "^15.0.1",
+    "react-toastify": "^10.0.6",
     "vercel": "^37.12.1",
     "winston": "^3.15.0"
   },
