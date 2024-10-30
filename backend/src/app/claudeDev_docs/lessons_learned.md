@@ -1,19 +1,31 @@
 # Lessons Learned
 
-1. Importance of Robust Parameter Extraction
-   - Learned from implementing number parsing for trending tracks
+1. Importance of LangGraph State Management
+   - State is managed by the graph, not individual tools
+   - Tools should return only their specific changes
+   - Channel reducers are crucial for proper state handling
 
-2. Value of Modular Design
-   - Enabled easy addition of new API endpoints and features
+2. Value of Proper Schema Validation
+   - Tool schemas must match LangGraph's expectations
+   - State shape consistency is critical between nodes
+   - Schema validation helps catch issues early
 
-3. Significance of Clear Logging
-   - Crucial for debugging complex query processing pipeline
+3. Significance of Comprehensive Logging
+   - State transitions need detailed logging
+   - Error context is crucial for debugging
+   - Log gaps can hide important issues
 
-4. Need for Flexible API Handling
-   - Different Audius API endpoints require varied parameter structures
+4. Need for State Reset Mechanisms
+   - State bleeding between queries is a common issue
+   - Explicit state reset is often necessary
+   - Reset should be selective based on needs
 
-5. Importance of User-Centric Design
-   - Natural language processing should prioritize common user query patterns
+5. Importance of Understanding LangGraph Flow
+   - Sequential processing, not concurrent
+   - State transitions are atomic
+   - Edge conditions control flow
 
-6. Value of Comprehensive Testing
-   - Essential for ensuring reliability across various query types and API interactions
+6. Value of Error Propagation
+   - Errors need proper context
+   - Error state should be preserved
+   - Recovery mechanisms are important

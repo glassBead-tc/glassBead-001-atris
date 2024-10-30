@@ -1,4 +1,4 @@
-import { logger } from "../../../logger.js";
+import { apiLogger } from "../../../logger.js";
 
 export function extractPlaylistId(query: string): string {
   const matches = query.match(/playlist_id:\s*(\S+)/);

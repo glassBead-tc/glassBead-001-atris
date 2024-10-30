@@ -1,6 +1,7 @@
-import { logger } from "./logger.js";
+import { apiLogger } from "./logger.js";
 import { ChatOpenAI } from "@langchain/openai";
-import { GraphState } from "./types.js";
+import { GraphState, ErrorState, DatasetSchema, ComplexityLevel, EntityType, QueryType, TrackData, UserData, PlaylistData } from "./types.js";
+import { Messages } from '@langchain/langgraph'
 import dotenv from 'dotenv';
 import {
   extractCategoryTool,
@@ -9,155 +10,254 @@ import {
   extractParametersTool,
   createFetchRequestTool,
   getApis,
-  verifyParams
+  verifyParams,
+  resetState
 } from "./tools/tools.js";
-import { StateGraph, END, START } from "@langchain/langgraph";
-import { findMissingParams } from "./utils.js";
+import { StateGraph, END, START, Annotation } from "@langchain/langgraph";
+import { RunnableConfig } from "@langchain/core/runnables";
+import { apiValidators } from "./validators/apiValidators.js";
+import { GraphDebugger } from "./debug/graphDebugger.js";
 
 dotenv.config({ path: '../.env' });
+
+// Define channel reducers properly
 const graphChannels = {
-  llm: null,
-  query: null,
-  queryType: null,
-  categories: null,
-  apis: null,
-  bestApi: null,
-  parameters: null,
-  response: null,
-  complexity: null,
-  isEntityQuery: null,
-  entityName: null,
-  entityType: null,
-  error: null,
-  messages: null,
-  selectedHost: null,
-  entity: null,
-  secondaryApi: null,
-  secondaryResponse: null,
-  multiStepHandled: null,
-  initialState: null,
-  formattedResponse: null,
-  message: null,
-};
+  llm: {
+    value: (old: ChatOpenAI | null, next: any) => next ?? old,
+    default: () => null
+  },
+  query: {
+    value: (old: string | null, next: string) => next ?? old,
+    default: () => null
+  },
+  queryType: {
+    value: (old: QueryType | null, next: QueryType | null) => {
+      console.log("\n=== QueryType Channel Update ===");
+      console.log("Old:", old);
+      console.log("Next:", next);
+      return next ?? old;
+    },
+    default: () => null
+  },
+  categories: {
+    value: (old: string[] | null, next: string[] | null) => {
+      console.log("\n=== Categories Channel Update ===");
+      console.log("Old:", old);
+      console.log("Next:", next);
+      const result = next ?? old;
+      console.log("Result:", result);
+      return result;
+    },
+    default: () => null
+  },
+  apis: {
+    value: (old: DatasetSchema[] | null, next: DatasetSchema[] | null) => next ?? old,
+    default: () => null
+  },
+  bestApi: {
+    value: (old: DatasetSchema | null, next: DatasetSchema | null) => next ?? old,
+    default: () => null
+  },
+  parameters: {
+    value: (old: Record<string, any> | null, next: Record<string, any> | null) => next ?? old,
+    default: () => null
+  },
+  response: {
+    value: (old: { data: (TrackData | UserData | PlaylistData)[] } | null, 
+           next: { data: (TrackData | UserData | PlaylistData)[] } | null) => next ?? old,
+    default: () => null
+  },
+  complexity: {
+    value: (old: ComplexityLevel | null, next: ComplexityLevel | null) => next ?? old,
+    default: () => null
+  },
+  isEntityQuery: {
+    value: (old: boolean | null, next: boolean | null) => next ?? old,
+    default: () => null
+  },
+  entityName: {
+    value: (old: string | null, next: string | null) => next ?? old,
+    default: () => null
+  },
+  entityType: {
+    value: (old: EntityType | null, next: EntityType | null) => next ?? old,
+    default: () => null
+  },
+  error: {
+    value: (old: ErrorState | null, next: ErrorState | null) => next ?? old,
+    default: () => null
+  },
+  errorHistory: {
+    value: (old: ErrorState[], next: ErrorState) => [...(old || []), next],
+    default: () => []
+  },
+  messages: {
+    value: (old: Messages | null, next: Messages | null) => next ?? old,
+    default: () => null
+  },
+  messageHistory: {
+    value: (old: Messages[], next: Messages) => [...(old || []), next],
+    default: () => []
+  },
+  selectedHost: {
+    value: (old: string | null, next: string | null) => next ?? old,
+    default: () => null
+  },
+  entity: {
+    value: (old: any | null, next: any | null) => next ?? old,
+    default: () => null
+  },
+  secondaryApi: {
+    value: (old: DatasetSchema | null, next: DatasetSchema | null) => next ?? old,
+    default: () => null
+  },
+  secondaryResponse: {
+    value: (old: string | null, next: string | null) => next ?? old,
+    default: () => null
+  },
+  initialState: {
+    value: (old: GraphState | null, next: GraphState | null) => next ?? old,
+    default: () => null
+  },
+  formattedResponse: {
+    value: (old: string | null, next: string | null) => next ?? old,
+    default: () => null
+  }
+} as const;
+
 
 /**
  * Creates and configures the graph.
  *
  * @returns {CompiledStateGraph} - The compiled state graph.
  */
-function createGraph() {
+export function createGraph() {
+  const debugger = new GraphDebugger();
+  
   const graph = new StateGraph<GraphState>({
-    channels: graphChannels,
-  })
-    .addNode("extract_category_node", extractCategoryTool)
+    channels: graphChannels
+  });
+
+  return graph
+    .addNode("extract_category_node", async (input) => {
+      try {
+        const output = await extractCategoryTool.call(input);
+        debugger.logTransition("extract_category_node", input, output);
+        return output;
+      } catch (error) {
+        debugger.logTransition("extract_category_node", input, {}, error as Error);
+        throw error;
+      }
+    })
     .addNode("get_apis_node", getApis)
     .addNode("select_api_node", selectApiTool)
     .addNode("extract_params_node", extractParametersTool)
-    .addNode("human_loop_node", readUserInputTool)
     .addNode("execute_request_node", createFetchRequestTool)
+    .addNode("reset_state_node", resetState)
     .addEdge("extract_category_node", "get_apis_node")
     .addEdge("get_apis_node", "select_api_node")
     .addEdge("select_api_node", "extract_params_node")
-    .addConditionalEdges("extract_params_node", verifyParams)
-    .addConditionalEdges("human_loop_node", verifyParams)
-    .addEdge("execute_request_node", END)
-    .addEdge(START, "extract_category_node");
-
-  logger.info("Graph created successfully.");
-
-  return graph.compile();
+    .addConditionalEdges(
+      "extract_params_node",
+      async (input: GraphState, config?: RunnableConfig) => {
+        console.log("\n=== Conditional Edge Input ===");
+        console.log(JSON.stringify(input, null, 2));
+        const result = await verifyParams(input);
+        if (result === "execute_request_node") {
+          return result;
+        }
+        return END;
+      }
+    )
+    .addEdge("execute_request_node", "reset_state_node")
+    .addEdge("reset_state_node", END)
+    .addEdge(START, "extract_category_node")
+    .compile();
 }
 
 /**
- * Processes each query through the graph.
- *
- * @param {string[]} queries - The user's queries.
- */
-async function main(queries: string[]) {
-  const app = createGraph();
+  * Processes each query through the graph.
+  *
+  * @param {string[]} queries - The user's queries.
+*/
+export async function main(queries: string[]): Promise<GraphState[]> {
+  console.log("\n=== Starting Query Processing ===");
+  console.log(`Total queries to process: ${queries.length}`);
 
   const llm = new ChatOpenAI({
-    modelName: "gpt-3.5-turbo",
-    temperature: 0,
+    modelName: 'gpt-3.5-turbo',
+    temperature: 0.1,
   });
 
-  for (const query of queries) {
-    console.log("\n=== Processing Query ===");
-    console.log(`Input: "${query}"`);
+  const results: GraphState[] = [];
 
+  for (const query of queries) {
     try {
+      console.log(`\n=== Processing Query: "${query}" ===`);
+      
+      const app = createGraph();
+      let finalState: GraphState | null = null;
+
       const stream = await app.stream({
-        llm,
         query,
+        llm
       });
 
-      let finalResult: GraphState | null = null;
-      for await (const event of stream) {
-        const eventName = Object.keys(event)[0];
-        const state = event[eventName];
-
-        // Log detailed state transitions
-        switch(eventName) {
-          case "extract_category_node":
-            console.log("\n=== Query Analysis ===");
-            console.log(`Detected Entity Type: ${state.entityType}`);
-            console.log(`Categorized as: ${state.categories?.join(', ')}`);
-            if (state.queryType === 'trending_tracks') {
-              console.log(`Query Type: ${state.queryType}`);
+      for await (const output of stream) {
+        console.log('\n=== Stream Output ===');
+        finalState = output;
+        
+        // Log important state changes
+        if (output.bestApi) {
+          console.log('Selected API:', output.bestApi.api_name);
+          
+          // Validate API response if we have one
+          if (output.response) {
+            const validator = apiValidators[output.bestApi.api_name];
+            if (validator) {
+              const isValid = validator.validate(output.response);
+              console.log('API Response Valid:', isValid);
+              if (isValid) {
+                console.log('Success:', validator.successMessage(output.response));
+              } else {
+                console.log('Failure:', validator.failureMessage);
+              }
             }
-            break;
+          }
+        }
 
-          case "select_api_node":
-            console.log("\n=== API Selection ===");
-            console.log(`Selected API: ${state.bestApi?.api_name}`);
-            break;
-
-          case "extract_params_node":
-            console.log("\n=== Parameter Extraction ===");
-            if (state.queryType === 'trending_tracks') {
-              console.log("Processing trending tracks query...");
-            }
-            Object.entries(state.parameters || {}).forEach(([key, value]) => {
-              console.log(`${key}: ${value}`);
-            });
-            break;
-
-          case "execute_request_node":
-            console.log("\n=== API Response ===");
-            if (state.error) {
-              console.error("Error in API response:", state.error);
-            } else {
-              console.log(state.response);
-            }
-            finalResult = state;
-            break;
+        if (output.error) {
+          console.error('Error in processing:', output.error);
         }
       }
 
-      if (!finalResult) {
-        throw new Error("No final result");
+      if (finalState) {
+        console.log('\n=== Final State ===');
+        console.log('Query Type:', finalState.queryType);
+        console.log('Selected API:', finalState.bestApi?.api_name);
+        console.log('Response:', finalState.response ? 
+          JSON.stringify(finalState.response, null, 2) : 'No response');
+        
+        results.push(finalState);
+      } else {
+        console.log('\n❌ No final state captured');
+        throw new Error('No final state captured for query: ' + query);
       }
 
-      console.log("\n=== Processing Complete ===");
-    } catch (error: any) {
-      console.error(`Error processing query "${query}":`, error instanceof Error ? error.message : String(error));
-      logger.error(`Failed to process query: ${error instanceof Error ? error.message : String(error)}`);
+    } catch (error) {
+      console.error('Process error:', {
+        phase: 'execution',
+        query,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw error; // Re-throw to be caught by test harness
     }
   }
 
-  // Clean exit
-  process.exit(0);
+  return results;
 }
 
-const datasetQuery = [
-  "How many plays does 115 SECONDS OF CLAMS have on Audius?",
-  "How many followers does TRICK CHENEY. have?",
-  "How many songs does the playlist glassBead's got game, vol. 1 have in it?",
-  "What is the genre of the song 115 SECONDS OF CLAMS?",
-  "What are the top ten trending tracks on Audius right now?"
-];
-
-main(datasetQuery).catch((error: Error) => {
-  logger.error(`Error during execution: ${error.message}`);
-  process.exit(1);
-});
+// Test with a single query first
+const testQuery = "What are the top trending tracks on Audius?";
+main([testQuery]).catch(console.error);

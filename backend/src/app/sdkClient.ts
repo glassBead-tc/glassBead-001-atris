@@ -1,28 +1,21 @@
-import { sdk as createSdk, AudiusSdk } from '@audius/sdk';
-import { SdkConfig } from '../../../node_modules/@audius/sdk/dist/sdk/types.js';
+import { sdk, DiscoveryNodeSelector } from '@audius/sdk';
+import dotenv from 'dotenv';
 import { getAudiusApiKey, getAudiusApiSecret } from './config.js';
 
-// Store original write function
-const originalWrite = process.stdout.write;
+dotenv.config();
 
-// Override stdout.write to filter SDK logs
-process.stdout.write = function(buffer: string | Uint8Array, ...args: any[]): boolean {
-    if (buffer instanceof Uint8Array || 
-        !buffer.includes('[audius-sdk][discovery-node-selector]') && 
-        !buffer.includes('[audius-sdk][storage-node-selector]')) {
-        return originalWrite.apply(process.stdout, [buffer, ...args] as [string | Uint8Array, BufferEncoding?, ((err?: Error) => void)?]);
-    }
-    return true;
-};
+// Initialize with just the discovery node selector
+const discoveryNodeSelector = new DiscoveryNodeSelector({
+  initialSelectedNode: 'https://discoveryprovider3.audius.co'
+});
 
-// Define the configuration for the SDK
-const sdkConfig: SdkConfig = {
-  appName: "Atris",
+const audiusSdk = sdk({
+  appName: 'Atris',
   apiKey: getAudiusApiKey(),
   apiSecret: getAudiusApiSecret(),
-};
+  services: {
+    discoveryNodeSelector
+  }
+});
 
-// Create an instance of the Audius SDK
-const sdk: AudiusSdk = createSdk(sdkConfig);
-
-export { sdk };
+export { audiusSdk as sdk };

@@ -3,7 +3,7 @@ import { RunnableToolLike } from "@langchain/core/runnables";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { z } from "zod";
 import { GraphState, DatasetSchema, DatasetParameters, ComplexityLevel, EntityType, QueryType, AudiusCorpus } from "../types.js";
-import { logger } from "../logger.js";
+import { apiLogger, stateLogger, logStateTransition } from "../logger.js";
 import * as readline from "readline";
 import { findMissingParams } from "../utils.js";
 import fs from "fs";
@@ -11,6 +11,149 @@ import { HIGH_LEVEL_CATEGORY_MAPPING, TRIMMED_CORPUS_PATH } from "../constants.j
 import { sdk } from '../sdkClient.js';
 import { Track, User, Playlist } from '@audius/sdk';
 import nlp from "compromise";
+import { 
+  isTrackProperty, 
+  isUserProperty, 
+  isPlaylistProperty,
+  TrackData,
+  UserData,
+  PlaylistData
+} from '../types.js';
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import { END } from "@langchain/langgraph";
+import { SystemMessage, HumanMessage } from "@langchain/core/messages";
+import { SystemChatMessage, HumanChatMessage, BaseChatMessage } from "langchain/schema";
+import { extractCategoryValidation } from "../validation/toolValidations.js";
+import { validateStateTransition, validateLLMResponse } from "../validation/index.js";
+
+// Define StateUpdate type using StateType
+type StateUpdate = {
+  type: "update";
+  key: string[];
+  value: any;
+};
+
+// Move to top after imports
+export const GraphStateSchema = z.object({
+  queryType: z.enum(['general', 'trending_tracks']),
+  entityType: z.enum(['track', 'user', 'playlist']).nullable(),
+  isEntityQuery: z.boolean(),
+  complexity: z.enum(['simple', 'moderate', 'complex']),
+  parameters: z.record(z.string(), z.any()).optional(),
+  bestApi: z.any().optional(),
+  response: z.any().optional(),
+  error: z.any().optional()
+});
+
+// Now let's try the exactMatchTool with unknown state
+export const exactMatchTool = tool(
+  async (input: { state: unknown }): Promise<Partial<GraphState>> => {
+    const state = input.state as Partial<GraphState>;
+    return {
+      queryType: 'general',
+      entityType: null,
+      isEntityQuery: false,
+      complexity: 'simple'
+    };
+  },
+  {
+    name: "exact_match_tool",
+    description: "Tool matching LangGraph's expected types",
+    schema: z.object({
+      state: GraphStateSchema.partial()
+    })
+  }
+);
+
+// Add at the top of tools.ts, after imports
+export const minimalTool = tool(
+  async (input: string): Promise<string> => {
+    console.log("Minimal tool received input:", input);
+    return `Processed: ${input}`;
+  },
+  {
+    name: "minimal_tool",
+    description: "Minimal test tool",
+    schema: z.string()
+  }
+);
+
+// Add after minimalTool
+export const minimalStateTool = tool(
+  async (input: { text: string }): Promise<{ processed: string }> => {
+    console.log("Minimal state tool received input:", input);
+    return { processed: `Processed: ${input.text}` };
+  },
+  {
+    name: "minimal_state_tool",
+    description: "Minimal tool with state structure",
+    schema: z.object({
+      text: z.string()
+    })
+  }
+);
+
+// Add after minimalStateTool
+export const nestedStateTool = tool(
+  async (input: { state: { text: string } }): Promise<{ state: { processed: string } }> => {
+    console.log("Nested state tool received input:", input);
+    return { state: { processed: `Processed: ${input.state.text}` } };
+  },
+  {
+    name: "nested_state_tool",
+    description: "Tool with nested state structure",
+    schema: z.object({
+      state: z.object({
+        text: z.string()
+      })
+    })
+  }
+);
+
+// Add after nestedStateTool
+export const graphStateTool = tool(
+  async (input: { state: Partial<GraphState> }): Promise<Partial<GraphState>> => {
+    console.log("Graph state tool received input:", input);
+    return {
+      queryType: 'general',
+      entityType: null,
+      isEntityQuery: false,
+      complexity: 'simple'
+    };
+  },
+  {
+    name: "graph_state_tool",
+    description: "Tool with GraphState structure",
+    schema: z.object({
+      state: z.object({
+        queryType: z.enum(['general', 'trending_tracks']).optional(),
+        entityType: z.enum(['track', 'user', 'playlist']).nullable(),
+        isEntityQuery: z.boolean().optional(),
+        complexity: z.enum(['simple', 'moderate', 'complex']).optional()
+      }).partial()
+    })
+  }
+);
+
+// Add after graphStateTool
+export const alignedGraphStateTool = tool(
+  async (input: { state: Partial<GraphState> }): Promise<Partial<GraphState>> => {
+    console.log("Aligned graph state tool received input:", input);
+    return {
+      queryType: 'general',
+      entityType: null,
+      isEntityQuery: false,
+      complexity: 'simple'
+    };
+  },
+  {
+    name: "aligned_graph_state_tool",
+    description: "Tool with exactly aligned GraphState schema",
+    schema: z.object({
+      state: GraphStateSchema.partial()
+    })
+  }
+);
 
 // Map words to properties
 const wordToPropertyMap: Record<string, string> = {
@@ -56,6 +199,16 @@ const keywordToEntityType: Record<string, EntityType> = {
   'verified': 'user',
 };  
 
+// Add state normalization helper
+const normalizeState = (state: Partial<GraphState>): Partial<GraphState> => {
+  return {
+    ...state,
+    parameters: state.parameters || {},
+    queryType: state.queryType || 'general',
+    entityType: state.entityType || null,
+  };
+};
+
 /**
  * Selects the appropriate SDK function based on the user's query.
  *
@@ -63,72 +216,66 @@ const keywordToEntityType: Record<string, EntityType> = {
  * @returns {Promise<Partial<GraphState>>} - The updated graph state.
  */
 export const selectApiTool = tool(
-  async (input: Record<string, any>): Promise<Partial<GraphState>> => {
-    const { apis, query, queryType } = input;
+  async (input: { apis: DatasetSchema[] }): Promise<{
+    bestApi: DatasetSchema;
+  }> => {
+    try {
+      console.log("\n=== selectApiTool Processing ===");
+      console.log("Available APIs:", input.apis.map(api => ({
+        name: api.api_name,
+        url: api.api_url,
+        category: api.category_name,
+        parameters: api.required_parameters.length
+      })));
 
-    if (!apis || !query) {
-      throw new Error("Missing required input properties");
-    }
+      // Select API based on:
+      // 1. Prefer regular trending over underground for general trending queries
+      // 2. Fewer required parameters (simpler is better)
+      // 3. More specific endpoint (deeper path)
+      const selectedApi = input.apis.sort((a, b) => {
+        // First, handle trending tracks preference
+        if (a.api_name.includes('Trending') && b.api_name.includes('Trending')) {
+          if (a.api_name.includes('Underground')) return 1;
+          if (b.api_name.includes('Underground')) return -1;
+          return 0;
+        }
+        
+        // Then, prefer exact matches over search
+        if (a.api_name.includes('Search') && !b.api_name.includes('Search')) return 1;
+        if (!a.api_name.includes('Search') && b.api_name.includes('Search')) return -1;
+        
+        // Then, sort by number of required parameters
+        const paramDiff = a.required_parameters.length - b.required_parameters.length;
+        if (paramDiff !== 0) return paramDiff;
+        
+        // Finally, prefer more specific paths
+        return b.api_url.split('/').length - a.api_url.split('/').length;
+      })[0];
+      
+      console.log("Selected API:", {
+        name: selectedApi.api_name,
+        url: selectedApi.api_url,
+        category: selectedApi.category_name,
+        parameters: selectedApi.required_parameters
+      });
 
-    if (queryType === 'trending_tracks') {
-      // Handle trending tracks query
       return {
-        ...input,
-        bestApi: apis.find((api: DatasetSchema) => api.api_name === 'Get Trending Tracks'),
-        // Removed parameters assignment to allow extractParametersTool to handle them
+        bestApi: selectedApi
       };
+    } catch (error) {
+      console.error("Error in selectApiTool:", error);
+      throw error;
     }
-
-    let bestApiName: string | null = null;
-
-    if (input.isEntityQuery && input.entityType) {
-      // Handle entity queries
-      switch (input.entityType) {
-        case 'track':
-          bestApiName = 'Search Tracks';
-          break;
-        case 'user':
-          bestApiName = 'Search Users';
-          break;
-        case 'playlist':
-          bestApiName = 'Search Playlists';
-          break;
-        default:
-          bestApiName = null;
-      }
-    } else {
-      bestApiName = 'Audius Web Search'; // Default to Search Tracks instead of Audius Web Search
-    }
-
-    const bestApi = apis.find((api: DatasetSchema) => api.api_name === bestApiName);
-    console.log('Selected API:', bestApi?.api_name);
-
-    if (!bestApi) {
-      throw new Error(`API "${bestApiName}" not found in the available APIs.`);
-    }
-
-    return {
-      ...input,
-      bestApi,
-      parameters: {
-        ...(input.parameters || {}),
-        query: input.query,
-      },
-    };
   },
   {
-    name: 'select_api',
-    description: 'Selects the best API based on query type and available APIs.',
+    name: "select_api",
+    description: "Selects the most appropriate API from available options",
     schema: z.object({
-      apis: z.array(z.any()),
-      query: z.string(),
-      queryType: z.string().optional(),
-      isEntityQuery: z.boolean().optional(),
-      entityType: z.enum(['track', 'user', 'playlist']).nullable().optional(),
-      parameters: z.record(z.any()).nullable().optional(),
-    }).passthrough(),
+      apis: z.array(z.any())
+    })
   }
 );
+
 
 // READ/PARSE USER INPUT -> EXTRACT PARAMS -> REQUEST PARAMS
 
@@ -138,23 +285,53 @@ export const selectApiTool = tool(
 const paramsFormat = `<name>,<value>:::<name>,<value>`;
 
 /**
+ * Parses user input from the format <name>,<value>:::<name>,<value>
+ * @param input The user input string
+ * @returns Record<string, string> of parameter names and values
+ */
+function parseUserInput(input: string): Record<string, string> {
+  try {
+    // Split on the separator
+    const pairs = input.split(':::');
+    
+    // Create object from pairs
+    const result: Record<string, string> = {};
+    for (const pair of pairs) {
+      const [name, value] = pair.split(',').map(s => s.trim());
+      if (!name || !value) {
+        throw new Error(`Invalid parameter pair: ${pair}`);
+      }
+      result[name] = value;
+    }
+    
+    return result;
+  } catch (e) {
+    throw new Error(`Failed to parse user input: ${input}. Expected format: ${paramsFormat}`);
+  }
+}
+
+/**
  * Tool to read user input from the command line.
  *
  * Prompts the user to provide missing parameters in a specific format.
  */
 export const readUserInputTool = tool(
-  async (input: { missingParams: { name: string; description: string }[] }) => { 
+  async (input: { missingParams: { name: string; description: string; }[] }): Promise<StateUpdate> => {
     try {
       const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
       });
+
       const missingParamsString = input.missingParams
-        .map((p) => `Name: ${p.name}, Description: ${p.description}`)
+        .map((param: { name: string; description: string }) => 
+          `Name: ${param.name}, Description: ${param.description}`
+        )
         .join("\n----\n");
+
       const question = `LangTool couldn't find all the required params for the API.\nMissing params:\n${missingParamsString}\nPlease provide the missing params in the following format:\n<name>,<value>:::<name>,<value>\n`;
 
-      logger.debug(`Prompting user for input: ${question}`);
+      apiLogger.debug(`Prompting user for input: ${question}`);
 
       const answer: string = await new Promise<string>((resolve) => {
         rl.question(question, (response) => {
@@ -163,28 +340,38 @@ export const readUserInputTool = tool(
         });
       });
 
-      logger.debug(`User provided input: ${answer}`);
+      apiLogger.debug(`User provided input: ${answer}`);
 
-      return answer;
+      return {
+        type: "update",
+        key: ["parameters"],
+        value: parseUserInput(answer)
+      };
     } catch (e: any) {
-      logger.error('Error in readUserInputTool:', e);
-      return "";
+      apiLogger.error('Error in readUserInputTool:', e);
+      return {
+        type: "update",
+        key: ["error"],
+        value: {
+          code: "USER_INPUT_ERROR",
+          message: e.message,
+          timestamp: Date.now(),
+          node: "readUserInputTool"
+        }
+      };
     }
   },
   {
     name: "read_user_input",
-    description:
-      "Prompts the user to provide missing API parameters in the format <name>,<value>:::<name>,<value>.",
+    description: "Prompts the user to provide missing API parameters in the format <name>,<value>:::<name>,<value>.",
     schema: z.object({
-      missingParams: z
-        .array(
-          z.object({
-            name: z.string().describe("The name of the missing parameter."),
-            description: z.string().describe("A description of the missing parameter."),
-          })
-        )
-        .describe("A list of missing parameters with their descriptions."),
-    }).passthrough(), // Allow additional properties
+      missingParams: z.array(
+        z.object({
+          name: z.string(),
+          description: z.string()
+        })
+      )
+    }).strict()
   }
 );
 
@@ -222,22 +409,19 @@ export const CategorizeQueryTool = tool(
     });
   
     const doc = nlp(normalizedQuery);
-    logger.debug(`Processing query: "${normalizedQuery}"`);
-
-    // Extract nouns from the query
-    const nouns = doc.nouns().out('array').map((e: string) => e.toLowerCase());
+    apiLogger.debug(`Processing query: "${normalizedQuery}"`);
 
     // Extract action keywords to determine entityType
     let mappedEntityType: EntityType | null = null;
     for (const [keyword, type] of Object.entries(keywordToEntityType)) {
       if (normalizedQuery.includes(keyword)) {
         mappedEntityType = type;
-        logger.debug(`Keyword "${keyword}" mapped to EntityType "${type}"`);
+        apiLogger.debug(`Keyword "${keyword}" mapped to EntityType "${type}"`);
         break; // Assign the first matching entityType
       }
     }
 
-    logger.debug(`Mapped Entity Type: ${mappedEntityType}`);
+    apiLogger.debug(`Mapped Entity Type: ${mappedEntityType}`);
 
     // Default categorization for trending tracks
     if (/trending|popular|top tracks/i.test(normalizedQuery)) {
@@ -264,381 +448,59 @@ export const CategorizeQueryTool = tool(
     description: "Categorizes the user's query to determine its type and complexity.",
     schema: z.object({
       state: z.object({
-        query: z.string().describe("The user's query string to classify"),
-      }),
-    }),
+        query: z.string().describe("The user's query string to classify")
+      }).strict()
+    }).strict()
   }
 );
 
 
 export const extractCategoryTool = tool(
-  async (input: { query: string }): Promise<Partial<GraphState>> => {
-    if (!input.query) {
-      throw new Error("Query is required");
-    }
+  async (input: { query: string, llm: ChatOpenAI }): Promise<Partial<GraphState>> => {
+    // Validate input
+    extractCategoryValidation.input.parse(input);
 
-    // Use the query directly with CategorizeQueryTool
-    const result = await CategorizeQueryTool.invoke({
-      state: { 
-        query: input.query 
-      }
-    });
+    // Track previous state for validation
+    const prevState = {} as GraphState; // Get this from context
 
-    // Ensure we have categories based on entityType or queryType
-    let categories: string[] = [];
+    // Process with LLM if needed
+    const messages: BaseChatMessage[] = [
+      new SystemChatMessage("You are analyzing a query..."),
+      new HumanChatMessage(input.query)
+    ];
 
-    if (result.entityType === 'track') {
-      categories = ['Tracks'];
-    } else if (result.entityType === 'user') {
-      categories = ['Users'];
-    } else if (result.entityType === 'playlist') {
-      categories = ['Playlists'];
-    } 
+    const response = await input.llm.call(messages);
+    
+    // Validate LLM response
+    const analysis = validateLLMResponse(
+      JSON.parse(response.text),
+      extractCategoryValidation.llmUsage!.validation,
+      "extractCategory LLM response"
+    );
 
-    // Merge the result with the input state and ensure categories are set
-    return {
-      ...input,
-      ...result,
-      categories, // Explicitly set categories based on entityType or queryType
+    const nextState = {
+      queryType: analysis.queryType,
+      entityType: analysis.entityType,
+      isEntityQuery: analysis.entityType !== null,
+      complexity: analysis.complexity
     };
+
+    // Validate state transition
+    validateStateTransition(
+      prevState,
+      nextState as GraphState,
+      "extractCategory",
+      extractCategoryValidation
+    );
+
+    return nextState;
   },
   {
-    name: "extract_category",
-    description: "Extracts the category from the user's query.",
-    schema: z.object({
-      query: z.string().describe("The user's query string to classify"),
-    }).passthrough(),
+    name: extractCategoryValidation.name,
+    description: "Analyzes a query to determine its type and entity",
+    schema: extractCategoryValidation.input
   }
 );
-
-/**
- * Verifies the presence of required parameters.
- *
- * @param {GraphState} state - The current state of the graph.
- * @returns {string} - Determines the next node based on parameter verification.
- */
-export const verifyParams = (
-  state: GraphState
-): "human_loop_node" | "execute_request_node" => {
-  const { bestApi, parameters, queryType } = state;
-  
-  if (!bestApi) {
-    throw new Error("No best API found");
-  }
-  
-  if (!parameters) {
-    console.warn("Parameters are missing. Redirecting to human_loop_node.");
-    return "human_loop_node";
-  }
-  
-  // Check if we have all required parameters for the selected API
-  const requiredParamsKeys = bestApi.required_parameters.map(({ name }) => name);
-  const extractedParamsKeys = Object.keys(parameters);
-  
-  // Special handling for 'Search Tracks' API
-  if (bestApi.api_name === 'Search Tracks' && parameters.trackTitle) {
-    parameters.query = parameters.trackTitle;
-  }
-  
-  const missingKeys = findMissingParams(requiredParamsKeys, extractedParamsKeys);
-  
-  // If there are no required parameters, proceed to execute
-  if (requiredParamsKeys.length === 0) {
-    logger.debug("No required parameters for the selected API. Proceeding to execute_request_node.");
-    return "execute_request_node";
-  }
-  
-  if (missingKeys.length > 0) {
-    console.warn(`Missing parameters: ${missingKeys.join(", ")}`);
-    return "human_loop_node";
-  }
-  
-  logger.debug("All required parameters are present. Proceeding to execute_request_node.");
-  return "execute_request_node";
-};
-
-/**
- * Parses the user input string into a key-value pair.
- *
- * @param {string} input - The raw input string from the user.
- * @returns {Record<string, string>} - An object mapping parameter names to their values.
- */
-export function parseUserInput(input: string): Record<string, string> {
-  if (!input.includes(":::")) {
-    const [key, value] = input.split(",");
-    return { [key.trim()]: value.trim() };
-  }
-
-  const splitParams = input.split(":::");
-  let params: Record<string, string> = {};
-  splitParams.forEach((param) => {
-    const [key, value] = param.split(",");
-    if (key && value) {
-      params[key.trim()] = value.trim();
-    }
-  });
-  return params;
-} 
-
-/**
- * Tool to request missing parameters from the user.
- *
- * @param {GraphState} state - The current state of the graph.
- * @returns {Promise<Partial<GraphState>>} - The updated graph state with new parameters.
- */
-export async function requestParameters(
-  state: GraphState
-): Promise<Partial<GraphState>> {
-  const { bestApi, parameters } = state; // {{ edit_3 }} Removed queryType
-  if (!bestApi) {
-    throw new Error("No best API found");
-  }
-
-  const requiredParamsKeys = bestApi.required_parameters.map(
-    ({ name }) => name
-  );
-  const extractedParamsKeys = Object.keys(parameters ?? {});
-  const missingParams = findMissingParams(
-    requiredParamsKeys,
-    extractedParamsKeys
-  );
-  const missingParamsSchemas = missingParams
-    .map((missingParamKey) =>
-      bestApi.required_parameters.find(({ name }) => name === missingParamKey)
-    )
-    .filter((p) => p !== undefined) as DatasetParameters[];
-
-  // Invoke the readUserInputTool to get user input for missing parameters
-  const userInput = await readUserInputTool.invoke({
-    missingParams: missingParamsSchemas,
-  });
-
-  // Parse the user input string into key-value pairs
-  const parsedUserInput = parseUserInput(userInput as string);
-
-  return {
-    parameters: {
-      ...parameters,
-      ...parsedUserInput,
-    },
-  };
-}
-
-
-
-export async function extractParameters(state: GraphState): Promise<Partial<GraphState>> {
-  const { query, entityType } = state;
-
-  if (!query || !entityType) {
-    logger.error("Query and entityType are required");
-    throw new Error("Query and entityType are required");
-  }
-
-  logger.debug(`extractParameters invoked with query: "${query}", entityType: "${entityType}"`);
-
-  // Initialize extracted parameters
-  let extractedParams: Record<string, any> = {};
-
-  // Use 'compromise' to process the query
-  const doc = nlp(query);
-
-  // Extract nouns and numbers from the query
-  const nouns = doc.nouns().out('array');
-  const numbers = doc.numbers().out('array');
-  const extractedTokens = [...nouns, ...numbers];
-
-  logger.debug(`Extracted Tokens (Nouns, Numbers): ${JSON.stringify(extractedTokens)}`);
-
-  // Remove irrelevant keywords
-  const irrelevantKeywords = [
-    ...Object.keys(wordToPropertyMap),
-    'audius', 'on', 'does', 'have', 'how', 'many',
-  ];
-  const entityNames = extractedTokens.filter(
-    (token: string) => !irrelevantKeywords.includes(token.toLowerCase())
-  );
-  logger.debug(`Filtered Entity Names: ${JSON.stringify(entityNames)}`);
-
-  if (entityNames.length > 0) {
-    // Reconstruct the entity name by joining tokens with spaces
-    extractedParams.entityName = entityNames.join(' ');
-    logger.debug(`Extracted Entity Name: "${extractedParams.entityName}"`);
-  } else {
-    logger.error(`Could not extract entity name from the query.`);
-    throw new Error(`Could not extract entity name from the query.`);
-  }
-
-  return {
-    ...state,
-    parameters: {
-      ...(state.parameters || {}),
-      ...extractedParams,
-    },
-  };
-}
-
-// EXTRACT QUERY CATEGORY
-
-/**
- * Tool to extract high-level categories from a user query.
- */
-export const ExtractHighLevelCategoriesTool = tool(
-  async (input: { highLevelCategories: string[] }) => {
-    const categoriesMapped = input.highLevelCategories
-      .map(
-        (category) =>
-          HIGH_LEVEL_CATEGORY_MAPPING[
-            category as keyof typeof HIGH_LEVEL_CATEGORY_MAPPING
-          ]
-      )
-      .flat();
-    return JSON.stringify(categoriesMapped);
-  },
-  {
-    name: "ExtractHighLevelCategories",
-    description:
-      "Given a user query, extract the high-level category which best represents the query.",
-    schema: z.object({
-      highLevelCategories: z
-        .array(
-          z
-            .enum(
-              Object.keys(HIGH_LEVEL_CATEGORY_MAPPING) as [string, ...string[]]
-            )
-            .describe("An enum of all categories which best match the query.")
-        )
-        .describe("The high-level categories to extract from the query."),
-    }),
-  }
-);
-
-/**
- * Extracts the entity name from the user's query.
- *
- * @param {string} query - The user's query.
- * @param {EntityType} entityType - The type of the entity ('track', 'user', or 'playlist').
- * @returns {string | null} - The extracted entity name or null if not found.
- */
-function extractEntityNameFromQuery(query: string, entityType: EntityType): string | null {
-  const doc = nlp(query);
-  let entityName: string | null = null;
-
-  switch (entityType) {
-    case 'track':
-      // Look for track-related terms and extract entity name
-      entityName = doc.match('track [#A-Z]+').normalize().out('text');
-      break;
-    case 'user':
-      // Look for user-related terms and extract entity name
-      entityName = doc.match('user [#A-Z]+').normalize().out('text');
-      break;
-    case 'playlist':
-      // Look for playlist-related terms and extract entity name
-      entityName = doc.match('playlist [#A-Z]+').normalize().out('text');
-      break;
-    default:
-      break;
-  }
-
-  if (!entityName) {
-    // As a fallback, extract proper nouns which are likely entity names
-    const nouns = doc.nouns().toTitleCase().out('array');
-    if (nouns.length > 0) {
-      entityName = nouns.join(' ');
-    }
-  }
-
-  return entityName || null;
-}
-
-/**
- * Modifies the extractCategory function to return only the first category.
- */
-export async function extractCategory(state: GraphState): Promise<Partial<GraphState>> {
-  // Prepare the prompt with categories and tools
-  const allApis: AudiusCorpus = JSON.parse(fs.readFileSync(TRIMMED_CORPUS_PATH, "utf-8"));
-
-  // Access the endpoints array
-  const categoriesAndTools = Object.entries(HIGH_LEVEL_CATEGORY_MAPPING)
-    .map(([high, low]) => {
-      const allTools = allApis.endpoints.filter((api) => low.includes(api.category_name));
-      return `High Level Category: ${high}
-Tools:
-${allTools
-        .map((item) => `Name: ${item.tool_name}`)
-        .join("\n")}`;
-    })
-    .join("\n\n");
-
-  const { llm, query } = state;
-
-  const prompt = ChatPromptTemplate.fromMessages([
-    [
-      "system",
-      `You are an expert software engineer.
-
-Currently, you are helping a fellow engineer select the best category of APIs based on their query.
-You are only presented with a list of high level API categories, and their query.
-Additionally, you need to determine if the query is about a specific entity (track, user, or playlist). If it is, identify the entity type and the entity name.
-
-Think slowly, and carefully select the best category for the query.
-
-Here are all the high level categories, and every tool name that falls under them:
-${categoriesAndTools}`,
-    ],
-    ["human", `Query: ${query}`],
-  ]);
-
-  const schema = z.object({
-    categories: z.array(z.string()).describe("The high-level categories that best match the query."),
-    isEntityQuery: z.boolean().describe("Whether the query is about a specific entity."),
-    entityType: z.enum(['track', 'user', 'playlist']).nullable().describe("The type of the entity if applicable."),
-    entityName: z.string().nullable().describe("The name of the entity if applicable."),
-  });
-
-  const modelWithStructuredOutput = llm!.withStructuredOutput(schema, {
-    name: "extract_category",
-  });
-
-  const chain = prompt.pipe(modelWithStructuredOutput);
-
-  const res = await chain.invoke({});
-
-  let { categories, isEntityQuery, entityType, entityName } = res;
-
-  // If isEntityQuery is undefined, determine it based on categories
-  if (typeof isEntityQuery !== 'boolean') {
-    isEntityQuery = false;
-    if (categories) {
-      if (categories.includes('Tracks')) {
-        isEntityQuery = true;
-        entityType = 'track';
-      } else if (categories.includes('Users')) {
-        isEntityQuery = true;
-        entityType = 'user';
-      } else if (categories.includes('Playlists')) {
-        isEntityQuery = true;
-        entityType = 'playlist';
-      }
-    }
-  }
-
-  // If entityName is null, attempt to extract it from the query
-  if (isEntityQuery && !entityName) {
-    entityName = extractEntityNameFromQuery(state.query!, entityType as EntityType);
-  }
-
-  console.log(categories, isEntityQuery, entityType, entityName);
-
-  // Ensure only one category is selected and include queryType
-  return {
-    categories: [categories[0]], // Select the first category as the most relevant
-    isEntityQuery,
-    entityType,
-    entityName,
-    queryType: isEntityQuery ? `search_${entityType}s` as QueryType : 'general' as QueryType, // Ensure queryType is appropriately set based on your logic
-  };
-}
 
 /**
  * Searches for the track using the combined track title and artist name query.
@@ -716,6 +578,7 @@ export const searchEntityTool = tool(
  */
 export function createSelectAPITool(apis: DatasetSchema[], query: string): StructuredTool | RunnableToolLike {
   const description = `Given the following query by a user, select the API which will best serve the query.
+Note: For trending tracks queries, use "Get Underground Trending Tracks" only if the query specifically mentions underground tracks. Otherwise, use "Get Trending Tracks".
 
 Query: ${query}
 
@@ -741,6 +604,16 @@ Parameters: ${[...api.required_parameters, ...api.optional_parameters]
     async (input: { api: string }): Promise<Partial<GraphState>> => {
       const { api: apiName } = input;
       const bestApi = apis.find((a) => a.api_name === apiName);
+      
+      // Override for trending tracks
+      if (apiName === "Get Underground Trending Tracks" && 
+          !query.toLowerCase().includes('underground')) {
+        const regularTrendingApi = apis.find(a => a.api_name === "Get Trending Tracks");
+        if (regularTrendingApi) {
+          return { bestApi: regularTrendingApi };
+        }
+      }
+
       if (!bestApi) {
         throw new Error(
           `API ${apiName} not found in the list of available APIs: ${apis
@@ -761,499 +634,217 @@ Parameters: ${[...api.required_parameters, ...api.optional_parameters]
 }
 
 /**
- * Instantiate createSelectAPITool with actual parameters.
- * Replace `existingApis` and `initialQuery` with your actual data.
-const existingApis: DatasetSchema[] = [
-  {
-    id: "1",
-    category_name: "Tracks",
-    tool_name: "SearchTracksTool",
-    api_name: "Search Tracks",
-    api_description: "Searches for tracks based on title and artist name.",
-    required_parameters: [
-      { 
-        name: "query", 
-        description: "Combined track title and artist name.",
-        type: "string",
-        default: ""
-      }
-    ],
-    optional_parameters: [],
-    method: "GET",
-    api_url: "https://api.audius.co/tracks/search",
-    template_response: {},
-  },
-  {
-    id: "2",
-    category_name: "Users",
-    tool_name: "SearchUsersTool",
-    api_name: "Search Users",
-    api_description: "Searches for users based on username.",
-    required_parameters: [
-      { 
-        name: "query", 
-        description: "Username to search for.",
-        type: "string",
-        default: ""
-      }
-    ],
-    optional_parameters: [],
-    method: "GET",
-    api_url: "https://api.audius.co/users/search",
-    template_response: {},
-  },
-  {
-    id: "3",
-    category_name: "Playlists",
-    tool_name: "SearchPlaylistsTool",
-    api_name: "Search Playlists",
-    api_description: "Searches for playlists based on name.",
-    required_parameters: [
-      { 
-        name: "query", 
-        description: "Playlist name to search for.",
-        type: "string",
-        default: ""
-      }
-    ],
-    optional_parameters: [],
-    method: "GET",
-    api_url: "https://api.audius.co/playlists/search",
-    template_response: {},
-  },
-  // Get Trending Tracks API definition added
-  {
-    id: "4",
-    category_name: "Tracks",
-    tool_name: "GetTrendingTracksTool",
-    api_name: "Get Trending Tracks",
-    api_description: "Fetches the top trending tracks on Audius.",
-    required_parameters: [],
-    optional_parameters: [
-      {
-        name: "genre",
-        type: "string",
-        description: "Genre of the song",
-        default: ""
-      },
-      {
-        name: "time",
-        type: "string",
-        description: "Time period for the trending tracks (e.g., 'week', 'month', 'allTime')",
-        default: "week"
-      }
-    ],
-    method: "GET",
-    api_url: "https://api.audius.co/tracks/trending",
-    template_response: {
-    },
-  },
-  // Remove or comment out any Get APIs
-  // {
-  //   id: "4",
-  //   category_name: "Tracks",
-  //   tool_name: "GetTrackTool",
-  //   api_name: "Get Track",
-  //   api_description: "Retrieves track details by ID.",
-  //   required_parameters: [
-  //     { 
-  //       name: "track_id", 
-  //       description: "The ID of the track.",
-  //       type: "string",
-  //       default: ""
-  //     }
-  //   ],
-  //   optional_parameters: [],
-  //   method: "GET",
-  //   api_url: "https://api.audius.co/tracks/get",
-  //   template_response: {},
-  // },
-  // Add more Search APIs as needed
-];
-
-const initialQuery: string = "Find popular playlists for jazz music.";
-
-// Instantiate the SelectAPITool
-const selectAPIToolInstance = createSelectAPITool(existingApis, initialQuery);
-
-
-// Updated response formatters leveraging the types.ts definitions
-const responseFormatters: { [key: string]: (data: any) => string } = {
-  'Search Tracks': (data) => {
-    // Log the raw data for debugging
-    logger.debug('Raw Search Tracks Data:', JSON.stringify(data, null, 2));
-
-    // Check if data is an array and has at least one track
-    if (Array.isArray(data) && data.length > 0) {
-      const track = data[0]; // Access the first track
-      const title = track.title || track.trackTitle || "Unknown Title";
-      const artistName = track.user?.name || track.user?.handle || "Unknown Artist";
-      const playCount = track.playCount || track.play_count || "Unknown";
-
-      if (typeof playCount === 'number') {
-        return `${title} by ${artistName} has ${playCount} plays on Audius.`;
-      } else {
-        logger.warn(`playCount is missing or invalid for track ID ${track.id}`);
-        return `${title} by ${artistName} has an unknown number of plays on Audius.`;
-      }
-    } else {
-      logger.warn("No track data found in the response.");
-      return "No track information available.";
-    }
-  },
-  'Search Users': (data) => {
-    logger.debug('Raw Search Users Data:', JSON.stringify(data, null, 2));
-
-    if (Array.isArray(data) && data.length > 0) {
-      const user = data[0];
-      const name = user.name || user.handle || "Unknown User";
-      const followerCount = user.followerCount || user.followers_count || "Unknown";
-
-      return `${name} has ${followerCount} followers on Audius.`;
-    } else {
-      logger.warn("No user data found in the response.");
-      return "No user information available.";
-    }
-  },
-  'Search Playlists': (data) => {
-    logger.debug('Raw Search Playlists Data:', JSON.stringify(data, null, 2));
-
-    if (Array.isArray(data) && data.length > 0) {
-      const playlist = data[0];
-      const playlistName = playlist.playlistName || playlist.name || "Unknown Playlist";
-      const trackCount = playlist.trackCount || playlist.tracks_count || "Unknown";
-      const creator = playlist.user?.name || playlist.user?.handle || "Unknown Creator";
-
-      return `Playlist "${playlistName}" by ${creator} contains ${trackCount} tracks on Audius.`;
-    } else {
-      logger.warn("No playlist data found in the response.");
-      return "No playlist information available.";
-    }
-  },
-  'Get Playlist Details': (data) => {
-    logger.debug('Raw Get Playlist Details Data:', JSON.stringify(data, null, 2));
-
-    if (Array.isArray(data) && data.length > 0) {
-      const playlist = data[0];
-      const playlistName = playlist.playlistName || playlist.name || "Unknown Playlist";
-      const trackCount = playlist.trackCount || playlist.tracks_count || "Unknown";
-      const favoriteCount = playlist.favoriteCount || playlist.favorites_count || "Unknown";
-      const creator = playlist.user?.name || playlist.user?.handle || "Unknown Creator";
-
-      return `Playlist "${playlistName}" by ${creator} has ${trackCount} tracks and is favorited ${favoriteCount} times on Audius.`;
-    } else {
-      logger.warn("No playlist details data found in the response.");
-      return "No playlist details available.";
-    }
-  },
-  // Add more formatters as needed for other APIs
-};
-
-/**
  * Tool to create and execute API fetch requests based on `bestApi` and `parameters`, including response formatting.
  *
  * @param {object} input - The input object containing `bestApi`, `queryType`, and `parameters`.
- * @returns {Promise<{ response: string }>} - The formatted response string.
+ * @returns {Promise<Partial<GraphState>>} - The updated graph state.
  */
 export const createFetchRequestTool = tool(
   async (input: Record<string, any>): Promise<Partial<GraphState>> => {
-    const { bestApi, queryType, parameters, query } = input;
+    console.log("\n=== createFetchRequestTool Input ===");
+    console.log("Raw input:", JSON.stringify(input, null, 2));
+    console.log("Input shape validation:");
+    console.log("- bestApi present:", !!input.bestApi);
+    console.log("- bestApi.api_name:", input.bestApi?.api_name);
+    console.log("- queryType:", input.queryType);
+    console.log("- parameters shape:", JSON.stringify(input.parameters, null, 2));
+    console.log("- entityType:", input.entityType);
 
-    if (!bestApi) {
-      throw new Error("Missing required input properties");
+    logStateTransition('createFetchRequestTool', input, 'entry');
+    
+    const { bestApi, queryType, parameters, entityType, query } = input;
+
+    if (!bestApi?.api_name) {
+      throw new Error("Missing required API information");
     }
 
     try {
-      let apiResponse: any;
+      // Special handling for trending queries
+      if (bestApi.api_name.toLowerCase().includes('trending')) {
+        console.log("\n=== Processing Trending Query ===");
+        const params = {
+          time: parameters?.time || 'week',
+          genre: parameters?.genre || undefined,
+          limit: parameters?.limit || 10
+        };
+        console.log("API Parameters:", params);
+        
+        try {
+          // Make direct API call to the first healthy node we find
+          const queryParams = new URLSearchParams({
+            time: params.time,
+            ...(params.genre && { genre: params.genre }),
+            limit: params.limit.toString()
+          });
 
-      if (queryType === 'trending_tracks') {
-        logger.debug("Calling Get Trending Tracks API with parameters:", parameters);
-
-        const maxRetries = 3;
-        const timeout = 10000; // Reduced timeout to 10 seconds
-        let lastError: Error | null = null;
-
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-          try {
-            logger.debug(`Attempt ${attempt} of ${maxRetries}`);
-
-            // API call without limit parameter since it's not supported
-            apiResponse = await Promise.race([
-              sdk.tracks.getTrendingTracks({
-                time: parameters?.time || 'week',
-                genre: parameters?.genre || undefined
-              }),
-              new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('API request timed out')), timeout);
-              })
-            ]);
-            
-            logger.debug("Raw API Response:", JSON.stringify(apiResponse, null, 2));
-
-            // If we got here, the call succeeded
-            break;
-          } catch (error) {
-            lastError = error as Error;
-            logger.error(`Attempt ${attempt} failed:`, error);
-            
-            // Check if it's a timeout error
-            if (error instanceof Error && error.message === 'API request timed out') {
-              if (attempt < maxRetries) {
-                logger.debug(`Retrying after timeout (attempt ${attempt})`);
-                const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
-                await new Promise(resolve => setTimeout(resolve, delay));
-                continue;
+          const response = await fetch(
+            `https://discoveryprovider3.audius.co/v1/tracks/trending?${queryParams}`,
+            {
+              method: 'GET',
+              headers: {
+                'Accept': 'application/json'
               }
             }
-            
-            // If it's not a timeout error or we've exhausted retries, throw the error
-            throw error;
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
-        }
 
-        // If we still don't have a response after all retries
-        if (!apiResponse) {
-          logger.error("All retry attempts failed");
+          const apiResponse = await response.json();
+          console.log(`Received ${apiResponse.data.length} tracks`);
+
+          // Only extract the fields we need
+          const simplifiedTracks = apiResponse.data.map((track: any, index: number): SimplifiedTrack => ({
+            type: 'track' as const,
+            id: track.id,
+            title: track.title,
+            playCount: track.play_count || 0,
+            rank: index + 1,
+            user: {
+              name: track.user?.name || track.user?.handle || "Unknown Artist"
+            }
+          }));
+
           return {
-            ...input,
-            response: `Failed to fetch trending tracks after ${maxRetries} attempts. ${lastError ? `Error: ${lastError.message}` : 'Please try again later.'}`,
+            response: {
+              data: simplifiedTracks
+            },
+            formattedResponse: `Here are the top ${params.limit} trending tracks:\n${simplifiedTracks
+              .map((track: SimplifiedTrack) => 
+                `${track.rank}. "${track.title}" by ${track.user.name} (${track.playCount.toLocaleString()} plays)`
+              ).join('\n')}`
           };
+        } catch (error: unknown) {
+          console.error("Error in SDK call:", error);
+          throw error;
+        }
+      }
+
+      // For non-trending entity queries, require entity name
+      const { entityName } = parameters;
+      if (!entityName) {
+        throw new Error("Entity name is required for non-trending queries");
+      }
+
+      // Determine which property we're looking for based on the query
+      const queryWords = query.toLowerCase().split(' ');
+      const targetProperty = queryWords
+        .map((word: string) => wordToPropertyMap[word])
+        .find((prop: string | undefined) => prop !== undefined);
+
+      let apiResponse;
+      try {
+        switch (entityType) {
+          case 'track':
+            apiResponse = await sdk.tracks.searchTracks({ query: entityName });
+            if (apiResponse.data && apiResponse.data.length > 0) {
+              const track = apiResponse.data[0];
+              // Use targetProperty to determine response format
+              if (targetProperty && isTrackProperty(targetProperty)) {
+                return {
+                  response: {
+                    data: [convertTrack(track)]
+                  },
+                  formattedResponse: `Track "${track.title}" by ${track.user?.name || track.user?.handle || "Unknown Artist"} has ${track[targetProperty]} ${targetProperty.replace('Count', '').toLowerCase()}s.`
+                };
+              } else if (query.toLowerCase().includes('genre')) {
+                return {
+                  response: {
+                    data: [convertTrack(track)]
+                  },
+                  formattedResponse: `Track "${track.title}" by ${track.user?.name || track.user?.handle || "Unknown Artist"} is in the ${track.genre || "unknown"} genre.`
+                };
+              }
+            }
+            break;
+
+          case 'user':
+            apiResponse = await sdk.users.searchUsers({ query: entityName });
+            if (apiResponse.data && apiResponse.data.length > 0) {
+              const user = apiResponse.data[0];
+              if (targetProperty && isUserProperty(targetProperty)) {
+                return {
+                  response: {
+                    data: [convertUser(user)]
+                  },
+                  formattedResponse: `User "${user.name || user.handle}" has ${user[targetProperty]} ${targetProperty.replace('Count', '').toLowerCase()}s.`
+                };
+              }
+            }
+            break;
+
+          case 'playlist':
+            apiResponse = await sdk.playlists.searchPlaylists({ query: entityName });
+            if (apiResponse.data && apiResponse.data.length > 0) {
+              const playlist = apiResponse.data[0];
+              if (targetProperty && isPlaylistProperty(targetProperty)) {
+                return {
+                  response: {
+                    data: [convertPlaylist(playlist)]
+                  },
+                  formattedResponse: `Playlist "${playlist.playlistName}" by ${playlist.user?.name || playlist.user?.handle || "Unknown Creator"} has ${playlist[targetProperty]} ${targetProperty.replace('Count', '').toLowerCase()}s.`
+                };
+              }
+            }
+            break;
+
+          default:
+            throw new Error(`Unsupported entityType: ${entityType}`);
         }
 
-        // Check if we have data and it's an array
-        if (!apiResponse?.data || !Array.isArray(apiResponse.data)) {
-          throw new Error("Invalid response format from Trending Tracks API");
-        }
+        throw new Error(`${entityType?.charAt(0).toUpperCase()}${entityType?.slice(1)} "${entityName}" not found.`);
 
-        const tracks = apiResponse.data.slice(0, 10); // Take first 10 tracks after successful response
-        
-        if (tracks.length === 0) {
-          return {
-            ...input,
-            response: "No trending tracks found at this time. Please try again later.",
-          };
-        }
-
-        const trackList = tracks.map((track: any, index: number) => {
-          const artistName = track.user?.name || track.user?.handle || "Unknown Artist";
-          const title = track.title || "Untitled";
-          const playCount = track.play_count || track.playCount || 0;
-          return `${index + 1}. "${title}" by ${artistName} (${playCount.toLocaleString()} plays)`;
-        }).join('\n');
-
-        logger.debug("Formatted Track List:", trackList);
-
+      } catch (error) {
+        stateLogger.error('Error in API request:', error);
         return {
-          ...input,
-          response: `Top ${tracks.length} trending tracks on Audius${parameters?.genre ? ` in ${parameters.genre}` : ''}${parameters?.time ? ` for ${parameters.time}` : ''}:\n${trackList}`,
+          error: {
+            code: 'API_ERROR',
+            message: 'Failed to fetch information. Please try again later.',
+            timestamp: Date.now(),
+            node: 'createFetchRequestTool'
+          },
+          response: {
+            data: []
+          }
         };
       }
 
-      // [Rest of the code remains unchanged]
-      // Handle entity queries
-      const { entityName } = input.parameters;
-      const entityType = input.entityType;
-
-      if (!entityName) {
-        throw new Error("Entity name is required");
-      }
-
-      switch (entityType) {
-        case 'track':
-          apiResponse = await sdk.tracks.searchTracks({ query: entityName });
-          if (apiResponse.data && apiResponse.data.length > 0) {
-            const track = apiResponse.data[0];
-            // Check if the query is about genre
-            if (query.toLowerCase().includes('genre')) {
-              return {
-                ...input,
-                response: `Track "${track.title}" by ${track.user?.name || track.user?.handle || "Unknown Artist"} is in the ${track.genre || "unknown"} genre.`,
-              };
-            } else {
-              return {
-                ...input,
-                response: `Track "${track.title}" by ${track.user?.name || track.user?.handle || "Unknown Artist"} has ${track.playCount} plays on Audius.`,
-              };
-            }
-          }
-          break;
-
-        case 'user':
-          apiResponse = await sdk.users.searchUsers({ query: entityName });
-          if (apiResponse.data && apiResponse.data.length > 0) {
-            const user = apiResponse.data[0];
-            return {
-              ...input,
-              response: `User "${user.name || user.handle}" has ${user.followerCount} followers on Audius.`,
-            };
-          }
-          break;
-
-        case 'playlist':
-          apiResponse = await sdk.playlists.searchPlaylists({ query: entityName });
-          if (apiResponse.data && apiResponse.data.length > 0) {
-            const playlist = apiResponse.data[0];
-            return {
-              ...input,
-              response: `Playlist "${playlist.playlistName || playlist.name}" by ${playlist.user?.name || playlist.user?.handle || "Unknown Creator"} contains ${playlist.trackCount} tracks on Audius.`,
-            };
-          }
-          break;
-
-        default:
-          throw new Error(`Unsupported entityType: ${entityType}`);
-      }
-
-      throw new Error(`${entityType?.charAt(0).toUpperCase()}${entityType?.slice(1)} "${entityName}" not found.`);
     } catch (error) {
-      logger.error('Error in createFetchRequestTool:', error);
+      console.error('Error in createFetchRequestTool:', error);
       throw error;
     }
   },
   {
     name: "create_fetch_request",
-    description: "Executes the selected API and formats the response based on extracted entity or parameters.",
+    description: "Executes the selected API and formats the response.",
     schema: z.object({
       bestApi: z.object({
         api_name: z.string(),
+        id: z.string(),
         category_name: z.string(),
         tool_name: z.string(),
+        api_description: z.string(),
         required_parameters: z.array(z.any()),
         optional_parameters: z.array(z.any()),
         method: z.string(),
-        api_url: z.string(),
-        api_description: z.string(),
         template_response: z.any(),
-        id: z.string()
-      }),
+        api_url: z.string()
+      }).passthrough(),
       queryType: z.string(),
-      // Make these optional since trending tracks don't need them
-      parameters: z.record(z.any()).optional(),
-      query: z.string().optional(),
-      entityType: z.enum(['track', 'user', 'playlist']).nullable().optional(),
-    }).passthrough(),
-  }
-);
-
-// Enhanced `extractParametersTool` using wink-nlp
-export const extractParametersTool = tool(
-  async (input: Record<string, any>): Promise<Partial<GraphState>> => {
-    const { query, entityType, queryType } = input;
-
-    if (!query) {
-      logger.error("Query is required");
-      throw new Error("Query is required");
-    }
-
-    logger.debug(`extractParametersTool invoked with query: "${query}", queryType: "${queryType}"`);
-
-    // Initialize extracted parameters
-    let extractedParams: Record<string, any> = { ...(input.parameters || {}) };
-
-    // Use 'compromise' to process the query
-    const doc = nlp(query);
-
-    if (queryType === 'trending_tracks') {
-      // Define potential genres and time periods
-      const genres = [
-        'electronic', 'rock', 'pop', 'hip-hop', 'rap', 'r&b', 'country', 'jazz', 'classical', 'reggae', 'latin', 'metal',
-        // Add more genres as needed
-      ];
-      const times = ['week', 'month', 'year', 'all time', 'alltime'];
-
-      // Extract 'genre' from the query
-      const genreMatch = genres.find(genre => query.toLowerCase().includes(genre.toLowerCase()));
-      if (genreMatch) {
-        extractedParams.genre = genreMatch;
-        logger.debug(`Extracted genre: ${genreMatch}`);
-      } else {
-        extractedParams.genre = null; // or set a default genre if desired
-        logger.debug("No genre specified. Setting genre to null.");
-      }
-
-      // Extract 'time' from the query
-      const timeMatch = times.find(time => query.toLowerCase().includes(time.toLowerCase()));
-      if (timeMatch) {
-        extractedParams.time = timeMatch.replace(' ', ''); // Convert 'all time' to 'alltime' if necessary
-        logger.debug(`Extracted time: ${extractedParams.time}`);
-      } else {
-        extractedParams.time = 'week'; // Set default time period
-        logger.debug("No time period specified. Setting time to 'week'.");
-      }
-
-      return {
-        ...input,
-        parameters: extractedParams,
-      };
-    }
-
-    // Handle entity queries
-    if (entityType) {
-      // Define regex patterns for each EntityType to extract entityName
-      const regexMap: Record<Exclude<EntityType, null>, RegExp> = {
-        'track': /(?:(?:the\s+)?(?:song|track)\s+['"]?([\w\s\'&\-]+)['"]?)|(?:does\s+['"]?([\w\s\'&\-]+)['"]?\s+have)/i,
-        'user': /(?:does\s+([A-Za-z0-9\s\'.-]+)\s+have)/i,
-        'playlist': /(?:(?:the\s+)?playlist\s+['"]?([\w\s\'&,.\-]+)['"]?)(?:\s+have|\s*$)/i,
-      };
-
-      const regex = regexMap[entityType as Exclude<EntityType, null>];
-      let entityName: string | null = null;
-
-      if (regex) {
-        const match = query.match(regex);
-        if (match && match[1]) {
-          entityName = match[1].trim();
-          logger.debug(`Extracted Entity Name via regex: "${entityName}"`);
-        }
-      }
-
-      // Fallback to extracting proper nouns if regex fails
-      if (!entityName) {
-        // Get all terms from the query
-        const terms = doc.terms().out('array');
-        logger.debug(`Terms Extracted: ${JSON.stringify(terms)}`);
-
-        // Remove irrelevant keywords
-        const irrelevantKeywords = [
-          ...Object.keys(wordToPropertyMap),
-          'audius', 'on', 'does', 'have', 'how', 'many',
-        ];
-        
-        const filteredTerms = terms.filter(
-          (token: string) => !irrelevantKeywords.includes(token.toLowerCase())
-        );
-        logger.debug(`Filtered Terms: ${JSON.stringify(filteredTerms)}`);
-
-        if (filteredTerms.length > 0) {
-          entityName = filteredTerms.join(' ').trim();
-          logger.debug(`Extracted Entity Name via terms: "${entityName}"`);
-        } else {
-          logger.error(`Could not extract entity name from the query.`);
-          throw new Error(`Could not extract entity name from the query.`);
-        }
-      }
-
-      extractedParams.entityName = entityName;
-    }
-
-    return {
-      ...input,
-      parameters: extractedParams,
-    };
-  },
-  {
-    name: "extract_parameters",
-    description:
-      "Extracts necessary parameters based on the entity type and properties from the user query.",
-    schema: z
-      .object({
+      parameters: z.object({
         query: z.string(),
-        entityType: z.enum(['track', 'user', 'playlist']).nullable(),
-        queryType: z.string(),
-        parameters: z.record(z.any()).nullable(),
-        // ... (other properties)
-      })
-      .passthrough(),
+        time: z.string().optional(),
+        genre: z.string().nullable().optional()
+      }).passthrough(),
+      entityType: z.enum(['track', 'user', 'playlist']).nullable(),
+      response: z.any().optional(),
+      complexity: z.string().optional(),
+      isEntityQuery: z.boolean().optional(),
+      entityName: z.string().nullable().optional(),
+      error: z.any().nullable().optional(),
+      formattedResponse: z.string().optional()
+    }).passthrough()
   }
 );
 
@@ -1263,83 +854,311 @@ export const extractParametersTool = tool(
  * @param {GraphState} state - The current state of the graph.
  * @returns {Partial<GraphState>} - The updated state with the list of APIs.
  */
-export function getApis(state: GraphState) {
-  logger.debug('getApis called with categories:', state.categories);
-  
-  if (!state.categories || state.categories.length === 0) {
-    logger.error("No categories available in state for getApis.");
-    throw new Error("No categories passed to get_apis_node");
+export const getApis = tool(
+  async (input: { categories: string[] }): Promise<{
+    apis: DatasetSchema[];  // Direct return type, no StateUpdate wrapper
+  }> => {
+    try {
+      console.log("\n=== getApis Processing ===");
+      console.log("Input categories:", input.categories);
+      
+      // Read and parse the API dataset
+      const rawData = fs.readFileSync(TRIMMED_CORPUS_PATH, 'utf-8');
+      const corpus: AudiusCorpus = JSON.parse(rawData);
+      
+      // Log corpus content
+      console.log("\n=== Corpus Content ===");
+      console.log("Available endpoints:", 
+        corpus.endpoints.map(e => ({
+          name: e.api_name,
+          category: e.category_name,
+          url: e.api_url
+        }))
+      );
+
+      // Log category matching process
+      console.log("\n=== Category Matching ===");
+      input.categories.forEach(cat => {
+        console.log(`Looking for: ${cat}`);
+        console.log(`Matches:`, 
+          corpus.endpoints
+            .filter(e => e.api_name === cat)
+            .map(e => e.api_name)
+        );
+      });
+      
+      // Filter and deduplicate APIs based on API names and URLs
+      const seenApis = new Set<string>();
+      const apis = corpus.endpoints
+        .filter(endpoint => {
+          if (input.categories.includes(endpoint.api_name)) {
+            const key = `${endpoint.api_name}:${endpoint.api_url}`;
+            if (!seenApis.has(key)) {
+              seenApis.add(key);
+              return true;
+            }
+          }
+          return false;
+        });
+
+      console.log("\n=== Selected APIs ===");
+      console.log("Found APIs:", apis.map(api => api.api_name));
+
+      // Return direct value - LangGraph will convert to StateUpdate
+      return {
+        apis  // Direct array, no nesting
+      };
+    } catch (error) {
+      console.error("Error in getApis:", error);
+      throw error;
+    }
+  },
+  {
+    name: "get_apis",
+    description: "Gets relevant APIs based on categories",
+    schema: z.object({
+      categories: z.array(z.string())
+    })
   }
+);
 
+
+// Add a type guard to verify state shape between nodes
+function isValidGraphState(state: any): state is GraphState {
   try {
-    const allData: any = JSON.parse(fs.readFileSync(TRIMMED_CORPUS_PATH, "utf8"));
-    const endpoints = allData.endpoints;
+    const schema = z.object({
+      bestApi: z.object({
+        api_name: z.string(),
+      }).passthrough(),
+      queryType: z.string(),
+      parameters: z.object({
+        query: z.string(),
+      }).passthrough(),
+      entityType: z.enum(['track', 'user', 'playlist']).nullable(),
+    }).passthrough();
 
-    // Transform all APIs without filtering
-    const transformedApis: DatasetSchema[] = endpoints.map((api: any) => ({
-      id: api.id,
-      category_name: api.category_name,
-      tool_name: api.tool_name,
-      api_name: api.api_name,
-      api_description: api.api_description,
-      required_parameters: api.required_parameters,
-      optional_parameters: api.optional_parameters,
-      method: api.method,
-      template_response: api.template_response,
-      api_url: api.api_url,
-    }));
-
-    // Filter APIs by category, including all Track-related APIs for trending queries
-    const apis = state.categories
-      .map((category) => {
-        if (category.toLowerCase() === 'tracks') {
-          // For Tracks category, include all Track-related APIs
-          return transformedApis.filter((endpoint: DatasetSchema) => 
-            endpoint.category_name.toLowerCase() === category.toLowerCase()
-          );
-        } else {
-          // For other categories, only include Search APIs
-          return transformedApis.filter((endpoint: DatasetSchema) => 
-            endpoint.category_name.toLowerCase() === category.toLowerCase() &&
-            endpoint.api_name.startsWith('Search')
-          );
-        }
-      })
-      .flat();
-
-    logger.debug('Selected APIs:', apis.map((api: DatasetSchema) => api.api_name));
-
-    return {
-      ...state,
-      apis,
-    };
+    schema.parse(state);
+    return true;
   } catch (error) {
-    logger.error('Error in getApis:', error);
-    throw error;
+    stateLogger.error('State validation failed:', error);
+    return false;
   }
 }
+
+export const resetState = tool(
+  async (input: Record<string, any>): Promise<Partial<GraphState>> => {
+    console.log("\n=== Reset State Input ===");
+    console.log(JSON.stringify(input, null, 2));
+
+    // Reset query-specific state but maintain LLM and other persistent properties
+    return {
+      query: null,
+      queryType: null,
+      categories: null,
+      apis: null,
+      bestApi: null,
+      parameters: null,
+      response: null,
+      complexity: null,
+      isEntityQuery: null,
+      entityName: null,
+      entityType: null,
+      error: null,
+      entity: null,
+      secondaryApi: null,
+      secondaryResponse: null,
+      formattedResponse: null,
+      messages: null
+    };
+  },
+  {
+    name: "reset_state",
+    description: "Resets query-specific state properties while maintaining persistent ones",
+    schema: z.object({
+      llm: z.any().optional(),
+      selectedHost: z.string().optional()
+    }).strict()
+  }
+);
+
+// Add these conversion functions at the top of tools.ts
+function convertTrack(track: Track): TrackData {
+  // Handle remixOf track differently
+  const remixTrack = track.remixOf?.tracks?.[0];
+  const remixData = remixTrack ? {
+    id: remixTrack.parentTrackId || '',  // This property exists
+    type: 'track' as const,
+    title: track.title || '',  // Use parent track's title since parentTrackTitle isn't available
+    artwork: track.artwork,
+    description: null,
+    genre: track.genre,
+    mood: null,
+    releaseDate: null,
+    remixOf: null,         // Don't recurse
+    repostCount: 0,
+    favoriteCount: 0,
+    commentCount: 0,
+    tags: null,
+    user: track.user,
+    duration: 0,
+    isDownloadable: false,
+    playCount: 0,
+    permalink: '',
+    isStreamable: true
+  } : null;
+
+  return {
+    id: track.id,
+    type: 'track',
+    title: track.title,
+    artwork: track.artwork,
+    description: track.description ?? null,
+    genre: track.genre,
+    mood: track.mood ?? null,
+    releaseDate: track.releaseDate ?? null,
+    remixOf: remixData,
+    repostCount: track.repostCount,
+    favoriteCount: track.favoriteCount,
+    commentCount: track.commentCount || 0,
+    tags: track.tags?.split(',') ?? null,
+    user: track.user,
+    duration: track.duration,
+    isDownloadable: track.isDownloadable ?? false,
+    playCount: track.playCount,
+    permalink: track.permalink,
+    isStreamable: track.isStreamable ?? true
+  };
+}
+
+function convertUser(user: User): UserData {
+  return {
+    id: user.id,
+    type: 'user',
+    name: user.name,
+    handle: user.handle,
+    bio: user.bio ?? null,
+    followerCount: user.followerCount,
+    followeeCount: user.followeeCount,
+    trackCount: user.trackCount,
+    playlistCount: user.playlistCount,
+    albumCount: user.albumCount,
+    isVerified: user.isVerified,
+    profilePicture: user.profilePicture!,
+    coverPhoto: user.coverPhoto!,
+    twitterHandle: user.twitterHandle ?? null,
+    instagramHandle: user.instagramHandle ?? null,
+    tiktokHandle: user.tiktokHandle ?? null,
+    website: user.website ?? null,
+    location: user.location ?? null,
+    isDeactivated: user.isDeactivated,
+    isAvailable: user.isAvailable,
+    supporterCount: user.supporterCount,
+    supportingCount: user.supportingCount,
+    totalAudioBalance: user.totalAudioBalance || 0
+  };
+}
+
+function convertPlaylist(playlist: Playlist): PlaylistData {
+  return {
+    id: playlist.id,
+    playlistName: playlist.playlistName,
+    description: playlist.description,
+    isAlbum: playlist.isAlbum,
+    trackCount: playlist.trackCount,
+    totalPlayCount: playlist.totalPlayCount,
+    repostCount: playlist.repostCount,
+    favoriteCount: playlist.favoriteCount,
+    user: playlist.user,
+    playlistContents: playlist.playlistContents,
+    artwork: playlist.artwork,
+    permalink: playlist.permalink,
+    isImageAutogenerated: playlist.isImageAutogenerated,
+    access: playlist.access,
+    ddexApp: playlist.ddexApp,
+    upc: playlist.upc,
+    tracks: [] // We'll need to fetch this separately if needed
+  };
+}
+
+// Add this interface near the top with other types
+interface SimplifiedTrack {
+  type: 'track';
+  id: string;
+  title: string;
+  playCount: number;
+  rank: number;
+  user: {
+    name: string;
+  };
+}
+
+export const extractParametersTool = tool(
+  async (input: { query: string, entityType: EntityType }): Promise<Partial<GraphState>> => {
+    console.log("\n=== extractParameters Processing ===");
+    console.log("Input:", input);
+
+    // Extract entity name using regex
+    const entityNameMatch = input.query.match(/"([^"]+)"|'([^']+)'|\b(\w+(?:\s+\w+)*)\b/);
+    const entityName = entityNameMatch ? entityNameMatch[0] : null;
+
+    return {
+      parameters: {
+        entityName,
+        query: input.query
+      }
+    };
+  },
+  {
+    name: "extract_parameters",
+    description: "Extracts parameters from the query",
+    schema: z.object({
+      query: z.string(),
+      entityType: z.enum(['track', 'user', 'playlist']).nullable()
+    })
+  }
+);
+
+// Add after the type definitions
+export function verifyParams(input: GraphState): Promise<"execute_request_node" | typeof END> {
+  console.log("\n=== Parameter Check ===");
+  const { bestApi, parameters } = input;
+
+  if (!bestApi?.required_parameters) {
+    throw new Error("No API selected");
+  }
+
+  const required = bestApi.required_parameters.map(p => p.name);
+  const extracted = Object.keys(parameters || {});
+  
+  console.log("Required:", required);
+  console.log("Extracted:", extracted);
+
+  // If no required parameters, proceed to execution
+  if (required.length === 0) {
+    console.log("No required parameters for the selected API. Proceeding to execute_request_node.");
+    return Promise.resolve("execute_request_node");
+  }
+
+  // Check if all required parameters are present
+  const missing = required.filter(p => !extracted.includes(p));
+  if (missing.length > 0) {
+    throw new Error(`Missing required parameters: ${missing.join(", ")}`);
+  }
+
+  return Promise.resolve("execute_request_node");
+}
+
 
 /**
  * List of all tools used in the ecosystem.
  */
 export const ALL_TOOLS_LIST: { 
-  [key: string]: StructuredToolInterface | RunnableToolLike | Promise<Partial<GraphState>> | ((state: GraphState) => Promise<Partial<GraphState>>) 
+  [key: string]: StructuredToolInterface | RunnableToolLike 
 } = {
   extractCategory: extractCategoryTool,
-  extractParameters: extractParametersTool, // Ensure this points to the enhanced tool
+  extractParameters: extractParametersTool,
   readUserInputTool,
-  ExtractHighLevelCategoriesTool,
   createFetchRequest: createFetchRequestTool,
   selectApi: selectApiTool,
-  readUserInput: readUserInputTool // Use the instantiated tool
-  // Remove or comment out any Get tools if they exist
-  // getTrack: getTrackTool, // Removed
-  // getUser: getUserTool, // Removed
-  // getPlaylist: getPlaylistTool, // Removed
-  // Add other Search tools here as needed
+  readUserInput: readUserInputTool
 };
-
-
-
-
-

@@ -35,6 +35,14 @@ export interface DatasetParameters {
   default: any;    // Default value for the parameter
 }
 
+export type ErrorState = {
+  code: string;
+  message: string;
+  suggestion?: string;
+  timestamp: number;
+  node: string;
+}
+
 export interface GraphState {
   llm: ChatOpenAI | null;
   query: string | null;
@@ -42,32 +50,32 @@ export interface GraphState {
   categories: string[] | null;
   apis: DatasetSchema[] | null;
   bestApi: DatasetSchema | null;
-  response: any | null;
-  complexity: string | null;
-  isEntityQuery: boolean;
+  parameters: Record<string, any> | null;
+  response: {
+    data: Array<TrackData | UserData | PlaylistData>
+  } | null;
+  complexity: ComplexityLevel | null;
+  isEntityQuery: boolean | null;
   entityName: string | null;
   entityType: EntityType | null;
-  parameters: Record<string, any> | null;
-  error: boolean;
+  error: ErrorState | null;
+  errorHistory: ErrorState[];
+  messages: Messages | null;
+  messageHistory: Messages[];
   selectedHost: string | null;
-  entity: Track | User | Playlist | null;
+  entity: TrackData | UserData | PlaylistData | null;
   secondaryApi: DatasetSchema | null;
-  secondaryResponse: any | null;
-  multiStepHandled: boolean;
+  secondaryResponse: string | null;
   initialState: GraphState | null;
   formattedResponse: string | null;
-  messages: Messages | null;
 }
 
 export type QueryType =
+  | 'general'
   | 'trending_tracks'
-  | 'search_tracks'
-  | 'search_users'
-  | 'search_playlists'
-  | 'search_genres'
-  | 'genre_info'
-  | 'playlist_info'
-  | 'general';
+  | 'search'
+  | 'entity_stats'
+  | 'trending_playlists';
 
 export type EntityType = 'track' | 'user' | 'playlist' | null;
 
@@ -200,15 +208,16 @@ export const initialGraphState: GraphState = {
   secondaryApi: null,
   response: null,
   secondaryResponse: null,  
-  error: false,
+  error: null as ErrorState | null,
+  errorHistory: [],
   formattedResponse: null,
   messages: null,
+  messageHistory: [],
   isEntityQuery: false,
   entityName: null,
   entity: null,
   parameters: null,
   complexity: null,
-  multiStepHandled: false, 
   initialState: null,
   entityType: null,
   selectedHost: null
@@ -217,18 +226,13 @@ export const initialGraphState: GraphState = {
 export type NodeNames =
   | '__start__'
   | '__end__'
-  | 'categorize_query'
   | 'extract_category'
   | 'get_apis'
   | 'select_api'
   | 'extract_parameters'
-  | 'verify_params'
-  | 'request_params'
+  | 'verify_parameters'
+  | 'request_parameters'
   | 'create_fetch_request'
-  | 'process_api_response'
-  | 'format_results'
-  | 'error_handler'
-  | 'multi_step_query';
 
 export type StateDefinition = {
   [key in NodeNames]: GraphState;
@@ -270,6 +274,41 @@ export interface AudiusCorpus {
 }
 
 // Similarly for Track and Playlist...
+
+// Add these type definitions
+export type TrackProperty = keyof Track;
+export type UserProperty = keyof User;
+export type PlaylistProperty = keyof Playlist;
+
+// Type guard functions
+export function isTrackProperty(prop: string): prop is TrackProperty {
+  return ['playCount', 'repostCount', 'favoriteCount', 'genre'].includes(prop);
+}
+
+export function isUserProperty(prop: string): prop is UserProperty {
+  return ['followerCount', 'trackCount', 'playlistCount'].includes(prop);
+}
+
+export function isPlaylistProperty(prop: string): prop is PlaylistProperty {
+  return ['trackCount', 'repostCount', 'favoriteCount'].includes(prop);
+}
+
+// Update entity type mapping
+export const wordToPropertyMap: Record<string, TrackProperty | UserProperty | PlaylistProperty> = {
+  'play': 'playCount',
+  'plays': 'playCount',
+  'follower': 'followerCount',
+  'followers': 'followerCount',
+  'song': 'trackCount',
+  'songs': 'trackCount',
+  'track': 'trackCount',
+  'tracks': 'trackCount',
+  'genre': 'genre',
+  'repost': 'repostCount',
+  'reposts': 'repostCount',
+  'favorite': 'favoriteCount',
+  'favorites': 'favoriteCount'
+} as const;
 
 
 

@@ -1,4 +1,4 @@
-import { logger } from '../../../logger.js';
+import { apiLogger } from '../../../logger.js';
 
 /**
  * Extracts parameters for genre queries.
@@ -38,6 +38,6 @@ export function extractGenreParameters(query: string, entityType: string | null)
     // Set points pool
     params.pointsPool = 10000; // Fixed value as per your approach
 
-    logger.info(`Extracted genre parameters: ${JSON.stringify(params)}`);
+    apiLogger.info(`Extracted genre parameters: ${JSON.stringify(params)}`);
     return params;
 }

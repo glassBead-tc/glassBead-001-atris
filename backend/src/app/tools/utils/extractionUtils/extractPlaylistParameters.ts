@@ -1,4 +1,4 @@
-import { logger } from "../../../logger.js";
+import { apiLogger } from "../../../logger.js";
 
 /**
  * Extracts parameters for playlist queries.
@@ -16,6 +16,6 @@ export function extractPlaylistParameters(query: string, entityType: string | nu
         }
     }
 
-    logger.info(`Extracted playlist parameters: ${JSON.stringify(params)}`);
+    apiLogger.info(`Extracted playlist parameters: ${JSON.stringify(params)}`);
     return params;
 }

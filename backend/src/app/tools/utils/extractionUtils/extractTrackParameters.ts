@@ -1,4 +1,4 @@
-import { logger } from "../../../logger.js";
+import { apiLogger } from "../../../logger.js";
 
 /**
  * Extracts parameters for track queries.
@@ -21,6 +21,6 @@ export function extractTrackParameters(query: string, entityType: string | null)
         }
     }
 
-    logger.info(`Extracted track parameters: ${JSON.stringify(params)}`);
+    apiLogger.info(`Extracted track parameters: ${JSON.stringify(params)}`);
     return params;
 }

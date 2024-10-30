@@ -1,5 +1,5 @@
 import { TrackArtwork, Track, Playlist, User } from '@audius/sdk';
-import { logger } from '../logger.js';
+import { apiLogger } from '../logger.js';
 import { TrackData} from '../types.js';
 
 
@@ -86,7 +86,7 @@ export async function fetchAudiusData(query: string): Promise<AudiusData | null>
 
     return null;
   } catch (error) {
-    logger.error("Error fetching Audius data:", error);
+    apiLogger.error("Error fetching Audius data:", error);
     return null;
   }
 }
@@ -147,7 +147,7 @@ async function searchRemixes(query: string): Promise<AudiusData | null> {
     }
     return null;
   } catch (error) {
-    logger.error("Error searching for remixes:", error);
+    apiLogger.error("Error searching for remixes:", error);
     return null;
   }
 }

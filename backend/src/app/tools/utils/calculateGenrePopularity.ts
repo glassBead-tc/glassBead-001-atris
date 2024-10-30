@@ -1,5 +1,5 @@
 // backend/app/tools/utils/calculateGenrePopularity.ts
-import { logger } from '../../logger.js';
+import { apiLogger } from '../../logger.js';
 import { TrackData } from '../../types.js';
 
 /**
@@ -39,7 +39,7 @@ export const calculateGenrePopularity = (genres: string[], baseValue: number): R
     genrePopularity[genre] = parseFloat((normalizedFactor * baseValue).toFixed(2));
   });
 
-  logger.info(
+  apiLogger.info(
     `Calculated genre popularity using Pareto distribution: ${JSON.stringify(
       genrePopularity
     )}`

@@ -1,4 +1,4 @@
-import { logger } from '../../../logger.js';
+import { apiLogger } from '../../../logger.js';
 
 /**
  * Extracts parameters for user queries.
@@ -21,6 +21,6 @@ export function extractUserParameters(query: string, entityType: string | null):
         }
     }
 
-    logger.info(`Extracted user parameters: ${JSON.stringify(params)}`);
+    apiLogger.info(`Extracted user parameters: ${JSON.stringify(params)}`);
     return params;
 }

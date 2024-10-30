@@ -1,4 +1,4 @@
-import { logger } from '../../logger.js';
+import { apiLogger } from '../../logger.js';
 
 // Function Declarations
 
@@ -58,7 +58,7 @@ function formatApiResults(response: any, apiName: string): string {
           return "Unsupported API response format.";
       }
     } catch (error) {
-      logger.error("Error in formatApiResults:", error);
+      apiLogger.error("Error in formatApiResults:", error);
       return "An error occurred while processing the API response.";
     }
 }

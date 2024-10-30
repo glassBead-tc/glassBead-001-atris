@@ -1,4 +1,4 @@
-import { logger } from "../../../logger.js";
+import { apiLogger } from "../../../logger.js";
 import { GraphState } from "../../../types.js";
 
 export function extractTime(query: string): string {

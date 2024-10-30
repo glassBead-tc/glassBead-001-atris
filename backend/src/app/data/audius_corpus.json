@@ -94,18 +94,6 @@
             "type": "string",
             "description": "Time range to query",
             "default": "week"
-          },
-          {
-            "name": "limit",
-            "type": "number",
-            "description": "Number of results to return",
-            "default": "10"
-          },
-          {
-            "name": "offset",
-            "type": "number",
-            "description": "Number of results to skip",
-            "default": "0"
           }
         ],
         "method": "GET",

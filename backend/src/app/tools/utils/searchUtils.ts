@@ -1,7 +1,7 @@
-import { logger } from '../../logger.js';
+import { apiLogger } from '../../logger.js';
 
 export function parseQuery(query: string): { type: string, title: string | null, artist: string | null, limit?: number | null } {
-  logger.debug(`Parsing query: "${query}"`);
+  apiLogger.debug(`Parsing query: "${query}"`);
   const patterns = {
     genre: /What genre is ['"]?(.*?)['"]? by (.*?)\??$/i,
     genreAlt: /(?:genre|style) of ['"]?(.*?)['"]? by (.*?)/i,

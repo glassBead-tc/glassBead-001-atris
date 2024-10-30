@@ -1,10 +1,10 @@
 import { sdk } from './sdkClient.js';
-import { logger } from './logger.js';
+import { apiLogger } from './logger.js';
 
 async function testGetTrendingTracks() {
   try {
     const response = await sdk.tracks.getTrendingTracks();
-    logger.debug("Test Get Trending Tracks Response:", JSON.stringify(response, null, 2));
+    apiLogger.debug("Test Get Trending Tracks Response:", JSON.stringify(response, null, 2));
     
     if (response.data && response.data.length > 0) {
       console.log("Top Trending Tracks:");
@@ -15,7 +15,7 @@ async function testGetTrendingTracks() {
       console.log("No trending tracks found.");
     }
   } catch (error) {
-    logger.error("Error in testGetTrendingTracks:", error);
+    apiLogger.error("Error in testGetTrendingTracks:", error);
   }
 }
 

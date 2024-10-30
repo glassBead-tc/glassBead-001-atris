@@ -1,5 +1,5 @@
 
-import { logger } from "../../../logger.js";
+import { apiLogger } from "../../../logger.js";
 
 /**
  * Extracts parameters for search tracks queries.
@@ -22,6 +22,6 @@ export function extractSearchTracksParameters(query: string, entityType: string 
         }
     }
 
-    logger.info(`Extracted search tracks parameters: ${JSON.stringify(params)}`);
+    apiLogger.info(`Extracted search tracks parameters: ${JSON.stringify(params)}`);
     return params;
 }

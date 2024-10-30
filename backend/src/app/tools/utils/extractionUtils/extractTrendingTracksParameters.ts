@@ -1,4 +1,4 @@
-import { logger } from '../../../logger.js';
+import { apiLogger } from '../../../logger.js';
 
 /**
  * Extracts parameters for trending tracks queries.
@@ -21,6 +21,6 @@ export function extractTrendingTracksParameters(query: string, entityType: strin
         }
     }
 
-    logger.info(`Extracted trending tracks parameters: ${JSON.stringify(params)}`);
+    apiLogger.info(`Extracted trending tracks parameters: ${JSON.stringify(params)}`);
     return params;
 }
