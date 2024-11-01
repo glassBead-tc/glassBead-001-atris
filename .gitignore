@@ -18,6 +18,7 @@ tests/baselines/local/projectOutput/*
 tests/baselines/reference/testresults.tap
 tests/services/baselines/prototyping/local/*
 tests/services/browser/typescriptServices.js
+blog-posts/*
 src/harness/*.js
 src/compiler/diagnosticInformationMap.generated.ts
 src/compiler/diagnosticMessages.generated.json
