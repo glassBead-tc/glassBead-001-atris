@@ -31,10 +31,13 @@ export class GraphDebugger {
     const allKeys = new Set([...Object.keys(prev), ...Object.keys(next)]);
     
     for (const key of allKeys) {
-      if (JSON.stringify(prev[key]) !== JSON.stringify(next[key])) {
+      const prevVal = prev[key as keyof GraphState];
+      const nextVal = next[key as keyof GraphState];
+      
+      if (JSON.stringify(prevVal) !== JSON.stringify(nextVal)) {
         diff[key] = {
-          from: prev[key],
-          to: next[key]
+          from: prevVal,
+          to: nextVal
         };
       }
     }

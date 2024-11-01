@@ -226,13 +226,12 @@ export const initialGraphState: GraphState = {
 export type NodeNames =
   | '__start__'
   | '__end__'
-  | 'extract_category'
-  | 'get_apis'
-  | 'select_api'
-  | 'extract_parameters'
-  | 'verify_parameters'
-  | 'request_parameters'
-  | 'create_fetch_request'
+  | 'extract_category_node' 
+  | 'get_apis_node' 
+  | 'select_api_node' 
+  | 'extract_params_node'
+  | 'execute_request_node'
+  | 'reset_state_node';
 
 export type StateDefinition = {
   [key in NodeNames]: GraphState;

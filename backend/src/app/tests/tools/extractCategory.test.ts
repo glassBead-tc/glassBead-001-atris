@@ -1,9 +1,9 @@
 import { test, expect } from 'vitest';
-import { extractCategoryTool } from '../../tools/tools';
-import { ChatOpenAI } from "@langchain/openai";
+import { extractCategoryTool } from '../../tools/tools.js';
+import { ChatOpenAI, type ChatOpenAICallOptions } from "@langchain/openai";
 
 test('extractCategoryTool input validation', async () => {
-  const llm = new ChatOpenAI({
+  const llm = new ChatOpenAI<ChatOpenAICallOptions>({
     modelName: 'gpt-3.5-turbo',
     temperature: 0.1,
   });
@@ -15,7 +15,7 @@ test('extractCategoryTool input validation', async () => {
   };
 
   // This should not throw
-  await expect(extractCategoryTool.call(validInput))
+  await expect(extractCategoryTool.invoke(validInput))
     .resolves.toBeDefined();
 
   // Test invalid input
@@ -25,6 +25,6 @@ test('extractCategoryTool input validation', async () => {
   };
 
   // This should throw with specific error
-  await expect(extractCategoryTool.call(invalidInput))
+  await expect(extractCategoryTool.invoke(invalidInput))
     .rejects.toThrow('Received tool input did not match expected schema');
 }); 

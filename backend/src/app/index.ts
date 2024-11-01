@@ -13,14 +13,13 @@ import {
   verifyParams,
   resetState
 } from "./tools/tools.js";
-import { StateGraph, END, START, Annotation } from "@langchain/langgraph";
-import { RunnableConfig } from "@langchain/core/runnables";
-import { apiValidators } from "./validators/apiValidators.js";
+import { StateGraph, END, START } from "@langchain/langgraph";
 import { GraphDebugger } from "./debug/graphDebugger.js";
+import { apiValidators } from "./validators/apiValidators.js"; 
 
 dotenv.config({ path: '../.env' });
 
-// Define channel reducers properly
+// Keep existing channel definitions
 const graphChannels = {
   llm: {
     value: (old: ChatOpenAI | null, next: any) => next ?? old,
@@ -126,52 +125,44 @@ const graphChannels = {
 } as const;
 
 
-/**
- * Creates and configures the graph.
- *
- * @returns {CompiledStateGraph} - The compiled state graph.
- */
 export function createGraph() {
-  const debugger = new GraphDebugger();
+  const graphDebugger = new GraphDebugger();
   
   const graph = new StateGraph<GraphState>({
     channels: graphChannels
   });
 
+  // Define nodes with explicit tool execution
   return graph
-    .addNode("extract_category_node", async (input) => {
-      try {
-        const output = await extractCategoryTool.call(input);
-        debugger.logTransition("extract_category_node", input, output);
-        return output;
-      } catch (error) {
-        debugger.logTransition("extract_category_node", input, {}, error as Error);
-        throw error;
-      }
-    })
+    .addNode("extract_category_node", extractCategoryTool)
     .addNode("get_apis_node", getApis)
     .addNode("select_api_node", selectApiTool)
     .addNode("extract_params_node", extractParametersTool)
     .addNode("execute_request_node", createFetchRequestTool)
     .addNode("reset_state_node", resetState)
+    
+    // Define explicit edges
     .addEdge("extract_category_node", "get_apis_node")
     .addEdge("get_apis_node", "select_api_node")
     .addEdge("select_api_node", "extract_params_node")
-    .addConditionalEdges(
-      "extract_params_node",
-      async (input: GraphState, config?: RunnableConfig) => {
-        console.log("\n=== Conditional Edge Input ===");
-        console.log(JSON.stringify(input, null, 2));
-        const result = await verifyParams(input);
-        if (result === "execute_request_node") {
-          return result;
-        }
-        return END;
-      }
-    )
+    .addEdge("extract_params_node", "execute_request_node")
     .addEdge("execute_request_node", "reset_state_node")
     .addEdge("reset_state_node", END)
     .addEdge(START, "extract_category_node")
+    
+    // Add conditional edges for validation
+    .addConditionalEdges(
+      "extract_params_node",
+      async (state: GraphState) => {
+        try {
+          const result = await verifyParams(state);
+          return result;
+        } catch (error) {
+          console.error("Parameter validation failed:", error);
+          return END;
+        }
+      }
+    )
     .compile();
 }
 
@@ -207,7 +198,7 @@ export async function main(queries: string[]): Promise<GraphState[]> {
         console.log('\n=== Stream Output ===');
         finalState = output;
         
-        // Log important state changes
+        // Keep existing logging
         if (output.bestApi) {
           console.log('Selected API:', output.bestApi.api_name);
           
@@ -251,13 +242,9 @@ export async function main(queries: string[]): Promise<GraphState[]> {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
-      throw error; // Re-throw to be caught by test harness
+      throw error;
     }
   }
 
   return results;
 }
-
-// Test with a single query first
-const testQuery = "What are the top trending tracks on Audius?";
-main([testQuery]).catch(console.error);
