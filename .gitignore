@@ -10,7 +10,14 @@ test-args.txt
 .\#*
 /atris-backend
 /atris-backend/*
-atris-backend-audius/*
+/atris-backend-audius
+/atris-backend-audius/*
+/major_refactor_docs
+/major_refactor_docs/*
+/blog-posts
+/blog-posts/*
+/backend/src/app/dev_process_documentation
+/backend/src/app/dev_process_documentation/*
 tests/baselines/local/*
 tests/baselines/local.old/*
 tests/services/baselines/local/*
@@ -21,7 +28,6 @@ tests/baselines/local/projectOutput/*
 tests/baselines/reference/testresults.tap
 tests/services/baselines/prototyping/local/*
 tests/services/browser/typescriptServices.js
-blog-posts/*
 src/harness/*.js
 src/compiler/diagnosticInformationMap.generated.ts
 src/compiler/diagnosticMessages.generated.json
