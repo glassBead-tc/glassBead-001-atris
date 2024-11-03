@@ -1,9 +1,9 @@
-import { sdk } from './sdkClient.js';
+import { audiusSdk } from './sdkClient.js';
 import { apiLogger } from './logger.js';
 
 async function testGetTrendingTracks() {
   try {
-    const response = await sdk.tracks.getTrendingTracks();
+    const response = await audiusSdk.tracks.getTrendingTracks();
     apiLogger.debug("Test Get Trending Tracks Response:", JSON.stringify(response, null, 2));
     
     if (response.data && response.data.length > 0) {

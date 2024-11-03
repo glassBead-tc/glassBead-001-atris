@@ -1,8 +1,8 @@
 {
-  "name": "anytool-template",
+  "name": "atris",
   "private": true,
   "version": "1.0.0",
-  "author": "Brace Sproul",
+  "author": "glassBead-001",
   "license": "MIT",
   "workspaces": [
     "backend"

@@ -1,5 +1,6 @@
-import { tool } from "@langchain/core/tools";
-import { z } from "zod";
+import { audiusSdk } from '../sdkClient.js'
+import { tool } from "@langchain/core/tools"
+import { z } from "zod"
 import { GraphState, DatasetSchema, ComplexityLevel, EntityType, QueryType, AudiusCorpus } from "../types.js";
 import fs from "fs";
 import { TRIMMED_CORPUS_PATH } from "../constants.js";
@@ -17,9 +18,6 @@ const EXTRACT_HIGH_LEVEL_CATEGORIES: Record<string, ApiCategory> = {
   'Search Playlists': 'Playlists',
   'Get Genre Info': 'Tracks'  // Genre info comes from track endpoints
 } as const;
-
-// Add at the top with other imports and constants
-const BASE_URL = "https://api.audius.co/v1";
 
 /**
  * Selects the appropriate SDK function based on the user's query.
@@ -254,67 +252,59 @@ function analyzeComplexity(query: string): ComplexityLevel {
  */
 export const createFetchRequestTool = tool(
   async (input: { 
-    parameters: Record<string, any>, 
-    bestApi: { api_url: string, method: string },
-    selectedHost: string
+    parameters: Record<string, any>,
+    bestApi: { api_name: string }
   }) => {
-    // Filter and rename parameters
-    const filteredParams: Record<string, string | number> = {
-      app_name: 'ATRIS' // Add your app name here
-    };
-    if (input.parameters.time) {
-      filteredParams['time'] = input.parameters.time;
-    }
-    if (input.parameters.limit) {
-      filteredParams['limit'] = input.parameters.limit;
-    }
-    const queryParams = new URLSearchParams(filteredParams as Record<string, string>);
-    // Ensure the 'v1/' prefix is included in the URL
-    const url = `${input.selectedHost}/v1${input.bestApi.api_url}?${queryParams}`;
-    console.log("Fetching URL:", url);
+    console.log("\n=== Execute SDK Request ===")
+    console.log("Input:", input)
 
     try {
-      const response = await fetch(url, { 
-        method: input.bestApi.method,
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      if (!response.ok) {
-        console.error(`HTTP error! status: ${response.status}`);
-        const errorText = await response.text();
-        console.error("Error response:", errorText);
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const data = await response.json();
-        console.log("API Response Data:", data);
-        return { response: data || null };
-      } else {
-        const text = await response.text();
-        console.error("Unexpected response type. Expected JSON:", text);
-        throw new Error("Received non-JSON response from API.");
-      }
+      const response = await executeSDKMethod(input.bestApi.api_name, input.parameters)
+      return { response }
     } catch (error) {
-      console.error("Fetch error:", error);
-      throw error;
+      console.error("SDK request failed:", error)
+      throw error
     }
   },
   {
     name: "create_fetch_request",
-    description: "Makes the API request to Audius",
+    description: "Executes request using Audius SDK",
     schema: z.object({
       parameters: z.record(z.any()),
       bestApi: z.object({
-        api_url: z.string(),
-        method: z.string()
-      }),
-      selectedHost: z.string()
+        api_name: z.string()
+      })
     })
   }
-);
+)
+
+// Helper function to map API names to SDK methods
+async function executeSDKMethod(apiName: string, params: Record<string, any>) {
+  console.log("\n=== Execute SDK Method ===");
+  console.log("API Name:", apiName);
+  console.log("Input Parameters:", params);
+  
+  let request;
+  switch(apiName) {
+    case 'Get Trending Tracks':
+      request = {
+        time: "week" as const,  // Using exact string literal from enum
+        genre: "all"  // Added default genre
+      };
+      console.log("Sending request to tracks.getTrendingTracks:", request);
+      return audiusSdk.tracks.getTrendingTracks(request);
+      
+    case 'Search Tracks':
+      request = {
+        query: params.query
+      };
+      console.log("Sending request to tracks.searchTracks:", request);
+      return audiusSdk.tracks.searchTracks(request);
+      
+    default:
+      throw new Error(`Unsupported API: ${apiName}`);
+  }
+}
 
 export const resetState = tool(
   async (input: Record<string, any>): Promise<Partial<GraphState>> => {
@@ -457,35 +447,19 @@ export function verifyParams(input: GraphState): Promise<"execute_request_node" 
   return Promise.resolve("execute_request_node");
 }
 
-// New Tool: Select Host
-export const selectHostTool = tool(
-  async (): Promise<{ selectedHost: string }> => {
-    console.log("\n=== Select Host Tool Processing ===");
-    
-    try {
-      const response = await fetch("https://api.audius.co");
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      
-      if (!data.data || !Array.isArray(data.data) || data.data.length === 0) {
-        throw new Error("No hosts available from Audius API.");
-      }
-      
-      // Select the first host for simplicity. You can implement a selection strategy if needed.
-      const selectedHost = data.data[0];
-      
-      console.log("Selected Host:", selectedHost);
-      return { selectedHost };
-    } catch (error) {
-      console.error("Error selecting host:", error);
-      throw error;
+// Replace selectHostTool with SDK initialization check
+export const initSdkTool = tool(
+  async (): Promise<{ initialized: boolean }> => {
+    if (!audiusSdk) {
+      throw new Error("SDK not initialized")
     }
+    return { initialized: true }
   },
   {
-    name: "select_host",
-    description: "Selects the best available Audius host from the provided list",
+    name: "init_sdk",
+    description: "Verifies Audius SDK initialization",
     schema: z.object({})
   }
-);
+)
+
+// Rest of the code remains the same...

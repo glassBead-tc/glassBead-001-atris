@@ -9,12 +9,16 @@ import {
   createFetchRequestTool,
   verifyParams,
   resetState,
-  selectHostTool
+  initSdkTool
 } from "./tools/tools.js";
 import { StateGraph, END, START } from "@langchain/langgraph";
 import { apiValidators } from "./validation/validators/apiValidators.js"; 
 
-dotenv.config({ path: '../.env' });
+dotenv.config();
+
+// Debug logging for environment variables
+console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? 'Set' : 'Not set');
+console.log('AUDIUS_API_KEY:', process.env.AUDIUS_API_KEY ? 'Set' : 'Not set');
 
 // Keep existing channel definitions
 const graphChannels = {
@@ -261,81 +265,61 @@ export function createGraph() {
     channels: graphChannels
   });
 
-  // Add logging for state transitions
   return graph
-  .addNode("select_host_node", async (state: GraphState) => {
-    console.log("\n=== Selecting Host ===");
-    const result = await selectHostTool.invoke({});
-    return result;
+    .addNode("init_sdk_node", async () => {
+      const result = await initSdkTool.invoke({})
+      return result
     })
-  .addNode("extract_category_node", async (state: GraphState) => {
-      console.log("\n=== State Before extract_category_node Exit ===");
-      console.log(JSON.stringify(state, null, 2));
+    .addNode("extract_category_node", async (state: GraphState) => {
       const result = await extractCategoryTool.invoke({
         query: state.query || ''
-      });
-      return result;
+      })
+      return result
     })
-  .addNode("select_api_node", selectApiTool,)
-  .addNode("extract_params_node", extractParametersTool)
-.addNode("execute_request_node", async (state: GraphState) => {
-  const { parameters, bestApi, selectedHost } = state;
-    
-  if (!bestApi) {
-      throw new Error("No bestApi found in state.");
-  }
+    .addNode("select_api_node", selectApiTool)
+    .addNode("extract_params_node", extractParametersTool)
+    .addNode("execute_request_node", async (state: GraphState) => {
+      const { parameters, bestApi } = state
+      
+      if (!bestApi) {
+        throw new Error("No bestApi found in state")
+      }
 
-  if (!selectedHost) {
-      throw new Error("No selectedHost found in state.");
-  }
+      const input = {
+        parameters: parameters || {},
+        bestApi: {
+          api_name: bestApi.api_name
+        }
+      }
 
-  const input = {
-      parameters: parameters || {},
-      bestApi: {
-        api_url: bestApi.api_url,
-        method: bestApi.method
-      },
-      selectedHost
-  };
-
-  console.log("\n=== execute_request_node Input ===");
-  console.log("Parameters:", JSON.stringify(parameters, null, 2));
-  console.log("Best API:", JSON.stringify(bestApi, null, 2));
-  console.log("Selected Host:", selectedHost);
-  console.log("Constructed Input:", JSON.stringify(input, null, 2));
-
-  const result = await createFetchRequestTool.invoke(input);
-  return result;
-})
+      const result = await createFetchRequestTool.invoke(input)
+      return result
+    })
     .addNode("reset_state_node", resetState)
     
-    // Update edges to include host selection
-    .addEdge(START, "select_host_node")  // 
-    .addEdge("select_host_node", "extract_category_node")
+    // Update edges
+    .addEdge(START, "init_sdk_node")
+    .addEdge("init_sdk_node", "extract_category_node")
     .addEdge("extract_category_node", "select_api_node")
     .addEdge("select_api_node", "extract_params_node")
     .addEdge("extract_params_node", "execute_request_node")
     .addEdge("execute_request_node", "reset_state_node")
     .addEdge("reset_state_node", END)
     
-    // Keep conditional edges for validation
+    // Keep conditional edges
     .addConditionalEdges(
       "extract_params_node",
       async (state: GraphState) => {
-        console.log("\n=== State Transition ===");
-        console.log("Current Node:", "extract_params_node");
-        console.log("State Before Transition:", JSON.stringify(state, null, 2));
         try {
-          const result = await verifyParams(state);
-          console.log("Transition Result:", result);
-          return result;
+          const result = await verifyParams(state)
+          return result
         } catch (error) {
-          console.error("Transition Error:", error);
-          return END;
+          console.error("Params verification failed:", error)
+          return END
         }
       }
     )
-    .compile();
+    .compile()
 }
 
 /**
