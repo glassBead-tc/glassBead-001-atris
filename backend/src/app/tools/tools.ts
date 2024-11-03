@@ -5,6 +5,7 @@ import { GraphState, DatasetSchema, ComplexityLevel, EntityType, QueryType, Audi
 import fs from "fs";
 import { TRIMMED_CORPUS_PATH } from "../constants.js";
 import { END } from "@langchain/langgraph";
+import type { Track, TracksResponse, GetTrendingTracksRequest, GetTrendingTracksTimeEnum } from '@audius/sdk';
 
 // Add at the top with other type imports
 type ApiCategory = 'Tracks' | 'Playlists' | 'Users';
@@ -21,9 +22,6 @@ const EXTRACT_HIGH_LEVEL_CATEGORIES: Record<string, ApiCategory> = {
 
 /**
  * Selects the appropriate SDK function based on the user's query.
- *
- * @param {object} input - The input object containing state information.
- * @returns {Promise<Partial<GraphState>>} - The updated graph state.
  */
 export const selectApiTool = tool(
   async (input: { 
@@ -245,25 +243,31 @@ function analyzeComplexity(query: string): ComplexityLevel {
 }
 
 /**
- * Tool to create and execute API fetch requests based on `bestApi`, `parameters`, and `selectedHost`, including response formatting.
- *
- * @param {object} input - The input object containing `bestApi`, `parameters`, and `selectedHost`.
- * @returns {Promise<{ response: any }>} - The API response.
+ * Tool to create and execute API fetch requests.
  */
 export const createFetchRequestTool = tool(
   async (input: { 
-    parameters: Record<string, any>,
-    bestApi: { api_name: string }
-  }) => {
+    parameters: Record<string, any>;
+    bestApi: { api_name: string };
+  }): Promise<{ response: TracksResponse }> => {
     console.log("\n=== Execute SDK Request ===")
     console.log("Input:", input)
 
     try {
-      const response = await executeSDKMethod(input.bestApi.api_name, input.parameters)
-      return { response }
+      // Extract only the parameters needed for the SDK call
+      const sdkParams = extractSdkParameters(input.bestApi.api_name, input.parameters);
+      console.log("SDK Parameters:", sdkParams);
+
+      const response = await executeSDKMethod(input.bestApi.api_name, sdkParams);
+      return { response };
     } catch (error) {
       console.error("SDK request failed:", error)
-      throw error
+      // Return empty data array on error to maintain schema
+      return {
+        response: {
+          data: []
+        }
+      };
     }
   },
   {
@@ -276,7 +280,23 @@ export const createFetchRequestTool = tool(
       })
     })
   }
-)
+);
+
+// Helper function to extract only the parameters needed for each SDK method
+function extractSdkParameters(apiName: string, params: Record<string, any>): Record<string, any> {
+  switch(apiName) {
+    case 'Get Trending Tracks':
+      return {
+        time: "allTime" // Changed from using genre to using time for allTime
+      };
+    case 'Search Tracks':
+      return {
+        query: params.query
+      };
+    default:
+      throw new Error(`Unsupported API: ${apiName}`);
+  }
+}
 
 // Helper function to map API names to SDK methods
 async function executeSDKMethod(apiName: string, params: Record<string, any>) {
@@ -284,22 +304,14 @@ async function executeSDKMethod(apiName: string, params: Record<string, any>) {
   console.log("API Name:", apiName);
   console.log("Input Parameters:", params);
   
-  let request;
   switch(apiName) {
     case 'Get Trending Tracks':
-      request = {
-        time: "week" as const,  // Using exact string literal from enum
-        genre: "all"  // Added default genre
-      };
-      console.log("Sending request to tracks.getTrendingTracks:", request);
-      return audiusSdk.tracks.getTrendingTracks(request);
+      console.log("Sending request to tracks.getTrendingTracks:", params);
+      return audiusSdk.tracks.getTrendingTracks(params);
       
     case 'Search Tracks':
-      request = {
-        query: params.query
-      };
-      console.log("Sending request to tracks.searchTracks:", request);
-      return audiusSdk.tracks.searchTracks(request);
+      console.log("Sending request to tracks.searchTracks:", params);
+      return audiusSdk.tracks.searchTracks(params);
       
     default:
       throw new Error(`Unsupported API: ${apiName}`);
@@ -351,7 +363,7 @@ export const extractParametersTool = tool(
     parameters: {
       entityName: string | null;
       query: string;
-      time?: string;
+      time?: GetTrendingTracksTimeEnum;
       genre?: string;
       limit?: number;
     }
@@ -363,7 +375,7 @@ export const extractParametersTool = tool(
     const parameters: {
       entityName: string | null;
       query: string;
-      time?: string;
+      time?: GetTrendingTracksTimeEnum;
       genre?: string;
       limit?: number;
     } = {
@@ -373,7 +385,7 @@ export const extractParametersTool = tool(
 
     // Add trending-specific parameters
     if (input.bestApi.api_name.toLowerCase().includes('trending')) {
-      parameters.time = 'week';
+      parameters.time = "allTime"; // Changed from week to allTime
       parameters.limit = 10;
       // Genre is optional, leave undefined unless specified
     }
@@ -461,5 +473,3 @@ export const initSdkTool = tool(
     schema: z.object({})
   }
 )
-
-// Rest of the code remains the same...

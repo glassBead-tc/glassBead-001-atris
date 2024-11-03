@@ -1,5 +1,5 @@
 import { ChatOpenAI } from "@langchain/openai";
-import { GraphState, ErrorState, DatasetSchema, ComplexityLevel, EntityType, QueryType, TrackData, UserData, PlaylistData } from "./types.js";
+import { GraphState, ErrorState, DatasetSchema, ComplexityLevel, EntityType, QueryType } from "./types.js";
 import { Messages } from '@langchain/langgraph'
 import dotenv from 'dotenv';
 import {
@@ -13,6 +13,7 @@ import {
 } from "./tools/tools.js";
 import { StateGraph, END, START } from "@langchain/langgraph";
 import { apiValidators } from "./validation/validators/apiValidators.js"; 
+import type { TracksResponse } from '@audius/sdk';
 
 dotenv.config();
 
@@ -99,8 +100,7 @@ const graphChannels = {
     default: () => null
   },
   response: {
-    value: (old: { data: (TrackData | UserData | PlaylistData)[] } | null, 
-           next: { data: (TrackData | UserData | PlaylistData)[] } | null) => {
+    value: (old: TracksResponse | null, next: TracksResponse | null) => {
       console.log("\n=== Response Channel Update ===");
       console.log("Old State:", old);
       console.log("Next State:", next);
@@ -279,21 +279,31 @@ export function createGraph() {
     .addNode("select_api_node", selectApiTool)
     .addNode("extract_params_node", extractParametersTool)
     .addNode("execute_request_node", async (state: GraphState) => {
-      const { parameters, bestApi } = state
+      const { parameters, bestApi } = state;
       
       if (!bestApi) {
-        throw new Error("No bestApi found in state")
+        throw new Error("No bestApi found in state");
       }
 
-      const input = {
+      // Create a properly formatted input object that matches the tool's schema
+      const toolInput = {
         parameters: parameters || {},
         bestApi: {
           api_name: bestApi.api_name
         }
+      };
+
+      // Validate the input structure before invoking the tool
+      if (!toolInput.parameters || typeof toolInput.parameters !== 'object') {
+        throw new Error("Invalid parameters format");
       }
 
-      const result = await createFetchRequestTool.invoke(input)
-      return result
+      if (!toolInput.bestApi?.api_name || typeof toolInput.bestApi.api_name !== 'string') {
+        throw new Error("Invalid bestApi format");
+      }
+
+      const result = await createFetchRequestTool.invoke(toolInput);
+      return result;
     })
     .addNode("reset_state_node", resetState)
     

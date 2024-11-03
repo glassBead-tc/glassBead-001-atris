@@ -1,6 +1,5 @@
 // backend/app/tools/utils/calculateGenrePopularity.ts
 import { apiLogger } from '../../logger.js';
-import { TrackData } from '../../types.js';
 
 /**
  * Calculates genre popularity using a Pareto distribution.
