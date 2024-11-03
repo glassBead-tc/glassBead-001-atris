@@ -8,6 +8,9 @@ test-args.txt
 ~*.docx
 \#*\#
 .\#*
+/atris-backend
+/atris-backend/*
+atris-backend-audius/*
 tests/baselines/local/*
 tests/baselines/local.old/*
 tests/services/baselines/local/*

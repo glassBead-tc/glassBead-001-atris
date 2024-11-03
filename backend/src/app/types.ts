@@ -22,7 +22,19 @@ export interface DatasetSchema {
   required_parameters: DatasetParameters[];
   optional_parameters: DatasetParameters[];
   method: string;
-  template_response?: Record<string, any>;
+  template_response?: {
+    data: Array<{
+      id: string;
+      title?: string;
+      name?: string;
+      user?: {
+        id: string;
+        name: string;
+      };
+      duration?: number;
+      play_count?: number;
+    }>;
+  };
   api_url: string;
   parameters?: Record<string, any>;
   default_parameters?: { [key: string]: any };
@@ -52,8 +64,9 @@ export interface GraphState {
   bestApi: DatasetSchema | null;
   parameters: Record<string, any> | null;
   response: {
-    data: Array<TrackData | UserData | PlaylistData>
+    data: Array<TrackData | UserData | PlaylistData>;
   } | null;
+  formattedResponse: string | null;
   complexity: ComplexityLevel | null;
   isEntityQuery: boolean | null;
   entityName: string | null;
@@ -67,21 +80,22 @@ export interface GraphState {
   secondaryApi: DatasetSchema | null;
   secondaryResponse: string | null;
   initialState: GraphState | null;
-  formattedResponse: string | null;
 }
 
 export type QueryType =
   | 'general'
   | 'trending_tracks'
-  | 'search'
-  | 'entity_stats'
-  | 'trending_playlists';
+  | 'trending_playlists'
+  | 'tracks'
+  | 'users'
+  | 'playlists'
+  | 'genre_info';
 
 export type EntityType = 'track' | 'user' | 'playlist' | null;
 
 export type TrackData = {
-  id: string;
   type: 'track';
+  id: string;
   title: string;
   artwork: TrackArtwork;  
   description: string | null;
@@ -102,8 +116,8 @@ export type TrackData = {
 };
 
 export type UserData = {
-  id: string;
   type: 'user';
+  id: string;
   name: string;
   handle: string;
   bio: string | null;
@@ -184,7 +198,7 @@ export function isUserData(entity: any): entity is UserData {
  * @returns True if entity is TrackData, else false.
  */
 export function isTrackData(entity: any): entity is TrackData {
-  return entity && typeof entity === 'object' && 'title' in entity;
+  return entity?.type === 'track';
 }
 
 /**
@@ -308,6 +322,17 @@ export const wordToPropertyMap: Record<string, TrackProperty | UserProperty | Pl
   'favorite': 'favoriteCount',
   'favorites': 'favoriteCount'
 } as const;
+
+export type TrendingTrackData = {
+  type: 'track';
+  id: string;
+  title: string;
+  playCount: number;
+  rank: number;
+  user: {
+    name: string;
+  };
+};
 
 
 
