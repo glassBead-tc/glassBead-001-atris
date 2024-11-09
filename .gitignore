@@ -8,8 +8,8 @@ test-args.txt
 ~*.docx
 \#*\#
 .\#*
-/blog_posts
-/blog_posts/*
+/blog-posts
+/blog-posts/*
 /atris-backend
 /atris-backend/*
 /atris-backend-audius
