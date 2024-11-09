@@ -47,55 +47,59 @@ import { GetTrendingTracksRequest, GetFavoritesRequest } from '@audius/sdk/dist/
 import { Messages, END } from '@langchain/langgraph'
 import { MinimalAudiusSDK } from './services/sdkClient.js';
 
-// Re-export the types we need
-export { Track, 
-  User, 
-  Playlist, 
-  TracksResponse, 
-  UsersResponse, 
-  PlaylistResponse, 
-  TrackCommentsResponse, 
-  StemsResponse, 
-  Reposts, 
-  FavoritesResponse, 
-  FollowersResponse, 
-  FollowingResponse,
-  SearchFullResponse,
-  RemixablesResponse,
-  RemixingResponse,
-  SearchModel,
-  RemixNotification,
-  FullRemix,
-  UserFull,
-  PlaylistFull,
+export { SearchFullResponse, 
+  RemixablesResponse, 
+  RemixingResponse, 
+  SearchModel, 
+  RemixNotification, 
+  FullRemix, 
+  UserFull, 
+  PlaylistFull, 
   TrackFull,
-  RemixersResponse,
-  SearchRequest,
-  SearchAutocompleteRequest,
+  RemixesResponse,
+  PlaylistAddedTimestamp,
+  PlaylistArtwork,
+  PlaylistLibrary,
+  PlaylistResponse,
+  FullPlaylistResponse,
+  FullGetSupporters,
+  SearchKindEnum, 
+  SearchAutocompleteKindEnum, 
+  SearchSortMethodEnum, 
+  SearchRequest, 
+  SearchAutocompleteRequest, 
+  SearchAutocompleteSortMethodEnum,
+  GetTrendingTracksTimeEnum,
   GetBulkTracksRequest,
   GetFeelingLuckyTracksRequest,
   GetMostLovedTracksRequest,
   GetNFTGatedTrackSignaturesRequest,
   GetTrendingUSDCPurchaseTracksTimeEnum,
   GetTrackRemixesRequest,
-  RemixesResponse,
-  FullPlaylistResponse,
-  PlaylistAddedTimestamp,
-  PlaylistArtwork,
-  PlaylistLibrary,
-  GetSupporters,
-  SearchKindEnum,
-  SearchSortMethodEnum,
-  SearchAutocompleteKindEnum,
-  SearchAutocompleteSortMethodEnum,
-  GetTrendingTracksTimeEnum,
-  GetTrendingPlaylistsTimeEnum,
-  TrendingPlaylistsResponse,
   GetTrendingTracksRequest,
-  GetTrendingPlaylistsRequest,
-  FullGetSupporters,
   GetFavoritesRequest,
-};
+  FollowersResponse,
+  FollowingResponse,
+  RemixersResponse,
+  GetSupporters,
+  GetTrendingPlaylistsRequest,
+  TrendingPlaylistsResponse,
+  GetTrendingPlaylistsTimeEnum,
+  User, 
+  Playlist, 
+  Track, 
+  FavoritesResponse,
+  UsersResponse,
+  TracksResponse,
+  TrackCommentsResponse,
+  StemsResponse,
+  Reposts,
+}
+
+// Define property types first
+export type TrackProperty = 'playCount' | 'repostCount' | 'favoriteCount' | 'genre';
+export type UserProperty = 'followerCount' | 'trackCount' | 'playlistCount';
+export type PlaylistProperty = 'trackCount' | 'repostCount' | 'favoriteCount';
 
 export type ApiResponse = 
   | TracksResponse 
@@ -106,7 +110,10 @@ export type ApiResponse =
   | Reposts
   | FavoritesResponse;
 
-export type ComplexityLevel = 'simple' | 'moderate' | 'complex';
+export type ComplexityLevel = 
+  | 'simple'
+  | 'moderate'
+  | 'complex';
 
 export type QueryCategorization = {
   queryType: QueryType;
@@ -116,38 +123,34 @@ export type QueryCategorization = {
   entityName: string | null;
 }
 
-export interface DatasetSchema {
+// Base interface for API endpoints
+export interface ApiEndpoint {
   id: string;
   category_name: string;
   tool_name: string;
   api_name: string;
   api_description: string;
-  required_parameters: DatasetParameters[];
-  optional_parameters: DatasetParameters[];
+  required_parameters: Array<{
+    name: string;
+    type: string;
+    description: string;
+    default: string;
+  }>;
+  optional_parameters: Array<{
+    name: string;
+    type: string;
+    description: string;
+    default: string;
+  }>;
   method: string;
-  template_response?: {
-    data: Array<{
-      id: string;
-      title?: string;
-      name?: string;
-      user?: {
-        id: string;
-        name: string;
-      };
-      duration?: number;
-      play_count?: number;
-    }>;
+  template_response: {
+    data: any;
   };
   api_url: string;
-  parameters?: Record<string, any>;
-  default_parameters?: { [key: string]: any };
 }
 
-export interface DatasetParameters {
-  name: string;
-  description: string;
-  type: string;    // Must match the type sent to the API
-  default: any;    // Default value for the parameter
+export interface AudiusCorpus {
+  endpoints: ApiEndpoint[];
 }
 
 export type ErrorState = {
@@ -163,8 +166,8 @@ export interface GraphState {
   query: string | null;
   queryType: QueryType | null;
   categories: string[] | null;
-  apis: DatasetSchema[] | null;
-  bestApi: DatasetSchema | null;
+  apis: ApiEndpoint[] | null;
+  bestApi: ApiEndpoint | null;
   parameters: Record<string, any> | null;
   response: ApiResponse | null;
   formattedResponse: string | null;
@@ -176,7 +179,7 @@ export interface GraphState {
   errorHistory: ErrorState[];
   messages: Messages | null;
   messageHistory: Messages[];
-  secondaryApi: DatasetSchema | null;
+  secondaryApi: ApiEndpoint | null;
   secondaryResponse: string | null;
   sdk: MinimalAudiusSDK | null;
   initialized: boolean | null;
@@ -233,36 +236,6 @@ export interface AudiusCorpus {
   endpoints: ApiEndpoint[];
 }
 
-interface ApiEndpoint {
-  id: string;
-  category_name: string;
-  tool_name: string;
-  api_name: string;
-  api_description: string;
-  required_parameters: Array<{
-    name: string;
-    type: string;
-    description: string;
-    default: string;
-  }>;
-  optional_parameters: Array<{
-    name: string;
-    type: string;
-    description: string;
-    default: string;
-  }>;
-  method: string;
-  template_response: {
-    data: any; // Adjust this type based on your actual data structure
-  };
-  api_url: string;
-}
-
-// Add these type definitions
-export type TrackProperty = keyof Track;
-export type UserProperty = keyof User;
-export type PlaylistProperty = keyof Playlist;
-
 export const initialGraphState: GraphState = {
   llm: null,
   query: null,
@@ -308,7 +281,17 @@ export type StateDefinition = {
 };
 
 export interface SelectAPIResponse {
-  api: DatasetSchema;
+  api: ApiEndpoint;
   parameters: Record<string, any>;
   error: boolean | null;
+}
+
+// This extends ApiEndpoint but adds fields that conflict with SDK types
+export interface DatasetSchema extends ApiEndpoint {
+  description: string;
+  parameters: {
+    required: string[];
+    optional: string[];
+  };
+  endpoint: string;
 }

@@ -5,11 +5,11 @@ import { GraphState,
   DatasetSchema, 
   ComplexityLevel, 
   EntityType, 
-  QueryType, 
   AudiusCorpus,
   GetTrendingTracksRequest,
   SearchFullResponse,
   GetFavoritesRequest,
+  ApiEndpoint,
 } from "../types.js";
 import fs from "fs";
 import { TRIMMED_CORPUS_PATH, BASE_URL } from "../constants.js";
@@ -32,6 +32,7 @@ import { TrackSDKMethods } from "../services/entity_methods/tracks/trackSDKMetho
 import { UserSDKMethods } from "../services/entity_methods/users/userSDKMethods.js";
 import { PlaylistSDKMethods } from "../services/entity_methods/playlists/playlistSDKMethods.js";
 import dotenv from 'dotenv';
+import { parseQuery } from './utils/searchUtils.js';
 
 // Add at the top with other type imports
 type ApiCategory = 'Tracks' | 'Playlists' | 'Users';
@@ -67,6 +68,20 @@ const EXTRACT_HIGH_LEVEL_CATEGORIES: Record<string, ApiCategory> = {
 const apiKey = dotenv.config().parsed?.AUDIUS_API_KEY;
 const baseUrl = BASE_URL;
 
+// At the top of the file where types are defined
+type QueryType = 
+  | 'trending_tracks'
+  | 'trending_playlists'
+  | 'trending_artists'
+  | 'artists_by_genre'
+  | 'top_artists'
+  | 'rising_artists'
+  | 'genre_info'
+  | 'general'
+  | 'tracks'
+  | 'users'
+  | 'playlists';
+
 /**
  * Selects the appropriate SDK function based on the user's query.
  */
@@ -85,7 +100,7 @@ export const selectApiTool = tool(
       const corpus: AudiusCorpus = JSON.parse(rawData);
       
       // Filter APIs by query type and category
-      const apis = corpus.endpoints.filter(endpoint => {
+      const apis = corpus.endpoints.filter((endpoint: ApiEndpoint) => {
         // For trending queries
         if (input.queryType === 'trending_tracks') {
           return endpoint.api_name === 'Get Trending Tracks';
@@ -95,13 +110,13 @@ export const selectApiTool = tool(
         }
 
         // For search queries
-        if (input.queryType === 'tracks') {
+        if (input.queryType === 'tracks' as QueryType) {
           return endpoint.api_name === 'Search Tracks';
         }
-        if (input.queryType === 'users') {
+        if (input.queryType === 'users' as QueryType) {
           return endpoint.api_name === 'Search Users';
         }
-        if (input.queryType === 'playlists') {
+        if (input.queryType === 'playlists' as QueryType) {
           return endpoint.api_name === 'Search Playlists';
         }
 
@@ -124,7 +139,15 @@ export const selectApiTool = tool(
       const selectedApi = apis[0];
       
       return {
-        bestApi: selectedApi,
+        bestApi: {
+          ...selectedApi,
+          description: selectedApi.api_description,
+          parameters: {
+            required: selectedApi.required_parameters.map(p => p.name),
+            optional: selectedApi.optional_parameters.map(p => p.name)
+          },
+          endpoint: selectedApi.api_url
+        } as DatasetSchema,
         queryType: input.queryType,
         entityType: input.entityType
       };
@@ -153,70 +176,59 @@ export const extractCategoryTool = tool(
     categories: string[];
   }> => {
     const normalizedQuery = input.query.toLowerCase();
-
+    
+    // Use enhanced query parsing
+    const parsedQuery = parseQuery(normalizedQuery);
+    
     // Entity detection
     const entityType = detectEntityType(normalizedQuery);
     
-    // Query type detection
+    // Query type detection with enhanced patterns
     const queryType = (): QueryType => {
-      if (normalizedQuery.includes('trending')) {
-        if (normalizedQuery.includes('playlist')) {
-          return 'trending_playlists';
-        }
-        return 'trending_tracks';
+      switch (parsedQuery.type) {
+        case 'trending_artists':
+        case 'rising_artists':
+          return 'trending_artists' as QueryType;
+          
+        case 'artists_by_genre':
+          return 'artists_by_genre' as QueryType;
+          
+        case 'mostFollowers':
+          return 'top_artists' as QueryType;
+          
+        case 'trendingGenres':
+          return 'genre_info' as QueryType;
+          
+        case 'trending':
+          return parsedQuery.title?.includes('playlist') ? 
+            'trending_playlists' : 'trending_tracks';
+            
+        default:
+          return 'general' as QueryType;
       }
-      
-      if (normalizedQuery.includes('genre')) {
-        return 'genre_info';
-      }
-      
-      if (normalizedQuery.includes('playlist')) {
-        return 'playlists';
-      }
-      
-      if (normalizedQuery.includes('user') || normalizedQuery.includes('followers')) {
-        return 'users';
-      }
-      
-      if (normalizedQuery.includes('track') || normalizedQuery.includes('song') || normalizedQuery.includes('plays')) {
-        return 'tracks';
-      }
-      
-      return 'general';
     };
 
-    // Determine categories based on query type and context
+    // Enhanced category mapping
     const getCategories = (type: QueryType): string[] => {
-      const query = normalizedQuery;
-      
       switch (type) {
-        case 'trending_tracks':
-          return ['Get Trending Tracks'];
-        case 'trending_playlists':
-          return ['Get Trending Playlists'];
-        case 'tracks':
-          if (query.includes('comment')) return ['Get Track Comments'];
-          if (query.includes('stem')) return ['Get Track Stems'];
-          if (query.includes('favorite')) return ['Get Track Favorites'];
-          if (query.includes('repost')) return ['Get Track Reposts'];
-          return ['Search Tracks'];
-        case 'users':
-          if (query.includes('follower')) return ['Get User Followers'];
-          if (query.includes('following')) return ['Get User Following'];
-          if (query.includes('repost')) return ['Get User Reposts'];
-          if (query.includes('favorite')) return ['Get User Favorites'];
-          return ['Search Users'];
-        case 'playlists':
-          return ['Search Playlists'];
-        case 'genre_info':
-          return ['Get Genre Info'];
+        case 'trending_artists':
+          return ['Get Trending Tracks', 'Calculate Artist Popularity'];
+          
+        case 'artists_by_genre':
+          return ['Get Trending Tracks', 'Calculate Artist Popularity', 'Get Genre Info'];
+          
+        case 'top_artists':
+          return ['Get User Followers', 'Calculate Artist Popularity'];
+          
+        // ... existing cases ...
+        
         default:
           return [];
       }
     };
 
-    // Complexity analysis
-    const complexity = analyzeComplexity(normalizedQuery);
+    // Complexity analysis with new patterns
+    const complexity = analyzeComplexity(normalizedQuery, parsedQuery.type);
 
     const determinedQueryType = queryType();
     const result = {
@@ -224,7 +236,8 @@ export const extractCategoryTool = tool(
       entityType,
       isEntityQuery: entityType !== null,
       complexity,
-      categories: getCategories(determinedQueryType)
+      categories: getCategories(determinedQueryType),
+      parsedQuery  // Include parsed query for downstream use
     };
 
     return result;
@@ -249,48 +262,18 @@ function detectEntityType(query: string): EntityType | null {
   return null;
 };
 
-function analyzeComplexity(query: string): ComplexityLevel {
-  const normalizedQuery = query.toLowerCase();
+function analyzeComplexity(query: string, queryType: string): ComplexityLevel {
+  if (queryType === 'artists_by_genre' || 
+      queryType === 'rising_artists') {
+    return 'high' as ComplexityLevel;  
+  }
   
-  // Complex: Queries requiring historical trend analysis or multiple API calls
-  if (
-    // Time-based analysis
-    normalizedQuery.includes('over time') ||
-    normalizedQuery.includes('historical') ||
-    // Cross-time comparisons
-    normalizedQuery.includes('compared to last') ||
-    normalizedQuery.includes('versus previous') ||
-    // Pattern recognition
-    normalizedQuery.includes('pattern') ||
-    normalizedQuery.includes('correlation')
-  ) {
-    return 'complex';
+  if (queryType === 'trending_artists' ||
+      queryType === 'top_artists') {
+    return 'medium' as ComplexityLevel;  
   }
-
-  // Moderate: Multiple API calls or data aggregation
-  if (
-    // Current trending data
-    normalizedQuery.includes('trending') ||
-    // Genre popularity analysis
-    (normalizedQuery.includes('genre') && (
-      normalizedQuery.includes('most') ||
-      normalizedQuery.includes('popular') ||
-      normalizedQuery.includes('top')
-    )) ||
-    // Multiple entity queries
-    (normalizedQuery.match(/and/g)?.length || 0) > 0 ||
-    // Relationship queries
-    normalizedQuery.includes('followers') ||
-    normalizedQuery.includes('following') ||
-    normalizedQuery.includes('favorite') ||
-    normalizedQuery.includes('repost') ||
-    normalizedQuery.includes('comment')
-  ) {
-    return 'moderate';
-  }
-
-  // Simple: Direct property lookups
-  return 'simple';
+  
+  return 'low' as ComplexityLevel;
 }
 
 /**
@@ -555,7 +538,7 @@ export const extractParametersTool = tool(
   },
   {
     name: "extract_parameters",
-    description: "Extracts parameters from the query",
+    description: "Extract parameters from user query based on API requirements",
     schema: z.object({
       query: z.string(),
       entityType: z.enum(['track', 'user', 'playlist']).nullable(),
@@ -568,8 +551,28 @@ export const extractParametersTool = tool(
         required_parameters: z.array(z.any()),
         optional_parameters: z.array(z.any()),
         method: z.string(),
-        api_url: z.string()
-      })
+        api_url: z.string(),
+        description: z.string(),
+        parameters: z.object({
+          required: z.array(z.string()),
+          optional: z.array(z.string())
+        }),
+        endpoint: z.string(),
+        template_response: z.object({
+          data: z.any()
+        })
+      }).transform((data): DatasetSchema => ({
+        ...data,
+        description: data.api_description,
+        parameters: {
+          required: data.required_parameters.map(p => p.name),
+          optional: data.optional_parameters.map(p => p.name)
+        },
+        endpoint: data.api_url,
+        template_response: {
+          data: data.template_response?.data || null // Ensure data is always present
+        }
+      }))
     })
   }
 );
@@ -633,24 +636,37 @@ interface ApiTrack {
 export const formatResponseTool = tool(
   async (input: { response: { data: any[] } }): Promise<{ formattedResponse: string }> => {
     try {
-      const tracks = input.response.data;
-      const structured = tracks
+      const items = input.response.data;
+      
+      // Check if we're dealing with tracks or playlists
+      const isTrack = items[0]?.play_count !== undefined;
+      
+      const formatted = items
         .slice(0, 10)
-        .map((track, index) => {
-          const plays = track.play_count.toLocaleString();
-          const favorites = track.favorite_count.toLocaleString();
-          return `${index + 1}. "${track.title}" by ${track.user.name} (${plays} plays, ${favorites} favorites)`;
+        .map((item, index) => {
+          if (isTrack) {
+            const plays = item.play_count.toLocaleString();
+            const favorites = item.favorite_count.toLocaleString();
+            return `${index + 1}. "${item.title}" by ${item.user.name} (${plays} plays, ${favorites} favorites)`;
+          } else {
+            // Format for playlists - clarify that these are total plays across all tracks
+            const totalPlays = item.total_play_count.toLocaleString();
+            return `${index + 1}. "${item.playlist_name}" by ${item.user.name} (${item.track_count} tracks, ${totalPlays} total plays across all tracks)`;
+          }
         })
-        .join("\n");
+        .join('\n');
 
-      return { formattedResponse: structured };
+      return {
+        formattedResponse: formatted
+      };
     } catch (error) {
+      console.error('Error formatting response:', error);
       throw new Error(`Failed to format response: ${error}`);
     }
   },
   {
     name: "format_response",
-    description: "Formats track data into a structured string format",
+    description: "Formats response data into readable text",
     schema: z.object({
       response: z.object({
         data: z.array(z.any())
