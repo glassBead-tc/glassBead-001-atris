@@ -35,5 +35,7 @@ export const HIGH_LEVEL_CATEGORY_MAPPING = {
   // Add any additional categories as needed
 };
 
+export const BASE_URL = 'https://discovery-us-01.audius.openplayer.org/v1';
+
 // If the SDK provides these, we can import directly.
 export { Genre, Mood, StemCategory };
