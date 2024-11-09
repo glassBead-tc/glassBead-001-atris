@@ -1,34 +1,105 @@
 import { ChatOpenAI } from '@langchain/openai';
 import { 
-  TrackArtwork, 
   User, 
-  ProfilePicture, 
-  CoverPhoto, 
   Playlist, 
-  PlaylistAddedTimestamp, 
-  PlaylistArtwork, 
-  Access, 
   Track, 
   TracksResponse,
-  UsersResponse,
-  TrackResponse,
-  UserResponse,
-  PlaylistResponse,
   TrackCommentsResponse,
+  UsersResponse,
+  PlaylistResponse,
   StemsResponse,
   Reposts,
-  FavoritesResponse
+  FavoritesResponse,
+  FollowersResponse,
+  FollowingResponse,
+  RemixersResponse,
+  GetSupporters,
+  GetTrendingPlaylistsRequest,
+  TrendingPlaylistsResponse,
+  GetTrendingPlaylistsTimeEnum,
 } from "@audius/sdk";
+import { SearchFullResponse, 
+  RemixablesResponse, 
+  RemixingResponse, 
+  SearchModel, 
+  RemixNotification, 
+  FullRemix, 
+  UserFull, 
+  PlaylistFull, 
+  TrackFull,
+  RemixesResponse,
+  PlaylistAddedTimestamp,
+  PlaylistArtwork,
+  PlaylistLibrary,
+  FullPlaylistResponse,
+  FullGetSupporters,
+} from "@audius/sdk/dist/sdk/api/generated/full/models";
+import { SearchKindEnum, SearchAutocompleteKindEnum, SearchSortMethodEnum, SearchRequest, SearchAutocompleteRequest, SearchAutocompleteSortMethodEnum } from '@audius/sdk/dist/sdk/api/generated/full/apis/SearchApi.js';
+import { GetTrendingTracksTimeEnum,
+  GetBulkTracksRequest,
+  GetFeelingLuckyTracksRequest,
+  GetMostLovedTracksRequest,
+  GetNFTGatedTrackSignaturesRequest,
+  GetTrendingUSDCPurchaseTracksTimeEnum,
+  GetTrackRemixesRequest,
+ } from '@audius/sdk/dist/sdk/api/generated/full/apis/TracksApi.js';
+import { GetTrendingTracksRequest, GetFavoritesRequest } from '@audius/sdk/dist/sdk/api/generated/full/apis';
 import { Messages, END } from '@langchain/langgraph'
+import { MinimalAudiusSDK } from './services/sdkClient.js';
 
 // Re-export the types we need
-export { Track, TracksResponse };
+export { Track, 
+  User, 
+  Playlist, 
+  TracksResponse, 
+  UsersResponse, 
+  PlaylistResponse, 
+  TrackCommentsResponse, 
+  StemsResponse, 
+  Reposts, 
+  FavoritesResponse, 
+  FollowersResponse, 
+  FollowingResponse,
+  SearchFullResponse,
+  RemixablesResponse,
+  RemixingResponse,
+  SearchModel,
+  RemixNotification,
+  FullRemix,
+  UserFull,
+  PlaylistFull,
+  TrackFull,
+  RemixersResponse,
+  SearchRequest,
+  SearchAutocompleteRequest,
+  GetBulkTracksRequest,
+  GetFeelingLuckyTracksRequest,
+  GetMostLovedTracksRequest,
+  GetNFTGatedTrackSignaturesRequest,
+  GetTrendingUSDCPurchaseTracksTimeEnum,
+  GetTrackRemixesRequest,
+  RemixesResponse,
+  FullPlaylistResponse,
+  PlaylistAddedTimestamp,
+  PlaylistArtwork,
+  PlaylistLibrary,
+  GetSupporters,
+  SearchKindEnum,
+  SearchSortMethodEnum,
+  SearchAutocompleteKindEnum,
+  SearchAutocompleteSortMethodEnum,
+  GetTrendingTracksTimeEnum,
+  GetTrendingPlaylistsTimeEnum,
+  TrendingPlaylistsResponse,
+  GetTrendingTracksRequest,
+  GetTrendingPlaylistsRequest,
+  FullGetSupporters,
+  GetFavoritesRequest,
+};
 
 export type ApiResponse = 
   | TracksResponse 
   | UsersResponse 
-  | TrackResponse 
-  | UserResponse 
   | PlaylistResponse
   | TrackCommentsResponse
   | StemsResponse
@@ -105,19 +176,15 @@ export interface GraphState {
   errorHistory: ErrorState[];
   messages: Messages | null;
   messageHistory: Messages[];
-  selectedHost: string | null;
-  entity: Track | User | Playlist | null;
   secondaryApi: DatasetSchema | null;
   secondaryResponse: string | null;
-  initialState: GraphState | null;
-  end?: typeof END;
-  sdk?: any;
-  initialized?: boolean;
-  sdkInitialized?: boolean;
-  sdkConfig?: {
-    apiKey: string;
-    baseUrl: string;
-    initialized: boolean;
+  sdk: MinimalAudiusSDK | null;
+  initialized: boolean | null;
+  sdkInitialized: boolean | null;
+  sdkConfig: {
+    apiKey: string | null;
+    baseUrl: string | null;
+    initialized: boolean | null;
   };
 }
 
@@ -213,12 +280,17 @@ export const initialGraphState: GraphState = {
   messageHistory: [],
   isEntityQuery: false,
   entityName: null,
-  entity: null,
   parameters: null,
   complexity: null,
-  initialState: null,
+  initialized: null,
+  sdkInitialized: null,
+  sdkConfig: {
+    apiKey: null,
+    baseUrl: null,
+    initialized: null
+  },
+  sdk: null,
   entityType: null,
-  selectedHost: null
 };
 
 export type NodeNames =

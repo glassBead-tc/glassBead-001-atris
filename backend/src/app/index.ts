@@ -10,32 +10,12 @@ import {
   verifyParams,
   resetState,
   initSdkTool,
-  formatResponseTool
+  formatResponseTool,
+  enhanceResponseTool
 } from "./tools/tools.js";
 import { StateGraph, END, START } from "@langchain/langgraph";
-import type { 
-  TracksResponse,
-  UsersResponse,
-  TrackResponse,
-  UserResponse,
-  PlaylistResponse,
-  TrackCommentsResponse,
-  StemsResponse,
-  Reposts,
-  FavoritesResponse
-} from '@audius/sdk';
-import { getAudiusSdk } from './sdkClient.js';
+import { ApiResponse } from './types.js';
 
-type ApiResponse = 
-  | TracksResponse 
-  | UsersResponse 
-  | TrackResponse 
-  | UserResponse 
-  | PlaylistResponse
-  | TrackCommentsResponse
-  | StemsResponse
-  | Reposts
-  | FavoritesResponse;
 
 dotenv.config();
 
@@ -74,7 +54,7 @@ const graphChannels = {
     default: () => null
   },
   response: {
-    value: (old: ApiResponse | null, next: ApiResponse | null) => next ?? old,
+    value: (old: GraphState['response'], next: GraphState['response']) => next ?? old,
     default: () => null
   },
   complexity: {
@@ -109,14 +89,6 @@ const graphChannels = {
     value: (old: Messages[], next: Messages) => [...(old || []), next],
     default: () => []
   },
-  selectedHost: {
-    value: (old: string | null, next: string | null) => next ?? old,
-    default: () => null
-  },
-  entity: {
-    value: (old: any | null, next: any | null) => next ?? old,
-    default: () => null
-  },
   secondaryApi: {
     value: (old: DatasetSchema | null, next: DatasetSchema | null) => next ?? old,
     default: () => null
@@ -125,21 +97,41 @@ const graphChannels = {
     value: (old: string | null, next: string | null) => next ?? old,
     default: () => null
   },
-  initialState: {
-    value: (old: GraphState | null, next: GraphState | null) => next ?? old,
-    default: () => null
-  },
   formattedResponse: {
     value: (old: string | null, next: string | null) => next ?? old,
     default: () => null
   },
   initialized: {
-    value: (old: boolean | undefined, next: boolean | undefined) => next ?? old,
-    default: () => false
-  }
+    value: (old: boolean | null, next: boolean | null) => next ?? old,
+    default: () => null
+  },
+  sdkInitialized: {
+    value: (old: boolean | null, next: boolean | null) => next ?? old,
+    default: () => null
+  },
+  sdkConfig: {
+    value: (old: GraphState['sdkConfig'], next: GraphState['sdkConfig']) => {
+      if (!next) {
+        return {
+          apiKey: null,
+          baseUrl: null,
+          initialized: null
+        };
+      }
+      return next;
+    },
+    default: () => ({
+      apiKey: null,
+      baseUrl: null,
+      initialized: null
+    })
+  },
+  sdk: {
+    value: (old: any | null, next: any | null) => next ?? old,
+    default: () => null
+  },
 } as const;
 
-const audiusSdk = await getAudiusSdk();
 console.log("SDK initialized successfully");
 
 export function createGraph() {
@@ -149,10 +141,8 @@ export function createGraph() {
 
   return graph
     .addNode("init_sdk_node", async (state: GraphState) => {
-      console.log("\n=== Init SDK Node Start ===");
       try {
         const result = await initSdkTool.invoke({});
-        console.log("Init SDK Tool Result:", result);
         return result;
       } catch (error) {
         console.error("Error in init_sdk_node:", error);
@@ -160,9 +150,6 @@ export function createGraph() {
       }
     })
     .addNode("extract_category_node", async (state: GraphState) => {
-      console.log("\n=== Extract Category Node Start ===");
-      console.log("Input State:", state);
-      
       try {
         if (!state.query) {
           throw new Error("Extract category received null query");
@@ -172,12 +159,10 @@ export function createGraph() {
           query: state.query
         });
         
-        console.log("Category Extraction Result:", result);
         if (!result.queryType || !result.categories) {
           throw new Error("Extract category produced invalid state");
         }
         
-        console.log("=== Extract Category Node Complete ===");
         return result;
       } catch (error) {
         console.error("Error in extract_category_node:", error);
@@ -185,9 +170,6 @@ export function createGraph() {
       }
     })
     .addNode("select_api_node", async (state: GraphState) => {
-      console.log("\n=== Select API Node Start ===");
-      console.log("Input State:", state);
-      
       try {
         if (!state.queryType || !state.categories) {
           throw new Error("Select API received invalid state");
@@ -202,13 +184,11 @@ export function createGraph() {
           entityType: state.entityType,
           queryType: mappedQueryType
         });
-        console.log("API Selection Result:", result);
         
         if (!result.bestApi) {
           throw new Error("Select API produced invalid state");
         }
         
-        console.log("=== Select API Node Complete ===");
         return {
           ...result,
           queryType: state.queryType
@@ -219,9 +199,6 @@ export function createGraph() {
       }
     })
     .addNode("extract_params_node", async (state: GraphState) => {
-      console.log("\n=== Extract Params Node Start ===");
-      console.log("Input State:", state);
-      
       try {
         if (!state.query || !state.bestApi) {
           throw new Error("Missing required state for parameter extraction");
@@ -232,9 +209,7 @@ export function createGraph() {
           entityType: state.entityType,
           bestApi: state.bestApi
         });
-        console.log("Parameter Extraction Result:", result);
         
-        console.log("=== Extract Params Node Complete ===");
         return result;
       } catch (error) {
         console.error("Error in extract_params_node:", error);
@@ -257,13 +232,13 @@ export function createGraph() {
         };
 
         const result = await createFetchRequestTool.invoke(input);
-        
         return {
           ...state,
           response: result.response,
           error: null
         };
       } catch (error) {
+        console.error("Error in execute_request_node:", error);
         return {
           ...state,
           error: {
@@ -275,15 +250,74 @@ export function createGraph() {
         };
       }
     })
+    .addNode("format_response_node", async (state: GraphState) => {
+      try {
+        if (!state.response?.data) {
+          throw new Error("No response data to format");
+        }
+
+        const result = await formatResponseTool.invoke({
+          response: {
+            data: Array.isArray(state.response.data) ? state.response.data : [state.response.data]
+          }
+        });
+
+        console.log("\nA:");
+        console.log(result.formattedResponse);
+        console.log("\n" + "-".repeat(80));
+
+        return {
+          ...state,
+          formattedResponse: result.formattedResponse
+        };
+
+      } catch (error) {
+        console.error("Error in format response node:", error);
+        return {
+          ...state,
+          error: {
+            code: 'FORMAT_RESPONSE_FAILED',
+            message: error instanceof Error ? error.message : String(error),
+            timestamp: Date.now(),
+            node: 'format_response_node'
+          },
+          formattedResponse: null
+        };
+      }
+    })
+    .addNode("enhance_response_node", async (state: GraphState) => {
+      try {
+        if (!state.formattedResponse) {
+          throw new Error("No formatted response to enhance");
+        }
+
+        const result = await enhanceResponseTool.invoke({
+          formatted: state.formattedResponse,
+          query: state.query || ""
+        });
+        
+        return {
+          ...state,
+          formattedResponse: result.enhanced
+        };
+      } catch (error) {
+        console.error("Error in enhance response node:", error);
+        return {
+          ...state,
+          error: {
+            code: 'ENHANCE_RESPONSE_FAILED',
+            message: error instanceof Error ? error.message : String(error),
+            timestamp: Date.now(),
+            node: 'enhance_response_node'
+          },
+          formattedResponse: null
+        };
+      }
+    })
     .addNode("reset_state_node", async (state: GraphState) => {
-      console.log("\n=== Reset State Node Start ===");
-      console.log("Input State:", state);
-      
       try {
         if (state.response || state.error) {
           const resetResult = await resetState.invoke({});
-          console.log("Reset Result:", resetResult);
-          console.log("=== Reset State Node Complete ===");
           return resetResult;
         }
         
@@ -293,79 +327,33 @@ export function createGraph() {
         throw error;
       }
     })
-    .addNode("format_response_node", async (state: GraphState) => {
-      console.log("\n=== Format Response Node Start ===");
-      try {
-        if (!state.response) {
-          throw new Error("No response to format");
-        }
-
-        const result = await formatResponseTool.invoke({
-          response: state.response
-        });
-        
-        return {
-          ...state,
-          formattedResponse: result.formattedResponse
-        };
-      } catch (error) {
-        console.error("Error in format_response_node:", error);
-        throw error;
-      }
-    })
-    
-    // Simplified edge definitions - mix of regular and conditional edges
     .addEdge(START, "init_sdk_node")
     .addConditionalEdges(
-      "init_sdk_node", 
-      async (state: GraphState) => {
-        console.log("\n=== Init SDK Edge Check ===");
-        console.log("Full state in edge:", {
-          initialized: state.initialized
-        });
-        
-        if (state.initialized) {
-          console.log("SDK initialized, continuing to extract_category_node");
-          return "extract_category_node";
-        }
-        
-        console.log("SDK initialization failed, ending graph");
-        return END;
-      }
+      "init_sdk_node",
+      async (state: GraphState) => state.initialized ? "extract_category_node" : END
     )
-    // Direct edge - no condition needed since extract_category_node handles its own validation
     .addEdge("extract_category_node", "select_api_node")
-    // Direct edge - select_api_node handles its own validation
     .addEdge("select_api_node", "extract_params_node")
     .addConditionalEdges(
       "extract_params_node",
       async (state: GraphState) => {
-        console.log("\n=== Extract Params Edge Check ===");
         try {
-          const result = await verifyParams(state);
-          return result;
+          const nextNode = await verifyParams(state);
+          console.log("Params verification result:", nextNode);
+          return nextNode;
         } catch (error) {
           console.error("Params verification failed:", error);
           return END;
         }
       }
     )
-    .addConditionalEdges(
-      "execute_request_node",
-      async (state: GraphState) => {
-        console.log("\n=== Execute Request Edge Check ===");
-        return (state.response || state.error) ? "format_response_node" : END;
-      }
-    )
-    .addEdge("format_response_node", "reset_state_node")
-    // Update the reset_state_node edge to explicitly return END
+    .addEdge("extract_params_node", "execute_request_node")
+    .addEdge("execute_request_node", "format_response_node")
+    .addEdge("format_response_node", "enhance_response_node")
+    .addEdge("enhance_response_node", "reset_state_node")
     .addConditionalEdges(
       "reset_state_node",
-      async (state: GraphState) => {
-        console.log("\n=== Reset State Edge Check ===");
-        console.log("State:", state);
-        return END;  // Always end after reset
-      }
+      async (state: GraphState) => END
     )
     .compile();
 }
@@ -375,25 +363,14 @@ export function createGraph() {
   *
   * @param {string[]} queries - The user's queries.
 */
-export async function main(queries: string[]): Promise<GraphState[]> {
-  console.log("\n=== Starting Query Processing ===");
-  console.log(`Total queries to process: ${queries.length}`);
-
-  const results: GraphState[] = [];
-  let currentQueryIndex = 0;
+export async function main(queries: string[]) {
+  console.log("\n=== Atris ===");
 
   for (const query of queries) {
-    currentQueryIndex++;
-    console.log(`\n=== Processing Query ${currentQueryIndex}/${queries.length} ===`);
-    console.log(`Query: "${query}"`);
-    console.log("=".repeat(80));
+    console.log(`\nQ: "${query}"`);
 
     try {
-      console.log("\n=== Creating Graph ===");
       const app = createGraph();
-      console.log("Graph created successfully");
-
-      console.log("\n=== Creating Stream ===");
       const stream = await app.stream({
         query,
         llm: new ChatOpenAI({
@@ -402,53 +379,33 @@ export async function main(queries: string[]): Promise<GraphState[]> {
         }),
         initialized: false
       });
-      console.log("Stream created successfully");
 
-      let finalState: GraphState | null = null;
-      let isComplete = false;
+      let gotResponse = false;
 
       for await (const output of stream) {
-        // Store the state before checking for END
-        if (output !== END) {
-          finalState = output;
-        }
-
-        if (output.formattedResponse) {
-          console.log("\nFormatted Response:", output.formattedResponse);
-        }
-        if (output.error) {
-          console.error("\nError:", output.error);
-        }
-        
-        if (output === END) {
-          isComplete = true;
-          break;
+        if (output !== END && output.formattedResponse) {
+          console.log(`\nA:\n${output.formattedResponse}\n`);
+          gotResponse = true;
         }
       }
 
-      if (finalState) {
-        console.log("\n=== Stream Completed Successfully ===");
-        results.push(finalState);
-      } else {
-        throw new Error('Stream completed but no final state was produced');
+      if (!gotResponse) {
+        console.log("\nA: Sorry, I couldn't get that information right now.\n");
       }
 
     } catch (error) {
-      console.error('Process error:', {
-        phase: 'execution',
-        query,
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : 'No stack trace available'
-      });
+      console.log("\nA: Sorry, I encountered an error processing your request.\n");
     }
   }
-
-  return results;
 }
 
 if (process.env.NODE_ENV !== 'test') {
   const testQueries = [
-    "What are the top 10 trending tracks on Audius?"
+    "What are the top 10 trending tracks on Audius?",
+    "What are the most popular playlists right now?",
+    "Who are the trending artists this week?",
+    "What genres are most popular on Audius?",
+    "Show me the top hip-hop tracks"
   ];
   
   console.log("\n=== Starting Atris Backend ===");
