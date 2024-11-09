@@ -14,7 +14,7 @@ import {
   enhanceResponseTool
 } from "./tools/tools.js";
 import { StateGraph, END, START } from "@langchain/langgraph";
-import { ApiResponse } from './types.js';
+import { ApiEndpoint } from './types.js';
 
 
 dotenv.config();
@@ -42,11 +42,11 @@ const graphChannels = {
     default: () => null
   },
   apis: {
-    value: (old: DatasetSchema[] | null, next: DatasetSchema[] | null) => next ?? old,
+    value: (old: ApiEndpoint[] | null, next: ApiEndpoint[] | null) => next ?? old,
     default: () => null
   },
   bestApi: {
-    value: (old: DatasetSchema | null, next: DatasetSchema | null) => next ?? old,
+    value: (old: ApiEndpoint | null, next: ApiEndpoint | null) => next ?? old,
     default: () => null
   },
   parameters: {
@@ -90,7 +90,7 @@ const graphChannels = {
     default: () => []
   },
   secondaryApi: {
-    value: (old: DatasetSchema | null, next: DatasetSchema | null) => next ?? old,
+    value: (old: ApiEndpoint | null, next: ApiEndpoint | null) => next ?? old,
     default: () => null
   },
   secondaryResponse: {
@@ -185,12 +185,19 @@ export function createGraph() {
           queryType: mappedQueryType
         });
         
-        if (!result.bestApi) {
-          throw new Error("Select API produced invalid state");
-        }
+        const transformedApi = {
+          ...result.bestApi,
+          description: result.bestApi.api_description,
+          parameters: {
+            required: result.bestApi.required_parameters.map((p: any) => p.name),
+            optional: result.bestApi.optional_parameters.map((p: any) => p.name)
+          },
+          endpoint: result.bestApi.api_url
+        };
         
         return {
           ...result,
+          bestApi: transformedApi,
           queryType: state.queryType
         };
       } catch (error) {
@@ -204,10 +211,21 @@ export function createGraph() {
           throw new Error("Missing required state for parameter extraction");
         }
 
+        // Transform ApiEndpoint to match expected shape
+        const transformedApi = {
+          ...state.bestApi,
+          description: state.bestApi.api_description,
+          parameters: {
+            required: state.bestApi.required_parameters.map(p => p.name),
+            optional: state.bestApi.optional_parameters.map(p => p.name)
+          },
+          endpoint: state.bestApi.api_url
+        };
+
         const result = await extractParametersTool.invoke({
           query: state.query,
           entityType: state.entityType,
-          bestApi: state.bestApi
+          bestApi: transformedApi
         });
         
         return result;
@@ -330,15 +348,15 @@ export function createGraph() {
     .addEdge(START, "init_sdk_node")
     .addConditionalEdges(
       "init_sdk_node",
-      async (state: GraphState) => state.initialized ? "extract_category_node" : END
+      async (input: GraphState, config: any) => input.initialized ? "extract_category_node" : END
     )
     .addEdge("extract_category_node", "select_api_node")
     .addEdge("select_api_node", "extract_params_node")
     .addConditionalEdges(
       "extract_params_node",
-      async (state: GraphState) => {
+      async (input: GraphState, config: any) => {
         try {
-          const nextNode = await verifyParams(state);
+          const nextNode = await verifyParams(input);
           console.log("Params verification result:", nextNode);
           return nextNode;
         } catch (error) {
@@ -353,7 +371,7 @@ export function createGraph() {
     .addEdge("enhance_response_node", "reset_state_node")
     .addConditionalEdges(
       "reset_state_node",
-      async (state: GraphState) => END
+      async (input: GraphState, config: any) => END
     )
     .compile();
 }

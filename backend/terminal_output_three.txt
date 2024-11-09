@@ -1,0 +1,349 @@
+
+=== Audius Trending Analysis ===
+
+Collecting metrics for top 100 trending tracks...
+
+Initializing SDK for the first time
+
+Extended Metrics Analysis:
+
+1. "ceiling (feat. ryan)" by SOLLY
+   Age: 8.0 days
+   Release Date: Sat, 02 Nov 2024 00:02:42 GMT
+   Overall Velocity: 1155.3 plays/day, 92.5 favs/day, 102.7 reposts/day
+   Recent Velocity: 1980.0 plays/day, 158.6 favs/day, 175.9 reposts/day
+   Playlists: 73 playlists
+   Engagement Index: 1.5
+   Time Decay Factor: 0.700
+   Decayed Score: 3983.1
+   Focused Score: 1348.4
+   Playlist Velocity: 9.1 adds/day (Recent: 15.6)
+   Cross-Engagement: 0.045 per follower/day (Recent: 0.078)
+   Relative Performance: 1155.28x artist average (Recent: 1980.00x)
+   Pure Velocity Score: 2129.9
+   Minimal Velocity Score: 1256.2
+   Aggressive Decay Factor: 0.0914
+   Aggressive Score: 7.2
+   Model Ranks: Full(4) | Focused(4) | Velocity(4) | Minimal(6) | Aggressive(28) | Actual(1)
+
+2. "Arachnids [Extended Mix]" by Disclosure
+   Age: 8.8 days
+   Release Date: Fri, 01 Nov 2024 05:20:19 GMT
+   Overall Velocity: 1763.5 plays/day, 184.0 favs/day, 229.1 reposts/day
+   Recent Velocity: 3316.9 plays/day, 346.1 favs/day, 430.9 reposts/day
+   Playlists: 316 playlists
+   Engagement Index: 0.5
+   Time Decay Factor: 0.700
+   Decayed Score: 8866.9
+   Focused Score: 2179.0
+   Playlist Velocity: 36.0 adds/day (Recent: 67.7)
+   Cross-Engagement: 0.002 per follower/day (Recent: 0.004)
+   Relative Performance: 1763.49x artist average (Recent: 3316.93x)
+   Pure Velocity Score: 3562.4
+   Minimal Velocity Score: 1990.2
+   Aggressive Decay Factor: 0.0307
+   Aggressive Score: 3.7
+   Model Ranks: Full(1) | Focused(1) | Velocity(1) | Minimal(1) | Aggressive(31) | Actual(2)
+
+3. "NOD TO THE NOISE [REMIX CONTEST]" by kelland
+   Age: 9.0 days
+   Release Date: Fri, 01 Nov 2024 00:14:59 GMT
+   Overall Velocity: 1359.7 plays/day, 154.6 favs/day, 177.7 reposts/day
+   Recent Velocity: 2619.2 plays/day, 297.9 favs/day, 342.2 reposts/day
+   Playlists: 191 playlists
+   Engagement Index: 0.6
+   Time Decay Factor: 0.700
+   Decayed Score: 6982.5
+   Focused Score: 1705.4
+   Playlist Velocity: 21.2 adds/day (Recent: 40.9)
+   Cross-Engagement: 0.271 per follower/day (Recent: 0.522)
+   Relative Performance: 1359.70x artist average (Recent: 2619.21x)
+   Pure Velocity Score: 2796.7
+   Minimal Velocity Score: 1543.5
+   Aggressive Decay Factor: 0.0226
+   Aggressive Score: 2.1
+   Model Ranks: Full(2) | Focused(2) | Velocity(2) | Minimal(3) | Aggressive(44) | Actual(3)
+
+4. "Mean Something" by Broey.
+   Age: 8.6 days
+   Release Date: Fri, 01 Nov 2024 08:36:42 GMT
+   Overall Velocity: 1302.4 plays/day, 168.7 favs/day, 187.7 reposts/day
+   Recent Velocity: 2411.6 plays/day, 312.4 favs/day, 347.6 reposts/day
+   Playlists: 161 playlists
+   Engagement Index: 0.5
+   Time Decay Factor: 0.700
+   Decayed Score: 6871.6
+   Focused Score: 1593.7
+   Playlist Velocity: 18.6 adds/day (Recent: 34.5)
+   Cross-Engagement: 0.058 per follower/day (Recent: 0.107)
+   Relative Performance: 1302.38x artist average (Recent: 2411.57x)
+   Pure Velocity Score: 2641.3
+   Minimal Velocity Score: 1479.9
+   Aggressive Decay Factor: 0.0373
+   Aggressive Score: 3.3
+   Model Ranks: Full(3) | Focused(3) | Velocity(3) | Minimal(4) | Aggressive(35) | Actual(4)
+
+5. "Fuego - Emaflu & Tiano Bless " by Emaflu
+   Age: 6.1 days
+   Release Date: Sun, 03 Nov 2024 23:33:01 GMT
+   Overall Velocity: 768.9 plays/day, 22.9 favs/day, 18.8 reposts/day
+   Recent Velocity: 1153.4 plays/day, 34.4 favs/day, 28.2 reposts/day
+   Playlists: 15 playlists
+   Engagement Index: 29.4
+   Time Decay Factor: 1.000
+   Decayed Score: 1857.5
+   Focused Score: 1185.7
+   Playlist Velocity: 2.5 adds/day (Recent: 3.7)
+   Cross-Engagement: 0.005 per follower/day (Recent: 0.008)
+   Relative Performance: 768.94x artist average (Recent: 1153.40x)
+   Pure Velocity Score: 1772.2
+   Minimal Velocity Score: 1712.6
+   Aggressive Decay Factor: 1.0000
+   Aggressive Score: 52.8
+   Model Ranks: Full(11) | Focused(5) | Velocity(6) | Minimal(2) | Aggressive(1) | Actual(5)
+
+6. "Chase the Sun" by Jimi Latifi
+   Age: 8.4 days
+   Release Date: Fri, 01 Nov 2024 15:25:23 GMT
+   Overall Velocity: 960.4 plays/day, 71.6 favs/day, 83.3 reposts/day
+   Recent Velocity: 1719.9 plays/day, 128.1 favs/day, 149.1 reposts/day
+   Playlists: 56 playlists
+   Engagement Index: 1.9
+   Time Decay Factor: 0.700
+   Decayed Score: 3341.0
+   Focused Score: 1151.2
+   Playlist Velocity: 6.7 adds/day (Recent: 12.0)
+   Cross-Engagement: 3.519 per follower/day (Recent: 6.302)
+   Relative Performance: 960.36x artist average (Recent: 1719.86x)
+   Pure Velocity Score: 1815.9
+   Minimal Velocity Score: 1050.3
+   Aggressive Decay Factor: 0.0557
+   Aggressive Score: 3.7
+   Model Ranks: Full(5) | Focused(6) | Velocity(5) | Minimal(8) | Aggressive(32) | Actual(6)
+
+7. "Spirit of Naima - In the Sun" by Chillhop Music
+   Age: 4.9 days
+   Release Date: Tue, 05 Nov 2024 04:30:00 GMT
+   Overall Velocity: 572.5 plays/day, 12.8 favs/day, 10.7 reposts/day
+   Recent Velocity: 858.8 plays/day, 19.2 favs/day, 16.1 reposts/day
+   Playlists: 5 playlists
+   Engagement Index: 86.2
+   Time Decay Factor: 1.000
+   Decayed Score: 1244.7
+   Focused Score: 882.8
+   Playlist Velocity: 1.0 adds/day (Recent: 1.5)
+   Cross-Engagement: 0.002 per follower/day (Recent: 0.002)
+   Relative Performance: 572.51x artist average (Recent: 858.76x)
+   Pure Velocity Score: 1310.7
+   Minimal Velocity Score: 1269.2
+   Aggressive Decay Factor: 1.0000
+   Aggressive Score: 39.3
+   Model Ranks: Full(16) | Focused(8) | Velocity(8) | Minimal(5) | Aggressive(2) | Actual(7)
+
+8. "Seventh Soul, Suray, Shan Nash - Amir | امیر" by Suray
+   Age: 8.8 days
+   Release Date: Fri, 01 Nov 2024 04:39:01 GMT
+   Overall Velocity: 818.9 plays/day, 51.8 favs/day, 51.8 reposts/day
+   Recent Velocity: 1545.2 plays/day, 97.7 favs/day, 97.7 reposts/day
+   Playlists: 31 playlists
+   Engagement Index: 3.5
+   Time Decay Factor: 0.700
+   Decayed Score: 2558.4
+   Focused Score: 1013.9
+   Playlist Velocity: 3.5 adds/day (Recent: 6.6)
+   Cross-Engagement: 0.220 per follower/day (Recent: 0.415)
+   Relative Performance: 818.86x artist average (Recent: 1545.21x)
+   Pure Velocity Score: 1574.1
+   Minimal Velocity Score: 893.1
+   Aggressive Decay Factor: 0.0295
+   Aggressive Score: 1.7
+   Model Ranks: Full(6) | Focused(7) | Velocity(7) | Minimal(14) | Aggressive(48) | Actual(8)
+
+9. "Proper Manners Radio Episode #24" by PLS&TY
+   Age: 4.7 days
+   Release Date: Tue, 05 Nov 2024 07:00:29 GMT
+   Overall Velocity: 515.8 plays/day, 11.4 favs/day, 9.7 reposts/day
+   Recent Velocity: 773.8 plays/day, 17.1 favs/day, 14.5 reposts/day
+   Playlists: 0 playlists
+   Engagement Index: 98.6
+   Time Decay Factor: 1.000
+   Decayed Score: 1099.4
+   Focused Score: 795.4
+   Playlist Velocity: 0.0 adds/day (Recent: 0.0)
+   Cross-Engagement: 0.005 per follower/day (Recent: 0.008)
+   Relative Performance: 515.83x artist average (Recent: 773.75x)
+   Pure Velocity Score: 1180.0
+   Minimal Velocity Score: 1142.9
+   Aggressive Decay Factor: 1.0000
+   Aggressive Score: 35.4
+   Model Ranks: Full(18) | Focused(10) | Velocity(12) | Minimal(7) | Aggressive(3) | Actual(9)
+
+10. "Jerro, Running Touch - Fever (Medii Remix)" by Medii
+   Age: 5.8 days
+   Release Date: Mon, 04 Nov 2024 05:01:28 GMT
+   Overall Velocity: 430.0 plays/day, 9.1 favs/day, 6.9 reposts/day
+   Recent Velocity: 645.0 plays/day, 13.6 favs/day, 10.3 reposts/day
+   Playlists: 3 playlists
+   Engagement Index: 118.3
+   Time Decay Factor: 1.000
+   Decayed Score: 911.1
+   Focused Score: 663.1
+   Playlist Velocity: 0.5 adds/day (Recent: 0.8)
+   Cross-Engagement: 0.550 per follower/day (Recent: 0.825)
+   Relative Performance: 430.02x artist average (Recent: 645.04x)
+   Pure Velocity Score: 983.0
+   Minimal Velocity Score: 952.3
+   Aggressive Decay Factor: 1.0000
+   Aggressive Score: 29.5
+   Model Ranks: Full(22) | Focused(16) | Velocity(16) | Minimal(11) | Aggressive(6) | Actual(10)
+
+Correlation Analysis with Trending Rank:
+
+Raw Metrics:
+plays           | correlation: -0.4875 | positive influence | strength: 48.8%
+favorites       | correlation: -0.3934 | positive influence | strength: 39.3%
+reposts         | correlation: -0.3839 | positive influence | strength: 38.4%
+
+Overall Velocity:
+playsPerDay     | correlation: -0.6639 | positive influence | strength: 66.4%
+favoritesPerDay | correlation: -0.4371 | positive influence | strength: 43.7%
+repostsPerDay   | correlation: -0.4101 | positive influence | strength: 41.0%
+
+Recent Velocity:
+recentPlaysVelocity  | correlation: -0.5861 | positive influence | strength: 58.6%
+recentFavoritesVelocity | correlation: -0.4149 | positive influence | strength: 41.5%
+recentRepostsVelocity | correlation: -0.3948 | positive influence | strength: 39.5%
+
+Other Metrics:
+engagementIndex | correlation: -0.2705 | positive influence | strength: 27.0%
+decayedScore    | correlation: -0.5132 | positive influence | strength: 51.3%
+timeDecayFactor | correlation: 0.0844 | negative influence | strength: 8.4%
+playlistCount   | correlation: -0.3502 | positive influence | strength: 35.0%
+
+New Velocity Metrics:
+playlistsPerDay      | correlation: -0.3784 | positive influence | strength: 37.8%
+recentPlaylistVelocity | correlation: -0.3657 | positive influence | strength: 36.6%
+crossEngagementPerDay | correlation: -0.1656 | positive influence | strength: 16.6%
+recentCrossEngagement | correlation: -0.1146 | positive influence | strength: 11.5%
+relativeVelocity     | correlation: -0.6639 | positive influence | strength: 66.4%
+recentRelativeVelocity | correlation: -0.5861 | positive influence | strength: 58.6%
+pureVelocityScore    | correlation: -0.6778 | positive influence | strength: 67.8%
+
+Model-to-Model Comparison:
+
+Average Rank Differences Between Models:
+   fullVsFocused: 6.1 ranks
+   fullVsMinimal: 8.6 ranks
+   focusedVsMinimal: 5.9 ranks
+   fullVsAggressive: 29.4 ranks
+   focusedVsAggressive: 28.5 ranks
+   minimalVsAggressive: 23.4 ranks
+   actualVsFull: 16.2 ranks
+   actualVsFocused: 14.1 ranks
+   actualVsMinimal: 12.9 ranks
+   actualVsAggressive: 21.9 ranks
+
+Largest Model Disagreements:
+
+"VIRUZ - Incenerator (Sterfry Remix)"
+   Actual Rank: 85
+   Full Model: 7
+   Focused Model: 12
+   Minimal Model: 25
+   Aggressive Model: 98
+   Largest Disagreement: 91 ranks
+
+"Baddadan (Tony Hawk's Pro Skater 3 Edition)"
+   Actual Rank: 63
+   Full Model: 13
+   Focused Model: 22
+   Minimal Model: 32
+   Aggressive Model: 97
+   Largest Disagreement: 84 ranks
+
+"Pick Your Battles ft. Diplo (Live Edit)"
+   Actual Rank: 43
+   Full Model: 8
+   Focused Model: 9
+   Minimal Model: 21
+   Aggressive Model: 91
+   Largest Disagreement: 83 ranks
+
+"CryJaxx - Candy Shop (feat. Junior Charles)"
+   Actual Rank: 65
+   Full Model: 15
+   Focused Model: 18
+   Minimal Model: 30
+   Aggressive Model: 94
+   Largest Disagreement: 79 ranks
+
+"A2 Rigodon (Woody Wood Speaker 02 - PP_RhuM vs Berzim)"
+   Actual Rank: 25
+   Full Model: 67
+   Focused Model: 64
+   Minimal Model: 100
+   Aggressive Model: 100
+   Largest Disagreement: 75 ranks
+
+Model Comparison (All 100 Tracks):
+
+Full Model Stats:
+   Average Rank Difference: 6.1
+   Maximum Rank Difference: 50
+   Exact Rank Matches: 10
+   Predictions Within 5 Ranks: 56
+   Predictions Within 10 Ranks: 87
+
+Focused Model Stats:
+   Average Rank Difference: 5.9
+   Maximum Rank Difference: 36
+   Exact Rank Matches: 6
+   Predictions Within 5 Ranks: 54
+   Predictions Within 10 Ranks: 86
+
+Minimal Model Stats:
+   Average Rank Difference: 23.4
+   Maximum Rank Difference: 73
+   Exact Rank Matches: 1
+   Predictions Within 5 Ranks: 10
+   Predictions Within 10 Ranks: 22
+
+Aggressive Model Stats:
+   Average Rank Difference: 21.9
+   Maximum Rank Difference: 75
+   Exact Rank Matches: 1
+   Predictions Within 5 Ranks: 12
+   Predictions Within 10 Ranks: 29
+
+Raw data saved to trending_metrics_2024-11-09T18-59-53-499Z.json
+
+Testing Composite Metrics:
+
+Top 5 Composite Metrics:
+
+1. Correlation: 0.6716 (positive influence)
+Components:
+   playsPerDay: 49.4%
+   pureVelocityScore: 50.6%
+
+2. Correlation: 0.6716 (positive influence)
+Components:
+   pureVelocityScore: 50.6%
+   relativeVelocity: 49.4%
+
+3. Correlation: 0.6692 (positive influence)
+Components:
+   playsPerDay: 33.1%
+   pureVelocityScore: 33.8%
+   relativeVelocity: 33.1%
+
+4. Correlation: 0.6639 (positive influence)
+Components:
+   playsPerDay: 50.0%
+   relativeVelocity: 50.0%
+
+5. Correlation: 0.6477 (positive influence)
+Components:
+   playsPerDay: 34.4%
+   pureVelocityScore: 35.2%
+   recentPlaysVelocity: 30.4%

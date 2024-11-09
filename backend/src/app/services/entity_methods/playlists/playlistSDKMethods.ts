@@ -11,18 +11,20 @@ import {
   GetTrendingPlaylistsTimeEnum,
   SearchFullResponse,
 } from '../../../types.js';
+import { BASE_URL } from '../../../constants.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export class PlaylistSDKMethods {
   private baseUrl: string;
   private apiKey: string;
 
   constructor(baseUrl: string, apiKey: string) {
-    this.baseUrl = baseUrl;
-    this.apiKey = apiKey;
+    this.baseUrl = BASE_URL;
+    this.apiKey = dotenv.config().parsed?.AUDIUS_API_KEY || '';
   }
-
-  // Existing methods...
-
+  
   // Get Playlist by ID
   async getPlaylist(playlistId: string): Promise<PlaylistResponse> {
     const url = `${this.baseUrl}/playlists/${playlistId}`;
@@ -66,22 +68,26 @@ export class PlaylistSDKMethods {
   }
 
   // Get Trending Playlists
-  async getTrendingPlaylists(params: { time?: string; limit?: number } = {}): Promise<PlaylistResponse> {
+  async getTrendingPlaylists(params: { time?: string; limit?: number } = {}): Promise<TrendingPlaylistsResponse> {
     const { time = 'week', limit = 10 } = params;
     const url = `${this.baseUrl}/playlists/trending`;
-
+    
+    console.log('Making request to:', url);
+    console.log('With API key:', this.apiKey ? 'Present' : 'Missing');
+    
     try {
-      const response = await axios.get<PlaylistResponse>(url, {
+      const response = await axios.get<TrendingPlaylistsResponse>(url, {
         params: {
-          time,
+          time_range: time,
           limit,
           app_name: 'Atris',
         },
         headers: {
-          Accept: 'application/json',
+          'Accept': 'application/json',
           'X-API-KEY': this.apiKey,
         },
       });
+
       return response.data;
     } catch (error) {
       console.error('Error fetching trending playlists:', error);

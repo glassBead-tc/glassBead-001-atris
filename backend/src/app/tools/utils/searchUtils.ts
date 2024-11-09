@@ -13,7 +13,9 @@ export function parseQuery(query: string): { type: string, title: string | null,
     latestReleases: /What are the latest releases/i,
     trendingGenres: /What genres are trending/i,
     trendingTracks: /What (?:tracks|songs) are trending/i,
-    topArtists: /Who are the top (\d+)? ?most followed artists/i
+    topArtists: /Who are the top (\d+)? ?most followed artists/i,
+    trendingArtists: /(?:who|which) (?:are|is) (?:the )?(?:most )?(?:trending|popular) artists/i,
+    artistsByGenre: /(?:who are|show me) (?:the )?(?:top|trending|popular) artists in ([\w\s]+)/i
   };
 
   for (const [type, pattern] of Object.entries(patterns)) {
@@ -41,6 +43,21 @@ export function parseQuery(query: string): { type: string, title: string | null,
           return { type: 'topTracks', title: 'tracks', artist: null, limit: null };
         case 'topArtists':
           return { type: 'mostFollowers', title: null, artist: null, limit: match[1] ? parseInt(match[1]) : 5 };
+        case 'trendingArtists':
+        case 'artistsByGenre':
+          return { 
+            type: 'trending_artists', 
+            title: null, 
+            artist: null, 
+            limit: match[1] ? parseInt(match[1]) : 10 
+          };
+        case 'risingArtists':
+          return { 
+            type: 'rising_artists', 
+            title: null, 
+            artist: null, 
+            limit: 10 
+          };
       }
     }
   }

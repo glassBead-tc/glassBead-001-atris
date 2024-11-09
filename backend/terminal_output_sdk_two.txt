@@ -1,0 +1,117 @@
+OPENAI_API_KEY: Set
+AUDIUS_API_KEY: Set
+SDK initialized successfully
+
+=== Starting Atris Backend ===
+Test queries: [
+  'What are the top 10 trending tracks on Audius?',
+  'What are the most popular playlists right now?',
+  'Who are the trending artists this week?',
+  'What genres are most popular on Audius?',
+  'Show me the top hip-hop tracks'
+]
+
+=== Atris ===
+
+Q: "What are the top 10 trending tracks on Audius?"
+Initializing SDK for the first time
+Params verification result: execute_request_node
+
+A:
+1. "ceiling (feat. ryan)" by SOLLY (9,265 plays, 740 favorites)
+2. "Arachnids [Extended Mix]" by Disclosure (15,503 plays, 1,615 favorites)
+3. "NOD TO THE NOISE [REMIX CONTEST]" by kelland (12,250 plays, 1,390 favorites)
+4. "Mean Something" by Broey. (11,280 plays, 1,458 favorites)
+5. "Fuego - Emaflu & Tiano Bless " by Emaflu (4,687 plays, 139 favorites)
+6. "Chase the Sun" by Jimi Latifi (8,038 plays, 598 favorites)
+7. "Spirit of Naima - In the Sun" by Chillhop Music (2,789 plays, 62 favorites)
+8. "Seventh Soul, Suray, Shan Nash - Amir | امیر" by Suray (7,224 plays, 456 favorites)
+9. "Proper Manners Radio Episode #24" by PLS&TY (2,459 plays, 54 favorites)
+10. "Jerro, Running Touch - Fever (Medii Remix)" by Medii (2,516 plays, 53 favorites)
+
+--------------------------------------------------------------------------------
+
+A: Sorry, I couldn't get that information right now.
+
+
+Q: "What are the most popular playlists right now?"
+Params verification result: execute_request_node
+Making request to: https://discovery-us-01.audius.openplayer.org/v1/playlists/trending
+With API key: Present
+
+A:
+1. "Hot & New: Week of 11/4/24" by Hot & New Archives (20 tracks, 108,688 total plays across all tracks)
+2. "Endless" by Mister Strawberry (16 tracks, 37,136 total plays across all tracks)
+3. "Autumn Arias" by KairosNoiselab (15 tracks, 69,653 total plays across all tracks)
+4. "Finn's Friday Cratediggers" by Ciara Graves (11 tracks, 17,649 total plays across all tracks)
+5. "Halloween 2024 (new and old)" by Janne Kuki (26 tracks, 176,190 total plays across all tracks)
+6. "MONTREALITY picks" by MONTREALITY (10 tracks, 163,956 total plays across all tracks)
+7. "Poetic Beats" by ollie 🌌 (24 tracks, 379,201 total plays across all tracks)
+8. "Arabic Oriental Deep House 2024" by Chakra Records (75 tracks, 61,965 total plays across all tracks)
+9. "Arabic Techno Oriental 2024 - Arab Club Dubai" by Chakra Records (17 tracks, 20,810 total plays across all tracks)
+10. "me at the gym like" by sammie zonana (20 tracks, 136,657 total plays across all tracks)
+
+--------------------------------------------------------------------------------
+
+A: Sorry, I couldn't get that information right now.
+
+
+Q: "Who are the trending artists this week?"
+Params verification result: execute_request_node
+
+A:
+1. "ceiling (feat. ryan)" by SOLLY (9,265 plays, 740 favorites)
+2. "Arachnids [Extended Mix]" by Disclosure (15,503 plays, 1,615 favorites)
+3. "NOD TO THE NOISE [REMIX CONTEST]" by kelland (12,250 plays, 1,390 favorites)
+4. "Mean Something" by Broey. (11,280 plays, 1,458 favorites)
+5. "Fuego - Emaflu & Tiano Bless " by Emaflu (4,687 plays, 139 favorites)
+6. "Chase the Sun" by Jimi Latifi (8,038 plays, 598 favorites)
+7. "Spirit of Naima - In the Sun" by Chillhop Music (2,789 plays, 62 favorites)
+8. "Seventh Soul, Suray, Shan Nash - Amir | امیر" by Suray (7,224 plays, 456 favorites)
+9. "Proper Manners Radio Episode #24" by PLS&TY (2,459 plays, 54 favorites)
+10. "Jerro, Running Touch - Fever (Medii Remix)" by Medii (2,516 plays, 53 favorites)
+
+--------------------------------------------------------------------------------
+
+A: Sorry, I couldn't get that information right now.
+
+
+Q: "What genres are most popular on Audius?"
+Params verification result: execute_request_node
+
+A:
+1. "ceiling (feat. ryan)" by SOLLY (9,265 plays, 740 favorites)
+2. "Arachnids [Extended Mix]" by Disclosure (15,503 plays, 1,615 favorites)
+3. "NOD TO THE NOISE [REMIX CONTEST]" by kelland (12,250 plays, 1,390 favorites)
+4. "Mean Something" by Broey. (11,280 plays, 1,458 favorites)
+5. "Fuego - Emaflu & Tiano Bless " by Emaflu (4,687 plays, 139 favorites)
+6. "Chase the Sun" by Jimi Latifi (8,038 plays, 598 favorites)
+7. "Spirit of Naima - In the Sun" by Chillhop Music (2,789 plays, 62 favorites)
+8. "Seventh Soul, Suray, Shan Nash - Amir | امیر" by Suray (7,224 plays, 456 favorites)
+9. "Proper Manners Radio Episode #24" by PLS&TY (2,459 plays, 54 favorites)
+10. "Jerro, Running Touch - Fever (Medii Remix)" by Medii (2,516 plays, 53 favorites)
+
+--------------------------------------------------------------------------------
+
+A: Sorry, I couldn't get that information right now.
+
+
+Q: "Show me the top hip-hop tracks"
+Params verification result: execute_request_node
+
+A:
+1. "ceiling (feat. ryan)" by SOLLY (9,265 plays, 740 favorites)
+2. "Arachnids [Extended Mix]" by Disclosure (15,503 plays, 1,615 favorites)
+3. "NOD TO THE NOISE [REMIX CONTEST]" by kelland (12,250 plays, 1,390 favorites)
+4. "Mean Something" by Broey. (11,280 plays, 1,458 favorites)
+5. "Fuego - Emaflu & Tiano Bless " by Emaflu (4,687 plays, 139 favorites)
+6. "Chase the Sun" by Jimi Latifi (8,038 plays, 598 favorites)
+7. "Spirit of Naima - In the Sun" by Chillhop Music (2,789 plays, 62 favorites)
+8. "Seventh Soul, Suray, Shan Nash - Amir | امیر" by Suray (7,224 plays, 456 favorites)
+9. "Proper Manners Radio Episode #24" by PLS&TY (2,459 plays, 54 favorites)
+10. "Jerro, Running Touch - Fever (Medii Remix)" by Medii (2,516 plays, 53 favorites)
+
+--------------------------------------------------------------------------------
+
+A: Sorry, I couldn't get that information right now.
+
