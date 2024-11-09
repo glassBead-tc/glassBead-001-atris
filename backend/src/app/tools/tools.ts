@@ -1,31 +1,62 @@
-import { tool } from "@langchain/core/tools";
-import { z } from "zod";
+import { getAudiusSdk } from '../sdkClient.js'
+import { tool } from "@langchain/core/tools"
+import { z } from "zod"
 import { GraphState, DatasetSchema, ComplexityLevel, EntityType, QueryType, AudiusCorpus } from "../types.js";
 import fs from "fs";
 import { TRIMMED_CORPUS_PATH } from "../constants.js";
 import { END } from "@langchain/langgraph";
+import type { 
+  TracksResponse, 
+  GetTrendingTracksTimeEnum,
+  UsersResponse,
+  TrackResponse,
+  UserResponse,
+  PlaylistResponse,
+  Track,
+  User,
+  Playlist,
+  TrackCommentsResponse,
+  StemsResponse,
+  Reposts,
+  FavoritesResponse
+} from '@audius/sdk';
 
 // Add at the top with other type imports
 type ApiCategory = 'Tracks' | 'Playlists' | 'Users';
+type ApiResponse = 
+  | TracksResponse 
+  | UsersResponse 
+  | TrackResponse 
+  | UserResponse 
+  | PlaylistResponse
+  | TrackCommentsResponse
+  | StemsResponse
+  | Reposts
+  | FavoritesResponse;
 
 // Update the EXTRACT_HIGH_LEVEL_CATEGORIES mapping with proper typing
 const EXTRACT_HIGH_LEVEL_CATEGORIES: Record<string, ApiCategory> = {
   'Get Trending Tracks': 'Tracks',
-  'Get Trending Playlists': 'Playlists',
+  'Get Track': 'Tracks',
   'Search Tracks': 'Tracks',
-  'Search Users': 'Users',
+  'Get Track Comments': 'Tracks',
+  'Get Track Stems': 'Tracks',
+  'Get Track Favorites': 'Tracks',
+  'Get Track Reposts': 'Tracks',
+  'Get Trending Playlists': 'Playlists',
+  'Get Playlist': 'Playlists',
   'Search Playlists': 'Playlists',
+  'Get User': 'Users',
+  'Search Users': 'Users',
+  'Get User Reposts': 'Users',
+  'Get User Favorites': 'Users',
+  'Get User Followers': 'Users',
+  'Get User Following': 'Users',
   'Get Genre Info': 'Tracks'  // Genre info comes from track endpoints
 } as const;
 
-// Add at the top with other imports and constants
-const BASE_URL = "https://api.audius.co/v1";
-
 /**
  * Selects the appropriate SDK function based on the user's query.
- *
- * @param {object} input - The input object containing state information.
- * @returns {Promise<Partial<GraphState>>} - The updated graph state.
  */
 export const selectApiTool = tool(
   async (input: { 
@@ -46,10 +77,39 @@ export const selectApiTool = tool(
       
       // Filter APIs by query type and category
       const apis = corpus.endpoints.filter(endpoint => {
-        // For trending queries, specifically look for trending APIs
+        // For trending queries
         if (input.queryType === 'trending_tracks') {
-          return endpoint.api_name.toLowerCase().includes('trending') &&
-                 endpoint.category_name === 'Tracks';
+          return endpoint.api_name === 'Get Trending Tracks';
+        }
+        if (input.queryType === 'trending_playlists') {
+          return endpoint.api_name === 'Get Trending Playlists';
+        }
+
+        // For entity-specific queries
+        if (input.entityType === 'track') {
+          return endpoint.api_name === 'Get Track';
+        }
+        if (input.entityType === 'user') {
+          return endpoint.api_name === 'Get User';
+        }
+        if (input.entityType === 'playlist') {
+          return endpoint.api_name === 'Get Playlist';
+        }
+
+        // For search queries
+        if (input.queryType === 'tracks') {
+          return endpoint.api_name === 'Search Tracks';
+        }
+        if (input.queryType === 'users') {
+          return endpoint.api_name === 'Search Users';
+        }
+        if (input.queryType === 'playlists') {
+          return endpoint.api_name === 'Search Playlists';
+        }
+
+        // For genre info
+        if (input.queryType === 'genre_info') {
+          return endpoint.api_name === 'Get Genre Info';
         }
 
         // For other queries, match by category
@@ -138,30 +198,40 @@ export const extractCategoryTool = tool(
         return 'playlists';
       }
       
-      if (normalizedQuery.includes('user')) {
+      if (normalizedQuery.includes('user') || normalizedQuery.includes('followers')) {
         return 'users';
       }
       
-      if (normalizedQuery.includes('track') || normalizedQuery.includes('song')) {
+      if (normalizedQuery.includes('track') || normalizedQuery.includes('song') || normalizedQuery.includes('plays')) {
         return 'tracks';
       }
       
       return 'general';
     };
 
-    // Determine categories based on query type
+    // Determine categories based on query type and context
     const getCategories = (type: QueryType): string[] => {
+      const query = normalizedQuery;
+      
       switch (type) {
         case 'trending_tracks':
           return ['Get Trending Tracks'];
         case 'trending_playlists':
           return ['Get Trending Playlists'];
         case 'tracks':
-          return ['Search Tracks'];
+          if (query.includes('comment')) return ['Get Track Comments'];
+          if (query.includes('stem')) return ['Get Track Stems'];
+          if (query.includes('favorite')) return ['Get Track Favorites'];
+          if (query.includes('repost')) return ['Get Track Reposts'];
+          return ['Get Track', 'Search Tracks'];
         case 'users':
-          return ['Search Users'];
+          if (query.includes('follower')) return ['Get User Followers'];
+          if (query.includes('following')) return ['Get User Following'];
+          if (query.includes('repost')) return ['Get User Reposts'];
+          if (query.includes('favorite')) return ['Get User Favorites'];
+          return ['Get User', 'Search Users'];
         case 'playlists':
-          return ['Search Playlists'];
+          return ['Get Playlist', 'Search Playlists'];
         case 'genre_info':
           return ['Get Genre Info'];
         default:
@@ -194,9 +264,9 @@ export const extractCategoryTool = tool(
 );
 
 function detectEntityType(query: string): EntityType | null {
-  const trackWords = ['track', 'song', 'play', 'plays', 'genre'];
-  const userWords = ['user', 'artist', 'follower', 'followers']; 
-  const playlistWords = ['playlist']; // removed 'album', distinct from playlist on Audius
+  const trackWords = ['track', 'song', 'play', 'plays', 'genre', 'stem'];
+  const userWords = ['user', 'artist', 'follower', 'followers', 'following']; 
+  const playlistWords = ['playlist', 'collection']; 
 
   if (trackWords.some(word => query.includes(word))) return 'track';
   if (userWords.some(word => query.includes(word))) return 'user';
@@ -207,7 +277,7 @@ function detectEntityType(query: string): EntityType | null {
 function analyzeComplexity(query: string): ComplexityLevel {
   const normalizedQuery = query.toLowerCase();
   
-  // Complex: Queries requiring historical trend analysis
+  // Complex: Queries requiring historical trend analysis or multiple API calls
   if (
     // Time-based analysis
     normalizedQuery.includes('over time') ||
@@ -236,86 +306,202 @@ function analyzeComplexity(query: string): ComplexityLevel {
     (normalizedQuery.match(/and/g)?.length || 0) > 0 ||
     // Relationship queries
     normalizedQuery.includes('followers') ||
-    // followers and following could also be simple, but it's fine that this goes here
-    normalizedQuery.includes('following')
+    normalizedQuery.includes('following') ||
+    normalizedQuery.includes('favorite') ||
+    normalizedQuery.includes('repost') ||
+    normalizedQuery.includes('comment')
   ) {
     return 'moderate';
   }
 
-  // Simple: Direct property lookups (including single genre lookups)
+  // Simple: Direct property lookups
   return 'simple';
 }
 
+// Utility function to add timeout to a promise
+const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
+  const timeout = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error(`Operation timed out after ${ms}ms`)), ms);
+  });
+  return Promise.race([promise, timeout]);
+};
+
 /**
- * Tool to create and execute API fetch requests based on `bestApi`, `parameters`, and `selectedHost`, including response formatting.
- *
- * @param {object} input - The input object containing `bestApi`, `parameters`, and `selectedHost`.
- * @returns {Promise<{ response: any }>} - The API response.
+ * Tool to create and execute API fetch requests.
  */
 export const createFetchRequestTool = tool(
   async (input: { 
-    parameters: Record<string, any>, 
-    bestApi: { api_url: string, method: string },
-    selectedHost: string
-  }) => {
-    // Filter and rename parameters
-    const filteredParams: Record<string, string | number> = {
-      app_name: 'ATRIS' // Add your app name here
-    };
-    if (input.parameters.time) {
-      filteredParams['time'] = input.parameters.time;
-    }
-    if (input.parameters.limit) {
-      filteredParams['limit'] = input.parameters.limit;
-    }
-    const queryParams = new URLSearchParams(filteredParams as Record<string, string>);
-    // Ensure the 'v1/' prefix is included in the URL
-    const url = `${input.selectedHost}/v1${input.bestApi.api_url}?${queryParams}`;
-    console.log("Fetching URL:", url);
-
+    parameters: Record<string, any>;
+    bestApi: { api_name: string };
+  }): Promise<{ response: ApiResponse }> => {
     try {
-      const response = await fetch(url, { 
-        method: input.bestApi.method,
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      if (!response.ok) {
-        console.error(`HTTP error! status: ${response.status}`);
-        const errorText = await response.text();
-        console.error("Error response:", errorText);
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const data = await response.json();
-        console.log("API Response Data:", data);
-        return { response: data || null };
-      } else {
-        const text = await response.text();
-        console.error("Unexpected response type. Expected JSON:", text);
-        throw new Error("Received non-JSON response from API.");
-      }
+      const sdk = await getAudiusSdk(); // Get the singleton instance
+      const sdkParams = extractSdkParameters(input.bestApi.api_name, input.parameters);
+      const response = await withTimeout(executeSDKMethod(input.bestApi.api_name, sdkParams), 5000); // 5 seconds timeout
+      return { response };
     } catch (error) {
-      console.error("Fetch error:", error);
-      throw error;
+      console.error("SDK request failed:", error)
+      return {
+        response: {
+          data: []
+        } as TracksResponse
+      };
     }
   },
   {
     name: "create_fetch_request",
-    description: "Makes the API request to Audius",
+    description: "Executes request using Audius SDK",
     schema: z.object({
       parameters: z.record(z.any()),
       bestApi: z.object({
-        api_url: z.string(),
-        method: z.string()
-      }),
-      selectedHost: z.string()
+        api_name: z.string()
+      })
     })
   }
 );
 
+// Helper function to extract only the parameters needed for each SDK method
+function extractSdkParameters(apiName: string, params: Record<string, any>): Record<string, any> {
+  switch(apiName) {
+    // Track endpoints
+    case 'Get Trending Tracks':
+      return {
+        time: "allTime",
+        limit: params.limit || 10
+      };
+    case 'Get Track':
+      return {
+        trackId: params.entityName
+      };
+    case 'Search Tracks':
+      return {
+        query: params.query
+      };
+    case 'Get Track Comments':
+      return {
+        trackId: params.entityName
+      };
+    case 'Get Track Stems':
+      return {
+        trackId: params.entityName
+      };
+
+    // Playlist endpoints
+    case 'Get Trending Playlists':
+      return {
+        time: "allTime",
+        limit: params.limit || 10
+      };
+    case 'Get Playlist':
+      return {
+        playlistId: params.entityName
+      };
+    case 'Search Playlists':
+      return {
+        query: params.query
+      };
+
+    // User endpoints
+    case 'Get User':
+      return {
+        userId: params.entityName
+      };
+    case 'Search Users':
+      return {
+        query: params.query
+      };
+    case 'Get User Reposts':
+      return {
+        userId: params.entityName
+      };
+    case 'Get User Favorites':
+      return {
+        userId: params.entityName
+      };
+    case 'Get User Followers':
+      return {
+        userId: params.entityName
+      };
+    case 'Get User Following':
+      return {
+        userId: params.entityName
+      };
+
+    default:
+      throw new Error(`Unsupported API: ${apiName}`);
+  }
+}
+
+// Helper function to map API names to SDK methods
+async function executeSDKMethod(apiName: string, params: Record<string, any>): Promise<ApiResponse> {
+    console.log(`\nExecuting ${apiName} with params:`, params);
+    
+    try {
+        const sdk = await getAudiusSdk(); // This will now return the already-initialized instance
+        if (!sdk) {
+            throw new Error('SDK not initialized');
+        }
+        
+        let response;
+        switch(apiName) {
+            case 'Get Trending Tracks':
+                console.log("About to call getTrendingTracks");
+                response = await sdk.tracks.getTrendingTracks(params);
+                console.log("After getTrendingTracks call");
+                return response;
+                
+            case 'Get Track':
+                response = await sdk.tracks.getTrack(params.trackId);
+                return response;
+                
+            case 'Search Tracks':
+                response = await sdk.tracks.searchTracks(params);
+                return response;
+                
+            case 'Get Track Comments':
+                response = await sdk.tracks.trackComments(params.trackId);
+                return response;
+                
+            case 'Get Track Stems':
+                response = await sdk.tracks.getTrackStems(params.trackId);
+                return response;
+
+            // Playlist endpoints
+            case 'Get Trending Playlists':
+                response = await sdk.playlists.getTrendingPlaylists(params);
+                return response;
+                
+            case 'Get Playlist':
+                response = await sdk.playlists.getPlaylist(params.playlistId);
+                return response;
+                
+            case 'Search Playlists':
+                response = await sdk.playlists.searchPlaylists(params);
+                return response;
+
+            // User endpoints
+            case 'Get User':
+                return sdk.users.getUser(params.userId);
+            case 'Search Users':
+                return sdk.users.searchUsers(params);
+            case 'Get User Reposts':
+                return sdk.users.getReposts(params.userId);
+            case 'Get User Favorites':
+                return sdk.users.getFavorites(params.userId);
+            case 'Get User Followers':
+                return sdk.users.getFollowers(params.userId);
+            case 'Get User Following':
+                return sdk.users.getFollowing(params.userId);
+                
+            default:
+                throw new Error(`Unsupported API: ${apiName}`);
+        }
+    } catch (error) {
+        console.error(`SDK request failed for ${apiName}:`, (error as Error).message);
+        return { data: [] };
+    }
+}
+  
 export const resetState = tool(
   async (input: Record<string, any>): Promise<Partial<GraphState>> => {
     console.log("\n=== Reset State Input ===");
@@ -361,7 +547,7 @@ export const extractParametersTool = tool(
     parameters: {
       entityName: string | null;
       query: string;
-      time?: string;
+      time?: GetTrendingTracksTimeEnum;
       genre?: string;
       limit?: number;
     }
@@ -373,7 +559,7 @@ export const extractParametersTool = tool(
     const parameters: {
       entityName: string | null;
       query: string;
-      time?: string;
+      time?: GetTrendingTracksTimeEnum;
       genre?: string;
       limit?: number;
     } = {
@@ -383,9 +569,8 @@ export const extractParametersTool = tool(
 
     // Add trending-specific parameters
     if (input.bestApi.api_name.toLowerCase().includes('trending')) {
-      parameters.time = 'week';
+      parameters.time = "allTime";
       parameters.limit = 10;
-      // Genre is optional, leave undefined unless specified
     }
 
     // Extract entity name if needed
@@ -427,29 +612,21 @@ export const extractParametersTool = tool(
 
 // Add after the type definitions
 export function verifyParams(input: GraphState): Promise<"execute_request_node" | typeof END> {
-  console.log("\n=== Parameter Verification Start ===");
-  console.log("Input State:", JSON.stringify(input, null, 2));
-  console.log("Best API:", input.bestApi);
-  console.log("Parameters:", input.parameters);
+  const { bestApi, parameters } = input;
   
-  if (!input.bestApi?.required_parameters) {
+  if (!bestApi?.required_parameters) {
     throw new Error("No API selected");
   }
 
-  const required = input.bestApi.required_parameters.map((p: { name: string }) => p.name);
-  const extracted = Object.keys(input.parameters || {});
+  const required = bestApi.required_parameters.map((p: { name: string }) => p.name);
   
-  console.log("Required:", required);
-  console.log("Extracted:", extracted);
-
-  // If no required parameters, proceed to execution
+  // If no required parameters, proceed
   if (required.length === 0) {
-    console.log("No required parameters for the selected API. Proceeding to execute_request_node.");
     return Promise.resolve("execute_request_node");
   }
 
-  // Check if all required parameters are present
-  const missing = required.filter((p: string) => !extracted.includes(p));
+  // Check required parameters
+  const missing = required.filter((p: string) => !parameters?.[p]);
   if (missing.length > 0) {
     throw new Error(`Missing required parameters: ${missing.join(", ")}`);
   }
@@ -457,35 +634,71 @@ export function verifyParams(input: GraphState): Promise<"execute_request_node" 
   return Promise.resolve("execute_request_node");
 }
 
-// New Tool: Select Host
-export const selectHostTool = tool(
-  async (): Promise<{ selectedHost: string }> => {
-    console.log("\n=== Select Host Tool Processing ===");
-    
+// Replace selectHostTool with SDK initialization check
+export const initSdkTool = tool(
+  async (): Promise<{ initialized: boolean }> => {
     try {
-      const response = await fetch("https://api.audius.co");
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const sdk = await getAudiusSdk();
+      if (!sdk) {
+        throw new Error("SDK not initialized");
       }
-      const data = await response.json();
-      
-      if (!data.data || !Array.isArray(data.data) || data.data.length === 0) {
-        throw new Error("No hosts available from Audius API.");
-      }
-      
-      // Select the first host for simplicity. You can implement a selection strategy if needed.
-      const selectedHost = data.data[0];
-      
-      console.log("Selected Host:", selectedHost);
-      return { selectedHost };
+      // Only return initialized flag - the SDK is managed by sdkClient.ts
+      return { initialized: true };
     } catch (error) {
-      console.error("Error selecting host:", error);
+      console.error("SDK initialization failed:", error);
       throw error;
     }
   },
   {
-    name: "select_host",
-    description: "Selects the best available Audius host from the provided list",
+    name: "init_sdk",
+    description: "Initializes and returns the Audius SDK instance",
     schema: z.object({})
+  }
+);
+
+interface ApiTrack {
+  title: string;
+  user: {
+    name: string;
+  };
+  play_count: number;    // API returns snake_case
+  favorite_count: number;  // API returns snake_case
+}
+
+export const formatResponseTool = tool(
+  async (input: { response: ApiResponse }): Promise<{ formattedResponse: string }> => {
+    try {
+      if (!input.response?.data) {
+        throw new Error("No response data to format");
+      }
+
+      const tracks = (input.response as TracksResponse).data;
+      const topTracks = tracks!.slice(0, 10);
+      
+      const formattedTracks = topTracks.map(rawTrack => ({
+        title: rawTrack.title,
+        artist: rawTrack.user.name,
+        plays: (rawTrack as any).play_count,
+        favorites: (rawTrack as any).favorite_count
+      }));
+      
+      const formattedResponse = `Top 10 Trending Tracks on Audius:\n${
+        formattedTracks.map((track, index) => 
+          `${index + 1}. "${track.title}" by ${track.artist} (${track.plays.toLocaleString()} plays, ${track.favorites.toLocaleString()} favorites)`
+        ).join('\n')
+      }`;
+
+      return { formattedResponse };
+    } catch (error) {
+      console.error("Format response failed:", error);
+      throw error;
+    }
+  },
+  {
+    name: "format_response",
+    description: "Formats the API response into a readable string",
+    schema: z.object({
+      response: z.custom<ApiResponse>()
+    })
   }
 );

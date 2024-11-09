@@ -8,8 +8,8 @@
     "dist/"
   ],
   "scripts": {
-    "build": "tsc && cp -r src/app/data dist/app/data",
-    "start": "node --experimental-wasm-modules -r dotenv/config dist/app/index.js dotenv_config_path=.env",
+    "build": "tsc && cp -r src/app/data dist/app/data && cp src/preload.cjs dist/preload.cjs",
+    "start": "node --experimental-wasm-modules --experimental-loader=./src/preload.cjs -r dotenv/config dist/app/index.js dotenv_config_path=.env",
     "start:dist": "npm run build && node -r dotenv/config dist/app/index.js",
     "lint": "eslint --cache --ext .ts,.js src/",
     "lint:fix": "npm run lint -- --fix",
@@ -18,13 +18,15 @@
     "format:check": "prettier --check \"src/**/*.ts\" \"src/*.ts\"",
     "test": "node --experimental-vm-modules $(npm bin)/jest --config jest.config.cjs",
     "interactive": "node app/interactiveTest.js",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "test:stream": "ts-node src/tests/streamTest.ts"
   },
   "author": "Brace Sproul",
   "license": "MIT",
   "dependencies": {
     "@audius/sdk": "^6.0.1",
     "@babel/core": "^7.25.8",
+    "@ibm-cloud/watsonx-ai": "^1.1.2",
     "@improbable-eng/grpc-web": "^0.15.0",
     "@langchain/community": "^0.3.5",
     "@langchain/core": "^0.3.15",
@@ -41,6 +43,7 @@
     "eventemitter3": "^5.0.1",
     "express": "^4.17.1",
     "google-protobuf": "^3.21.0",
+    "ibm-cloud-sdk-core": "^5.1.0",
     "node-nlp": "^4.27.0",
     "pg": "^8.11.0",
     "pg-query-stream": "^4.7.0",
@@ -49,15 +52,17 @@
     "react-dom": "^18.3.1",
     "react-is": "^18.3.1",
     "readline": "^1.3.0",
+    "svelte": "^5.1.9",
     "typed-emitter": "^2.1.0",
     "typescript": "^5.6.3",
     "web3": "^1.8.2",
+    "web3-eth-ens": "^4.4.0",
     "webpack": "^5.95.0",
     "wink-eng-lite-web-model": "^1.8.0",
     "wink-nlp": "^2.3.0",
     "winston": "^3.15.0",
     "ws": "^8.18.0",
-    "zod": "^3.22.4"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.18.6",

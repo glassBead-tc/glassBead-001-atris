@@ -1,5 +1,5 @@
 import { ChatOpenAI } from "@langchain/openai";
-import { GraphState, ErrorState, DatasetSchema, ComplexityLevel, EntityType, QueryType, TrackData, UserData, PlaylistData } from "./types.js";
+import { GraphState, ErrorState, DatasetSchema, ComplexityLevel, EntityType, QueryType } from "./types.js";
 import { Messages } from '@langchain/langgraph'
 import dotenv from 'dotenv';
 import {
@@ -9,178 +9,100 @@ import {
   createFetchRequestTool,
   verifyParams,
   resetState,
-  selectHostTool
+  initSdkTool,
+  formatResponseTool
 } from "./tools/tools.js";
 import { StateGraph, END, START } from "@langchain/langgraph";
-import { apiValidators } from "./validation/validators/apiValidators.js"; 
+import type { 
+  TracksResponse,
+  UsersResponse,
+  TrackResponse,
+  UserResponse,
+  PlaylistResponse,
+  TrackCommentsResponse,
+  StemsResponse,
+  Reposts,
+  FavoritesResponse
+} from '@audius/sdk';
+import { getAudiusSdk } from './sdkClient.js';
 
-dotenv.config({ path: '../.env' });
+type ApiResponse = 
+  | TracksResponse 
+  | UsersResponse 
+  | TrackResponse 
+  | UserResponse 
+  | PlaylistResponse
+  | TrackCommentsResponse
+  | StemsResponse
+  | Reposts
+  | FavoritesResponse;
+
+dotenv.config();
+
+// Debug logging for environment variables
+console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? 'Set' : 'Not set');
+console.log('AUDIUS_API_KEY:', process.env.AUDIUS_API_KEY ? 'Set' : 'Not set');
 
 // Keep existing channel definitions
 const graphChannels = {
   llm: {
-    value: (old: ChatOpenAI | null, next: any) => {
-      console.log("\n=== LLM Channel Update ===");
-      console.log("Old State:", old);
-      console.log("Next State:", next);
-      const result = next ?? old;
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: ChatOpenAI | null, next: any) => next ?? old,
     default: () => null
   },
   query: {
-    value: (old: string | null, next: string) => {
-      console.log("\n=== Query Channel Update ===");
-      console.log("Old State:", old);
-      console.log("Next State:", next);
-      const result = next ?? old;
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: string | null, next: any) => next ?? old,
     default: () => null
   },
   queryType: {
-    value: (old: QueryType | null, next: QueryType | null) => {
-      console.log("\n=== QueryType Channel Update ===");
-      console.log("Old State:", JSON.stringify(old, null, 2));
-      console.log("Next State:", JSON.stringify(next, null, 2));
-      console.log("Update Stack:", new Error().stack);
-      return next ?? old;
-    },
+    value: (old: QueryType | null, next: QueryType | null) => next ?? old,
     default: () => null
   },
   categories: {
-    value: (old: string[] | null, next: string[] | null) => {
-      console.log("\n=== Categories Channel Update ===");
-      console.log("Old:", old);
-      console.log("Next:", next);
-      const result = next ?? old;
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: string[] | null, next: string[] | null) => next ?? old,
     default: () => null
   },
   apis: {
-    value: (old: DatasetSchema[] | null, next: DatasetSchema[] | null) => {
-      console.log("\n=== APIs Channel Update ===");
-      console.log("Old State:", old);
-      console.log("Next State:", next);
-      const result = next ?? old;
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: DatasetSchema[] | null, next: DatasetSchema[] | null) => next ?? old,
     default: () => null
   },
   bestApi: {
-    value: (old: DatasetSchema | null, next: DatasetSchema | null) => {
-      console.log("\n=== Best API Channel Update ===");
-      console.log("Old State:", old);
-      console.log("Next State:", next);
-      const result = next ?? old;
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: DatasetSchema | null, next: DatasetSchema | null) => next ?? old,
     default: () => null
   },
   parameters: {
-    value: (old: Record<string, any> | null, next: Record<string, any> | null) => {
-      console.log("\n=== Parameters Channel Update ===");
-      console.log("Old State:", old);
-      console.log("Next State:", next);
-      const result = next ?? old;
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: Record<string, any> | null, next: Record<string, any> | null) => next ?? old,
     default: () => null
   },
   response: {
-    value: (old: { data: (TrackData | UserData | PlaylistData)[] } | null, 
-           next: { data: (TrackData | UserData | PlaylistData)[] } | null) => {
-      console.log("\n=== Response Channel Update ===");
-      console.log("Old State:", old);
-      console.log("Next State:", next);
-      const result = next ?? old;
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: ApiResponse | null, next: ApiResponse | null) => next ?? old,
     default: () => null
   },
   complexity: {
-    value: (old: ComplexityLevel | null, next: ComplexityLevel | null) => {
-      console.log("\n=== Complexity Channel Update ===");
-      console.log("Old State:", old);
-      console.log("Next State:", next);
-      const result = next ?? old;
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: ComplexityLevel | null, next: ComplexityLevel | null) => next ?? old,
     default: () => null
   },
   isEntityQuery: {
-    value: (old: boolean | null, next: boolean | null) => {
-      console.log("\n=== IsEntityQuery Channel Update ===");
-      console.log("Old State:", old);
-      console.log("Next State:", next);
-      const result = next ?? old;
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: boolean | null, next: boolean | null) => next ?? old,
     default: () => null
   },
   entityName: {
-    value: (old: string | null, next: string | null) => {
-      console.log("\n=== EntityName Channel Update ===");
-      console.log("Old State:", old);
-      console.log("Next State:", next);
-      const result = next ?? old;
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: string | null, next: string | null) => next ?? old,
     default: () => null
   },
   entityType: {
-    value: (old: EntityType | null, next: EntityType | null) => {
-      console.log("\n=== EntityType Channel Update ===");
-      console.log("Old State:", old);
-      console.log("Next State:", next);
-      const result = next ?? old;
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: EntityType | null, next: EntityType | null) => next ?? old,
     default: () => null
   },
   error: {
-    value: (old: ErrorState | null, next: ErrorState | null) => {
-      console.log("\n=== Error Channel Update ===");
-      console.log("Old State:", old);
-      console.log("Next State:", next);
-      const result = next ?? old;
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: ErrorState | null, next: ErrorState | null) => next ?? old,
     default: () => null
   },
   errorHistory: {
-    value: (old: ErrorState[], next: ErrorState) => {
-      console.log("\n=== ErrorHistory Channel Update ===");
-      console.log("Old State:", old);
-      console.log("Next Error:", next);
-      const result = [...(old || []), next];
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: ErrorState[], next: ErrorState) => [...(old || []), next],
     default: () => []
   },
   messages: {
-    value: (old: Messages | null, next: Messages | null) => {
-      console.log("\n=== Messages Channel Update ===");
-      console.log("Old State:", old);
-      console.log("Next State:", next);
-      const result = next ?? old;
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: Messages | null, next: Messages | null) => next ?? old,
     default: () => null
   },
   messageHistory: {
@@ -188,151 +110,261 @@ const graphChannels = {
     default: () => []
   },
   selectedHost: {
-    value: (old: string | null, next: string | null) => {
-      console.log("\n=== SelectedHost Channel Update ===");
-      console.log("Old State:", old);
-      console.log("Next State:", next);
-      const result = next ?? old;
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: string | null, next: string | null) => next ?? old,
     default: () => null
   },
   entity: {
-    value: (old: any | null, next: any | null) => {
-      console.log("\n=== Entity Channel Update ===");
-      console.log("Old State:", old);
-      console.log("Next State:", next);
-      const result = next ?? old;
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: any | null, next: any | null) => next ?? old,
     default: () => null
   },
   secondaryApi: {
-    value: (old: DatasetSchema | null, next: DatasetSchema | null) => {
-      console.log("\n=== SecondaryApi Channel Update ===");
-      console.log("Old State:", old);
-      console.log("Next State:", next);
-      const result = next ?? old;
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: DatasetSchema | null, next: DatasetSchema | null) => next ?? old,
     default: () => null
   },
   secondaryResponse: {
-    value: (old: string | null, next: string | null) => {
-      console.log("\n=== SecondaryResponse Channel Update ===");
-      console.log("Old State:", old);
-      console.log("Next State:", next);
-      const result = next ?? old;
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: string | null, next: string | null) => next ?? old,
     default: () => null
   },
   initialState: {
-    value: (old: GraphState | null, next: GraphState | null) => {
-      console.log("\n=== InitialState Channel Update ===");
-      console.log("Old State:", old);
-      console.log("Next State:", next);
-      const result = next ?? old;
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: GraphState | null, next: GraphState | null) => next ?? old,
     default: () => null
   },
   formattedResponse: {
-    value: (old: string | null, next: string | null) => {
-      console.log("\n=== FormattedResponse Channel Update ===");
-      console.log("Old State:", old);
-      console.log("Next State:", next);
-      const result = next ?? old;
-      console.log("Result:", result);
-      return result;
-    },
+    value: (old: string | null, next: string | null) => next ?? old,
     default: () => null
+  },
+  initialized: {
+    value: (old: boolean | undefined, next: boolean | undefined) => next ?? old,
+    default: () => false
   }
 } as const;
 
+const audiusSdk = await getAudiusSdk();
+console.log("SDK initialized successfully");
 
 export function createGraph() {
   const graph = new StateGraph<GraphState>({
     channels: graphChannels
   });
 
-  // Add logging for state transitions
   return graph
-  .addNode("select_host_node", async (state: GraphState) => {
-    console.log("\n=== Selecting Host ===");
-    const result = await selectHostTool.invoke({});
-    return result;
+    .addNode("init_sdk_node", async (state: GraphState) => {
+      console.log("\n=== Init SDK Node Start ===");
+      try {
+        const result = await initSdkTool.invoke({});
+        console.log("Init SDK Tool Result:", result);
+        return result;
+      } catch (error) {
+        console.error("Error in init_sdk_node:", error);
+        throw error;
+      }
     })
-  .addNode("extract_category_node", async (state: GraphState) => {
-      console.log("\n=== State Before extract_category_node Exit ===");
-      console.log(JSON.stringify(state, null, 2));
-      const result = await extractCategoryTool.invoke({
-        query: state.query || ''
-      });
-      return result;
+    .addNode("extract_category_node", async (state: GraphState) => {
+      console.log("\n=== Extract Category Node Start ===");
+      console.log("Input State:", state);
+      
+      try {
+        if (!state.query) {
+          throw new Error("Extract category received null query");
+        }
+        
+        const result = await extractCategoryTool.invoke({
+          query: state.query
+        });
+        
+        console.log("Category Extraction Result:", result);
+        if (!result.queryType || !result.categories) {
+          throw new Error("Extract category produced invalid state");
+        }
+        
+        console.log("=== Extract Category Node Complete ===");
+        return result;
+      } catch (error) {
+        console.error("Error in extract_category_node:", error);
+        throw error;
+      }
     })
-  .addNode("select_api_node", selectApiTool,)
-  .addNode("extract_params_node", extractParametersTool)
-.addNode("execute_request_node", async (state: GraphState) => {
-  const { parameters, bestApi, selectedHost } = state;
+    .addNode("select_api_node", async (state: GraphState) => {
+      console.log("\n=== Select API Node Start ===");
+      console.log("Input State:", state);
+      
+      try {
+        if (!state.queryType || !state.categories) {
+          throw new Error("Select API received invalid state");
+        }
+        
+        const mappedQueryType = state.queryType === 'general' 
+          ? 'trending_tracks'
+          : state.queryType;
+        
+        const result = await selectApiTool.invoke({
+          categories: state.categories,
+          entityType: state.entityType,
+          queryType: mappedQueryType
+        });
+        console.log("API Selection Result:", result);
+        
+        if (!result.bestApi) {
+          throw new Error("Select API produced invalid state");
+        }
+        
+        console.log("=== Select API Node Complete ===");
+        return {
+          ...result,
+          queryType: state.queryType
+        };
+      } catch (error) {
+        console.error("Error in select_api_node:", error);
+        throw error;
+      }
+    })
+    .addNode("extract_params_node", async (state: GraphState) => {
+      console.log("\n=== Extract Params Node Start ===");
+      console.log("Input State:", state);
+      
+      try {
+        if (!state.query || !state.bestApi) {
+          throw new Error("Missing required state for parameter extraction");
+        }
+
+        const result = await extractParametersTool.invoke({
+          query: state.query,
+          entityType: state.entityType,
+          bestApi: state.bestApi
+        });
+        console.log("Parameter Extraction Result:", result);
+        
+        console.log("=== Extract Params Node Complete ===");
+        return result;
+      } catch (error) {
+        console.error("Error in extract_params_node:", error);
+        throw error;
+      }
+    })
+    .addNode("execute_request_node", async (state: GraphState) => {
+      try {
+        const { parameters, bestApi } = state;
+        
+        if (!bestApi) {
+          throw new Error("No bestApi found in state");
+        }
+
+        const input = {
+          parameters: parameters || {},
+          bestApi: {
+            api_name: bestApi.api_name
+          }
+        };
+
+        const result = await createFetchRequestTool.invoke(input);
+        
+        return {
+          ...state,
+          response: result.response,
+          error: null
+        };
+      } catch (error) {
+        return {
+          ...state,
+          error: {
+            code: 'EXECUTE_REQUEST_FAILED',
+            message: error instanceof Error ? error.message : String(error),
+            timestamp: Date.now(),
+            node: 'execute_request_node'
+          }
+        };
+      }
+    })
+    .addNode("reset_state_node", async (state: GraphState) => {
+      console.log("\n=== Reset State Node Start ===");
+      console.log("Input State:", state);
+      
+      try {
+        if (state.response || state.error) {
+          const resetResult = await resetState.invoke({});
+          console.log("Reset Result:", resetResult);
+          console.log("=== Reset State Node Complete ===");
+          return resetResult;
+        }
+        
+        throw new Error("Cannot reset state without response or error");
+      } catch (error) {
+        console.error("Error in reset_state_node:", error);
+        throw error;
+      }
+    })
+    .addNode("format_response_node", async (state: GraphState) => {
+      console.log("\n=== Format Response Node Start ===");
+      try {
+        if (!state.response) {
+          throw new Error("No response to format");
+        }
+
+        const result = await formatResponseTool.invoke({
+          response: state.response
+        });
+        
+        return {
+          ...state,
+          formattedResponse: result.formattedResponse
+        };
+      } catch (error) {
+        console.error("Error in format_response_node:", error);
+        throw error;
+      }
+    })
     
-  if (!bestApi) {
-      throw new Error("No bestApi found in state.");
-  }
-
-  if (!selectedHost) {
-      throw new Error("No selectedHost found in state.");
-  }
-
-  const input = {
-      parameters: parameters || {},
-      bestApi: {
-        api_url: bestApi.api_url,
-        method: bestApi.method
-      },
-      selectedHost
-  };
-
-  console.log("\n=== execute_request_node Input ===");
-  console.log("Parameters:", JSON.stringify(parameters, null, 2));
-  console.log("Best API:", JSON.stringify(bestApi, null, 2));
-  console.log("Selected Host:", selectedHost);
-  console.log("Constructed Input:", JSON.stringify(input, null, 2));
-
-  const result = await createFetchRequestTool.invoke(input);
-  return result;
-})
-    .addNode("reset_state_node", resetState)
-    
-    // Update edges to include host selection
-    .addEdge(START, "select_host_node")  // 
-    .addEdge("select_host_node", "extract_category_node")
+    // Simplified edge definitions - mix of regular and conditional edges
+    .addEdge(START, "init_sdk_node")
+    .addConditionalEdges(
+      "init_sdk_node", 
+      async (state: GraphState) => {
+        console.log("\n=== Init SDK Edge Check ===");
+        console.log("Full state in edge:", {
+          initialized: state.initialized
+        });
+        
+        if (state.initialized) {
+          console.log("SDK initialized, continuing to extract_category_node");
+          return "extract_category_node";
+        }
+        
+        console.log("SDK initialization failed, ending graph");
+        return END;
+      }
+    )
+    // Direct edge - no condition needed since extract_category_node handles its own validation
     .addEdge("extract_category_node", "select_api_node")
+    // Direct edge - select_api_node handles its own validation
     .addEdge("select_api_node", "extract_params_node")
-    .addEdge("extract_params_node", "execute_request_node")
-    .addEdge("execute_request_node", "reset_state_node")
-    .addEdge("reset_state_node", END)
-    
-    // Keep conditional edges for validation
     .addConditionalEdges(
       "extract_params_node",
       async (state: GraphState) => {
-        console.log("\n=== State Transition ===");
-        console.log("Current Node:", "extract_params_node");
-        console.log("State Before Transition:", JSON.stringify(state, null, 2));
+        console.log("\n=== Extract Params Edge Check ===");
         try {
           const result = await verifyParams(state);
-          console.log("Transition Result:", result);
           return result;
         } catch (error) {
-          console.error("Transition Error:", error);
+          console.error("Params verification failed:", error);
           return END;
         }
+      }
+    )
+    .addConditionalEdges(
+      "execute_request_node",
+      async (state: GraphState) => {
+        console.log("\n=== Execute Request Edge Check ===");
+        return (state.response || state.error) ? "format_response_node" : END;
+      }
+    )
+    .addEdge("format_response_node", "reset_state_node")
+    // Update the reset_state_node edge to explicitly return END
+    .addConditionalEdges(
+      "reset_state_node",
+      async (state: GraphState) => {
+        console.log("\n=== Reset State Edge Check ===");
+        console.log("State:", state);
+        return END;  // Always end after reset
       }
     )
     .compile();
@@ -347,64 +379,58 @@ export async function main(queries: string[]): Promise<GraphState[]> {
   console.log("\n=== Starting Query Processing ===");
   console.log(`Total queries to process: ${queries.length}`);
 
-  const llm = new ChatOpenAI({
-    modelName: 'gpt-3.5-turbo',
-    temperature: 0.1,
-  });
-
   const results: GraphState[] = [];
+  let currentQueryIndex = 0;
 
   for (const query of queries) {
-    try {
-      console.log(`\n=== Processing Query: "${query}" ===`);
-      
-      const app = createGraph();
-      let finalState: GraphState | null = null;
+    currentQueryIndex++;
+    console.log(`\n=== Processing Query ${currentQueryIndex}/${queries.length} ===`);
+    console.log(`Query: "${query}"`);
+    console.log("=".repeat(80));
 
+    try {
+      console.log("\n=== Creating Graph ===");
+      const app = createGraph();
+      console.log("Graph created successfully");
+
+      console.log("\n=== Creating Stream ===");
       const stream = await app.stream({
         query,
-        llm
+        llm: new ChatOpenAI({
+          modelName: 'gpt-3.5-turbo',
+          temperature: 0.1,
+        }),
+        initialized: false
       });
+      console.log("Stream created successfully");
+
+      let finalState: GraphState | null = null;
+      let isComplete = false;
 
       for await (const output of stream) {
-        console.log('\n=== Stream Output ===');
-        finalState = output;
-        
-        // Keep existing logging
-        if (output.bestApi) {
-          console.log('Selected API:', output.bestApi.api_name);
-          
-          // Validate API response if we have one
-          if (output.response) {
-            const validator = apiValidators[output.bestApi.api_name];
-            if (validator) {
-              const isValid = validator.validate(output.response);
-              console.log('API Response Valid:', isValid);
-              if (isValid) {
-                console.log('Success:', validator.successMessage(output.response));
-              } else {
-                console.log('Failure:', validator.failureMessage);
-              }
-            }
-          }
+        // Store the state before checking for END
+        if (output !== END) {
+          finalState = output;
         }
 
+        if (output.formattedResponse) {
+          console.log("\nFormatted Response:", output.formattedResponse);
+        }
         if (output.error) {
-          console.error('Error in processing:', output.error);
+          console.error("\nError:", output.error);
+        }
+        
+        if (output === END) {
+          isComplete = true;
+          break;
         }
       }
 
       if (finalState) {
-        console.log('\n=== Final State ===');
-        console.log('Query Type:', finalState.queryType);
-        console.log('Selected API:', finalState.bestApi?.api_name);
-        console.log('Response:', finalState.response ? 
-          JSON.stringify(finalState.response, null, 2) : 'No response');
-        
+        console.log("\n=== Stream Completed Successfully ===");
         results.push(finalState);
       } else {
-        console.log('\n❌ No final state captured');
-        throw new Error('No final state captured for query: ' + query);
+        throw new Error('Stream completed but no final state was produced');
       }
 
     } catch (error) {
@@ -412,9 +438,8 @@ export async function main(queries: string[]): Promise<GraphState[]> {
         phase: 'execution',
         query,
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : 'No stack trace available'
       });
-      throw error;
     }
   }
 
@@ -423,9 +448,7 @@ export async function main(queries: string[]): Promise<GraphState[]> {
 
 if (process.env.NODE_ENV !== 'test') {
   const testQueries = [
-    "What are the top 10 trending tracks on Audius?",
-    "How many plays does the track '115 SECONDS OF CLAMS' have?",
-    "Who has the most followers on Audius?"
+    "What are the top 10 trending tracks on Audius?"
   ];
   
   console.log("\n=== Starting Atris Backend ===");

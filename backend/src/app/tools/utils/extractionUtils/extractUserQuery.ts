@@ -1,17 +1,33 @@
-import { TrackData, UserData } from "../../../types.js";
+// import { Track, User } from "@audius/sdk";
+// import { getAudiusSdk } from "../../../sdkClient.js";
+// import type { 
+//     GetTracksByUserRequest,
+//     GetTracksByUserSortEnum,
+//     GetTracksByUserSortMethodEnum,
+//     GetTracksByUserSortDirectionEnum,
+//     GetTracksByUserFilterTracksEnum
+// } from "@audius/sdk";
 
+// export async function getUserTracks(params: GetTracksByUserRequest): Promise<Track[]> {
+//     const sdk = await getAudiusSdk();  // Will return the same instance
+//     const response = await sdk.users.getTracksByUser(params);
+//     return response.data || [];
+// }
 
-export function getUserTracks(userId: string): TrackData[] {
-    const tracks = getUserTracks(userId);
-    return tracks;
-}
+// export async function getUserFollowers(params: {
+//     id: string;
+//     offset?: number;
+//     limit?: number;
+// }): Promise<User[]> {
+//     const response = await getAudiusSdk().then(sdk => sdk.users.getFollowers(params));
+//     return response.data || [];
+// }
 
-export function getUserFollowers(userId: string): UserData[] {
-    const followers = getUserFollowers(userId);
-    return followers;
-}
-
-export function getUserFollowing(userId: string): UserData[] {
-    const following = getUserFollowing(userId);
-    return following;
-}
+// export async function getUserFollowing(params: {
+//     id: string;
+//     offset?: number;
+//     limit?: number;
+// }): Promise<User[]> {
+//     const response = await getAudiusSdk().then(sdk => sdk.users.getFollowing(params));
+//     return response.data || [];
+// }
