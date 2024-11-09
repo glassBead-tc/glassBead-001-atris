@@ -1,6 +1,39 @@
 import { ChatOpenAI } from '@langchain/openai';
-import { TrackArtwork, User, ProfilePicture, CoverPhoto, Playlist, PlaylistAddedTimestamp, PlaylistArtwork, Access, Track, TracksResponse } from "@audius/sdk";
-import { Messages } from '@langchain/langgraph'
+import { 
+  TrackArtwork, 
+  User, 
+  ProfilePicture, 
+  CoverPhoto, 
+  Playlist, 
+  PlaylistAddedTimestamp, 
+  PlaylistArtwork, 
+  Access, 
+  Track, 
+  TracksResponse,
+  UsersResponse,
+  TrackResponse,
+  UserResponse,
+  PlaylistResponse,
+  TrackCommentsResponse,
+  StemsResponse,
+  Reposts,
+  FavoritesResponse
+} from "@audius/sdk";
+import { Messages, END } from '@langchain/langgraph'
+
+// Re-export the types we need
+export { Track, TracksResponse };
+
+export type ApiResponse = 
+  | TracksResponse 
+  | UsersResponse 
+  | TrackResponse 
+  | UserResponse 
+  | PlaylistResponse
+  | TrackCommentsResponse
+  | StemsResponse
+  | Reposts
+  | FavoritesResponse;
 
 export type ComplexityLevel = 'simple' | 'moderate' | 'complex';
 
@@ -62,7 +95,7 @@ export interface GraphState {
   apis: DatasetSchema[] | null;
   bestApi: DatasetSchema | null;
   parameters: Record<string, any> | null;
-  response: TracksResponse | null;
+  response: ApiResponse | null;
   formattedResponse: string | null;
   complexity: ComplexityLevel | null;
   isEntityQuery: boolean | null;
@@ -73,10 +106,19 @@ export interface GraphState {
   messages: Messages | null;
   messageHistory: Messages[];
   selectedHost: string | null;
-  entity: Track | null;
+  entity: Track | User | Playlist | null;
   secondaryApi: DatasetSchema | null;
   secondaryResponse: string | null;
   initialState: GraphState | null;
+  end?: typeof END;
+  sdk?: any;
+  initialized?: boolean;
+  sdkInitialized?: boolean;
+  sdkConfig?: {
+    apiKey: string;
+    baseUrl: string;
+    initialized: boolean;
+  };
 }
 
 export type QueryType =

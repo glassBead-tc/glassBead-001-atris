@@ -8,8 +8,8 @@
     "dist/"
   ],
   "scripts": {
-    "build": "tsc && cp -r src/app/data dist/app/data",
-    "start": "node --experimental-wasm-modules -r dotenv/config dist/app/index.js dotenv_config_path=.env",
+    "build": "tsc && cp -r src/app/data dist/app/data && cp src/preload.cjs dist/preload.cjs",
+    "start": "node --experimental-wasm-modules --experimental-loader=./src/preload.cjs -r dotenv/config dist/app/index.js dotenv_config_path=.env",
     "start:dist": "npm run build && node -r dotenv/config dist/app/index.js",
     "lint": "eslint --cache --ext .ts,.js src/",
     "lint:fix": "npm run lint -- --fix",
@@ -18,7 +18,8 @@
     "format:check": "prettier --check \"src/**/*.ts\" \"src/*.ts\"",
     "test": "node --experimental-vm-modules $(npm bin)/jest --config jest.config.cjs",
     "interactive": "node app/interactiveTest.js",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "test:stream": "ts-node src/tests/streamTest.ts"
   },
   "author": "Brace Sproul",
   "license": "MIT",
@@ -55,6 +56,7 @@
     "typed-emitter": "^2.1.0",
     "typescript": "^5.6.3",
     "web3": "^1.8.2",
+    "web3-eth-ens": "^4.4.0",
     "webpack": "^5.95.0",
     "wink-eng-lite-web-model": "^1.8.0",
     "wink-nlp": "^2.3.0",
