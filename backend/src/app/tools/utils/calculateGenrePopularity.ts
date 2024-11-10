@@ -1,47 +1,109 @@
 // backend/app/tools/utils/calculateGenrePopularity.ts
 import { apiLogger } from '../../logger.js';
 
-/**
- * Calculates genre popularity using a Pareto distribution.
- * @param tracks - Array of trending tracks.
- * @param totalPoints - Total points to distribute among genres.
- * @returns A record mapping genres to their assigned points.
- */
-export const calculateGenrePopularity = (genres: string[], baseValue: number): Record<string, number> =>  {
-  const genreCounts: Record<string, number> = {};
-
-  // Count occurrences of each genre
-  genres.forEach((genre) => {
-    genreCounts[genre] = (genreCounts[genre] || 0) + 1;
-  });
-
-  // Sort genres by count in descending order
-  const sortedGenres = Object.entries(genreCounts).sort(
-    ([_, countA], [__, countB]) => countB - countA
-  );
-
-  // Define Pareto exponent (alpha). Commonly between 1 and 3.
-  const alpha = 1.16; // Adjust based on desired distribution skew
-
-  // Calculate Pareto distribution factors
-  const paretoFactors = sortedGenres.map(([, _], index) => {
-    return 1 / Math.pow(index + 1, alpha);
-  });
-
-  // Calculate total Pareto factor
-  const totalParetoFactor = paretoFactors.reduce((sum, factor) => sum + factor, 0);
-
-  // Assign points based on Pareto factors
-  const genrePopularity: Record<string, number> = {};
-  sortedGenres.forEach(([genre, _], index) => {
-    const normalizedFactor = paretoFactors[index] / totalParetoFactor;
-    genrePopularity[genre] = parseFloat((normalizedFactor * baseValue).toFixed(2));
-  });
-
-  apiLogger.info(
-    `Calculated genre popularity using Pareto distribution: ${JSON.stringify(
-      genrePopularity
-    )}`
-  );
-  return genrePopularity;
+// Define interface matching actual API response shape
+interface ApiTrack {
+  title: string;
+  genre: string;
+  play_count: number;
+  favorite_count: number;
+  user: {
+    name: string;
+  };
 }
+
+interface GenreScore {
+  name: string;
+  points: number;
+  trackCount: number;
+  totalPlays: number;
+  totalFavorites: number;
+  topTrack: {
+    title: string;
+    plays: number;
+    favorites: number;
+  };
+}
+
+/**
+ * Calculates genre popularity using Pareto distribution
+ */
+export const calculateGenrePopularity = (
+  tracks: any[], 
+  totalPoints: number = 10000
+): GenreScore[] => {
+  // First, assign Pareto-distributed points to tracks
+  const paretoPoints = tracks.map((_, index) => {
+    const position = index + 1;
+    const subdivision = Math.ceil(position / 20);
+    const basePoints = totalPoints / Math.pow(5, subdivision - 1);
+    return basePoints / 20;
+  });
+
+  // Group tracks by genre
+  const genreTracks = new Map<string, {
+    tracks: ApiTrack[];
+    points: number;
+  }>();
+
+  tracks.forEach((track, index) => {
+    const genre = track.genre || 'Unknown';
+    if (!genreTracks.has(genre)) {
+      genreTracks.set(genre, {
+        tracks: [],
+        points: 0
+      });
+    }
+    const genreGroup = genreTracks.get(genre)!;
+    genreGroup.tracks.push(track);
+    genreGroup.points += paretoPoints[index];
+  });
+
+  // Calculate metrics for each genre
+  const genreScores: GenreScore[] = Array.from(genreTracks.entries())
+    .map(([genre, data]) => {
+      const totalPlays = data.tracks.reduce((sum, track) => 
+        sum + (track.play_count || 0), 0);
+      const totalFavorites = data.tracks.reduce((sum, track) => 
+        sum + (track.favorite_count || 0), 0);
+
+      // Find top track for this genre
+      const topTrack = data.tracks.reduce((best, track) => {
+        const trackScore = (track.play_count || 0) + ((track.favorite_count || 0) * 2);
+        const bestScore = (best.play_count || 0) + ((best.favorite_count || 0) * 2);
+        return trackScore > bestScore ? track : best;
+      }, data.tracks[0]);
+
+      return {
+        name: genre,
+        points: data.points,
+        trackCount: data.tracks.length,
+        totalPlays,
+        totalFavorites,
+        topTrack: {
+          title: topTrack.title,
+          plays: topTrack.play_count || 0,
+          favorites: topTrack.favorite_count || 0
+        }
+      };
+    });
+
+  // Sort by points
+  const sortedGenres = genreScores.sort((a, b) => b.points - a.points);
+
+  // Log distribution analysis
+  const totalGenres = sortedGenres.length;
+  const top20Percent = Math.ceil(totalGenres * 0.2);
+  const top20Points = sortedGenres
+    .slice(0, top20Percent)
+    .reduce((sum, genre) => sum + genre.points, 0);
+  
+  apiLogger.info(
+    `Calculated genre popularity across ${tracks.length} tracks:\n` +
+    `- ${totalGenres} total genres\n` +
+    `- Top ${top20Percent} genres (${Math.round(top20Points / 100)}% of points)\n` +
+    `- Distribution: ${sortedGenres.map(g => `${g.name}: ${Math.round(g.points)}`).join(', ')}`
+  );
+
+  return sortedGenres;
+};

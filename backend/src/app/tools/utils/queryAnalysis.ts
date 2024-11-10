@@ -9,6 +9,8 @@ interface QueryAnalysis {
   properties: string[];
   isAudiusRelated: boolean;
   confidence: number;
+  isTrendingQuery: boolean;
+  isGenreQuery: boolean;
 }
 
 export function analyzeQuery(query: string): QueryAnalysis {
@@ -22,7 +24,9 @@ export function analyzeQuery(query: string): QueryAnalysis {
       entityType: null,
       properties: [],
       isAudiusRelated: false,
-      confidence: 1.0
+      confidence: 1.0,
+      isTrendingQuery: false,
+      isGenreQuery: false
     };
   }
 
@@ -94,12 +98,26 @@ export function analyzeQuery(query: string): QueryAnalysis {
   // Adjust complexity based on custom calculations
   const complexity = needsCustomCalculation ? 0.6 : confidence;
 
+  // Detect if this is a trending query
+  const trendingTriggers = ['trending', 'popular', 'hot', 'top', 'best'];
+  const isTrendingQuery = trendingTriggers.some(trigger => 
+    normalizedQuery.includes(trigger)
+  );
+
+  // Detect if this is a genre-related query
+  const genreTriggers = ['genre', 'style', 'type of music'];
+  const isGenreQuery = genreTriggers.some(trigger => 
+    normalizedQuery.includes(trigger)
+  );
+
   return {
     highLevelCategory: bestCategory.score > 0 ? bestCategory.category : 'GENERAL',
     entityType,
     properties,
     isAudiusRelated: true,
-    confidence: complexity // This will be used to determine complexity level in extractCategoryTool
+    confidence: complexity,
+    isTrendingQuery,
+    isGenreQuery
   };
 }
 

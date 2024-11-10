@@ -2,6 +2,30 @@
 
 Atris is a research agent for Audius designed to provide artists, labels, and technologists with insights into making things on the platform that people like.
 
+## Recent Achievements
+
+Successfully implemented five core query types:
+1. **Trending Tracks**: Retrieves and ranks current trending tracks with play counts and favorites
+2. **Popular Playlists**: Lists trending playlists with track counts and total plays
+3. **Trending Artists**: Calculates artist popularity using Pareto distribution across multiple metrics
+4. **Genre Analysis**: Analyzes genre popularity with comprehensive engagement metrics
+5. **Genre-Specific Tracks**: Filters trending tracks by genre with accurate rankings
+
+## Key Features
+
+- **Pareto Distribution Analysis**: Implements the 80/20 rule for accurate popularity metrics
+- **Multi-metric Engagement**: Considers plays, favorites, and track counts
+- **Comprehensive Genre Analysis**: Tracks genre performance across the platform
+- **Dynamic Track Filtering**: Supports genre-specific track queries
+- **Detailed Analytics**: Provides play counts, favorites, and engagement metrics
+
+## Technical Highlights
+
+- Successfully resolved snake_case/camelCase API response handling
+- Implemented proper error handling and type safety
+- Added comprehensive logging for debugging
+- Achieved stable query processing without recursion issues
+
 ## Project Overview
 
 Atris is an Audius API integration system using LangGraph.js and Next.js. It processes natural language queries to interact with the Audius API, focusing on trending tracks, playlists, genres, and user profiles. We have resolved compiler errors and are now focusing on connecting to the Audius discovery nodes via the SDK.

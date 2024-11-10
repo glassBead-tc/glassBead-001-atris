@@ -161,3 +161,26 @@ export function getHighLevelCategory(query: string): HighLevelCategory | null {
 
   return bestMatch.matches > 0 ? bestMatch.category : 'GENERAL';
 }
+
+// Add to existing constants
+export const GENRE_MAPPINGS = {
+  'Hip-Hop/Rap': ['hip hop', 'hip-hop', 'rap', 'hiphop'],
+  'Electronic': ['electronic', 'edm', 'electronica'],
+  'Rock': ['rock', 'alternative rock', 'indie rock'],
+  'Pop': ['pop', 'popular'],
+  'R&B/Soul': ['r&b', 'rnb', 'soul', 'rhythm and blues'],
+  'Jazz': ['jazz', 'jazzy'],
+  'Drum & Bass': ['drum and bass', 'drum & bass', 'dnb', 'd&b', 'jungle'],
+  'House': ['house'],
+  'Deep House': ['deep house'],
+  'Tech House': ['tech house'],
+  'Techno': ['techno'],
+  'Trap': ['trap'],
+  'Dubstep': ['dubstep'],
+  'Alternative': ['alternative', 'alt', 'indie'],
+  'Classical': ['classical', 'orchestra', 'orchestral'],
+  'Ambient': ['ambient', 'atmospheric'],
+  'World': ['world music', 'world', 'international'],
+} as const;
+
+export type AudiusGenre = keyof typeof GENRE_MAPPINGS;

@@ -6,7 +6,6 @@ import { GraphState,
   ComplexityLevel, 
   EntityType, 
   AudiusCorpus,
-  GetTrendingTracksRequest,
   SearchFullResponse,
   GetFavoritesRequest,
   ApiEndpoint,
@@ -32,10 +31,10 @@ import { TrackSDKMethods } from "../services/entity_methods/tracks/trackSDKMetho
 import { UserSDKMethods } from "../services/entity_methods/users/userSDKMethods.js";
 import { PlaylistSDKMethods } from "../services/entity_methods/playlists/playlistSDKMethods.js";
 import { analyzeQuery } from './utils/queryAnalysis.js';
-import { HighLevelCategory } from '../constants.js';
-import { parseQuery } from './utils/searchUtils.js';
 import dotenv from 'dotenv';
 import { calculateArtistPopularity } from './utils/calculateArtistPopularity.js';
+import { calculateGenrePopularity } from './utils/calculateGenrePopularity.js';
+import { extractGenreFromQuery } from './utils/extractGenre.js';
 
 // Add at the top with other type imports
 type ApiCategory = 'Tracks' | 'Playlists' | 'Users';
@@ -93,12 +92,42 @@ export const selectApiTool = tool(
     categories: string[];
     entityType: EntityType | null;
     queryType: QueryType;
+    isTrendingQuery: boolean;
+    isGenreQuery: boolean;
   }): Promise<{
     bestApi: DatasetSchema;
     queryType: QueryType;
     entityType: EntityType | null;
   }> => {
     try {
+      // Only use genre popularity calculation for trending genre queries
+      if (input.isTrendingQuery && input.isGenreQuery && !input.entityType) {
+        return {
+          bestApi: {
+            id: 'calculate_genre_popularity',
+            api_name: 'Calculate Genre Popularity',
+            category_name: 'Genres',
+            tool_name: 'Genre Popularity Calculator',
+            api_description: 'Calculates genre popularity based on trending tracks',
+            required_parameters: [],
+            optional_parameters: [],
+            method: 'GET',
+            api_url: 'custom/genre-popularity',
+            description: 'Custom calculation for genre popularity',
+            parameters: {
+              required: [],
+              optional: ['time', 'limit']
+            },
+            endpoint: 'custom/genre-popularity',
+            template_response: {
+              data: []
+            }
+          } as DatasetSchema,
+          queryType: 'genre_popularity',
+          entityType: null
+        };
+      }
+
       // Special handling for trending artists
       if (input.queryType === 'trending_artists') {
         return {
@@ -205,7 +234,9 @@ export const selectApiTool = tool(
         'tracks',
         'users',
         'playlists'
-      ])
+      ]),
+      isTrendingQuery: z.boolean(),
+      isGenreQuery: z.boolean()
     })
   }
 );
@@ -329,31 +360,6 @@ function getAvailableEndpoints(queryType: QueryType, needsCustomCalc: boolean): 
   return endpointMap[queryType] || ['General'];
 }
 
-function detectEntityType(query: string): EntityType | null {
-  const trackWords = ['track', 'song', 'play', 'plays', 'genre', 'stem'];
-  const userWords = ['user', 'artist', 'follower', 'followers', 'following']; 
-  const playlistWords = ['playlist', 'collection']; 
-
-  if (trackWords.some(word => query.includes(word))) return 'track';
-  if (userWords.some(word => query.includes(word))) return 'user';
-  if (playlistWords.some(word => query.includes(word))) return 'playlist';
-  return null;
-};
-
-function analyzeComplexity(query: string, queryType: string): ComplexityLevel {
-  if (queryType === 'artists_by_genre' || 
-      queryType === 'rising_artists') {
-    return 'high' as ComplexityLevel;  
-  }
-  
-  if (queryType === 'trending_artists' ||
-      queryType === 'top_artists') {
-    return 'medium' as ComplexityLevel;  
-  }
-  
-  return 'low' as ComplexityLevel;
-}
-
 /**
  * Tool to create and execute API fetch requests.
  */
@@ -387,78 +393,6 @@ export const createFetchRequestTool = tool(
   }
 );
 
-// Helper function to extract only the parameters needed for each SDK method
-function extractSdkParameters(apiName: string, params: Record<string, any>): Record<string, any> {
-  switch(apiName) {
-    // Track endpoints
-    case 'Get Trending Tracks':
-      return {
-        time: "allTime",
-        limit: params.limit || 10
-      };
-    case 'Get Track':
-      return {
-        trackId: params.entityName
-      };
-    case 'Search Tracks':
-      return {
-        query: params.query
-      };
-    case 'Get Track Comments':
-      return {
-        trackId: params.entityName
-      };
-    case 'Get Track Stems':
-      return {
-        trackId: params.entityName
-      };
-
-    // Playlist endpoints
-    case 'Get Trending Playlists':
-      return {
-        time: "allTime",
-        limit: params.limit || 10
-      };
-    case 'Get Playlist':
-      return {
-        playlistId: params.entityName
-      };
-    case 'Search Playlists':
-      return {
-        query: params.query
-      };
-
-    // User endpoints
-    case 'Get User':
-      return {
-        userId: params.entityName
-      };
-    case 'Search Users':
-      return {
-        query: params.query
-      };
-    case 'Get User Reposts':
-      return {
-        userId: params.entityName
-      };
-    case 'Get User Favorites':
-      return {
-        userId: params.entityName
-      };
-    case 'Get User Followers':
-      return {
-        userId: params.entityName
-      };
-    case 'Get User Following':
-      return {
-        userId: params.entityName
-      };
-
-    default:
-      throw new Error(`Unsupported API: ${apiName}`);
-  }
-}
-
 // Helper function to map API names to SDK methods
 async function executeSDKMethod(apiName: string, parameters: Record<string, any>): Promise<ApiResponse> {
   const sdk = await getAudiusSdk();
@@ -473,7 +407,7 @@ async function executeSDKMethod(apiName: string, parameters: Record<string, any>
     // Handle custom calculation cases
     if (apiName === 'Calculate Trending Artists') {
       const recentTracks = await trackMethods.getTrendingTracks({
-        time: 'week',
+        time: 'month',
         limit: 100
       });
 
@@ -483,37 +417,40 @@ async function executeSDKMethod(apiName: string, parameters: Record<string, any>
 
       const artistRankings = await calculateArtistPopularity(recentTracks.data);
 
-      // Convert to proper User type
+      // Just return the rankings directly with a data property to match ApiResponse shape
       return {
         data: artistRankings.map(artist => ({
-          // Required User properties from SDK
-          albumCount: 0,
-          followeeCount: 0,
-          followerCount: 0,
-          handle: artist.name.toLowerCase().replace(/\s+/g, '_'),
-          id: artist.id,
-          isVerified: false,
           name: artist.name,
-          playlistCount: 0,
-          repostCount: 0,
           trackCount: artist.trackCount,
-          // Additional User properties
-          bio: '',
-          coverPhoto: {
-            '640x': '',
-            '2000x': ''
-          },
-          location: '',
-          profilePicture: {
-            '150x150': '',
-            '480x480': '',
-            '1000x1000': ''
-          },
-          // Timestamps
-          createdAt: '',
-          updatedAt: '',
-          // Custom properties for trending artists
-          popularity_score: artist.points
+          totalPlays: artist.totalPlays,
+          totalFavorites: artist.totalFavorites,
+          points: artist.points,
+          topTrack: artist.topTrack
+        }))
+      } as unknown as ApiResponse;
+    }
+
+    if (apiName === 'Calculate Genre Popularity') {
+      const recentTracks = await trackMethods.getTrendingTracks({
+        time: 'month',
+        limit: 100
+      });
+
+      if (!recentTracks.data) {
+        throw new Error('No track data available for genre popularity calculation');
+      }
+
+      const genreRankings = await calculateGenrePopularity(recentTracks.data);
+
+      // Return with all required ApiResponse fields
+      return {
+        data: genreRankings.map(genre => ({
+          name: genre.name,
+          trackCount: genre.trackCount,
+          totalPlays: genre.totalPlays,
+          totalFavorites: genre.totalFavorites,
+          points: genre.points,
+          topTrack: genre.topTrack
         })),
         latest_chain_block: 0,
         latest_chain_slot_plays: 0,
@@ -522,12 +459,20 @@ async function executeSDKMethod(apiName: string, parameters: Record<string, any>
         signature: '',
         timestamp: Date.now(),
         version: '1.0.0'
-      } as unknown as UsersResponse;  // Use type assertion after unknown to satisfy TypeScript
+      } as unknown as ApiResponse;  // Double type assertion to handle custom fields
     }
 
     // Handle standard API calls
     switch(apiName) {
       case 'Get Trending Tracks':
+        const genre = extractGenreFromQuery(parameters.query);
+        if (genre) {
+          return await trackMethods.getTrendingTracks({
+            ...parameters,
+            genre
+          });
+        }
+        // Default case - no genre filter
         return await trackMethods.getTrendingTracks(parameters);
       case 'Get Trending Playlists':
         return await playlistMethods.getTrendingPlaylists(parameters);
@@ -741,8 +686,9 @@ export const formatResponseTool = tool(
         throw new Error('No items in response data');
       }
 
-      // Check if we're dealing with playlists (has playlist_name) or tracks (has title)
+      // Check what type of data we're dealing with
       const isPlaylist = 'playlist_name' in items[0];
+      const isArtist = 'points' in items[0];
       
       const formatted = items
         .slice(0, 10)
@@ -751,7 +697,21 @@ export const formatResponseTool = tool(
             const playlist = item as ApiPlaylist;
             const totalPlays = playlist.total_play_count.toLocaleString();
             return `${index + 1}. "${playlist.playlist_name}" by ${playlist.user.name} (${playlist.track_count} tracks, ${totalPlays} total plays)`;
+          } else if (isArtist) {
+            const artist = item as {
+              name: string;
+              trackCount: number;
+              totalPlays: number;
+              totalFavorites: number;
+              points: number;
+            };
+            
+            const plays = artist.totalPlays?.toLocaleString() || '0';
+            const favorites = artist.totalFavorites?.toLocaleString() || '0';
+            
+            return `${index + 1}. ${artist.name} (${artist.trackCount} tracks, ${plays} plays this month, ${favorites} favorites)`;
           } else {
+            // Default track handling
             const track = item as ApiTrack;
             const plays = track.play_count.toLocaleString();
             const favorites = track.favorite_count.toLocaleString();
