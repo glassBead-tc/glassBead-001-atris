@@ -21,8 +21,8 @@ export class PlaylistSDKMethods {
   private apiKey: string;
 
   constructor(baseUrl: string, apiKey: string) {
-    this.baseUrl = BASE_URL;
-    this.apiKey = dotenv.config().parsed?.AUDIUS_API_KEY || '';
+    this.baseUrl = baseUrl;
+    this.apiKey = apiKey;
   }
   
   // Get Playlist by ID

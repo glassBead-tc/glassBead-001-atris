@@ -15,6 +15,7 @@ import {
 } from "./tools/tools.js";
 import { StateGraph, END, START } from "@langchain/langgraph";
 import { ApiEndpoint } from './types.js';
+import { analyzeQuery } from "./tools/utils/queryAnalysis.js";
 
 
 dotenv.config();
@@ -175,14 +176,20 @@ export function createGraph() {
           throw new Error("Select API received invalid state");
         }
         
-        const mappedQueryType = state.queryType === 'general' 
-          ? 'trending_tracks'
+        // In the execute_request_node handler
+        const mappedQueryType = state.entityType === 'user' && state.queryType === 'trending_tracks'
+          ? 'trending_artists'
           : state.queryType;
-        
+
+        // Get query analysis results
+        const queryAnalysis = analyzeQuery(state.query!);
+
         const result = await selectApiTool.invoke({
           categories: state.categories,
           entityType: state.entityType,
-          queryType: mappedQueryType
+          queryType: mappedQueryType,
+          isTrendingQuery: queryAnalysis.isTrendingQuery,
+          isGenreQuery: queryAnalysis.isGenreQuery
         });
         
         const transformedApi = {
