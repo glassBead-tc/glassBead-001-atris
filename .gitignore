@@ -78,7 +78,10 @@ package-lock.json
 dist
 .turbo
 .yarn
-
+/srcbook
+/srcbook/*
+/langgraphjs
+/langgraphjs/*
 # Environment variables and secrets
 .env
 .env.*
@@ -174,3 +177,6 @@ Thumbs.db
 
 /glassBead-002-karoshi/audius-langtool/ORGANICREADME.md
 audius-langtool/backend/oldAgent_docs/
+
+# Essay variations
+docs/consciousness_and_context_essay*.md
