@@ -4,8 +4,10 @@
   "version": "1.0.0",
   "author": "glassBead-001",
   "license": "MIT",
+  "type": "module",
   "workspaces": [
-    "backend"
+    "backend",
+    "frontend"
   ],
   "scripts": {
     "start:backend": "yarn turbo run start --filter=backend",
@@ -27,8 +29,9 @@
   },
   "dependencies": {
     "@audius/sdk": "^6.0.1",
-    "@langchain/core": "^0.3.13",
-    "@langchain/langgraph": "^0.2.16",
+    "@langchain/core": "^0.3.18",
+    "@langchain/langgraph": "^0.2.22",
+    "@langchain/openai": "^0.3.14",
     "@supabase/supabase-js": "^2.45.4",
     "@types/joi": "^17.2.2",
     "@types/react": "^18.3.11",
@@ -40,7 +43,8 @@
     "next": "^15.0.1",
     "react-toastify": "^10.0.6",
     "vercel": "^37.12.1",
-    "winston": "^3.15.0"
+    "winston": "^3.15.0",
+    "zod": "^3.23.8"
   },
   "packageManager": "yarn@4.5.0"
 }
