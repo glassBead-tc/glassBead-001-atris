@@ -1,4 +1,12 @@
 import { AudiusDocument, AudiusMetadata } from '../../types/documents.js';
+import {
+  DocumentRelationship,
+  DocumentValidation,
+  DocumentChange,
+  VersionCompatibility,
+  DocumentUsageStats,
+  SemanticVersion
+} from '../../types/document-relationships.js';
 
 export type Json =
   | string
@@ -17,6 +25,9 @@ export interface Database {
           content: string;
           metadata: AudiusMetadata;
           embedding: number[];
+          validation_status: DocumentValidation;
+          version: SemanticVersion;
+          usage_stats: DocumentUsageStats;
           created_at: string;
           updated_at: string;
         };
@@ -25,6 +36,9 @@ export interface Database {
           content: string;
           metadata: AudiusMetadata;
           embedding: number[];
+          validation_status?: DocumentValidation;
+          version?: SemanticVersion;
+          usage_stats?: DocumentUsageStats;
           created_at?: string;
           updated_at?: string;
         };
@@ -33,6 +47,78 @@ export interface Database {
           content?: string;
           metadata?: AudiusMetadata;
           embedding?: number[];
+          validation_status?: DocumentValidation;
+          version?: SemanticVersion;
+          usage_stats?: DocumentUsageStats;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      document_relationships: {
+        Row: {
+          id: string;
+          source_id: string;
+          target_id: string;
+          relationship_type: DocumentRelationship['type'];
+          metadata: DocumentRelationship['metadata'];
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          source_id: string;
+          target_id: string;
+          relationship_type: DocumentRelationship['type'];
+          metadata?: DocumentRelationship['metadata'];
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          source_id?: string;
+          target_id?: string;
+          relationship_type?: DocumentRelationship['type'];
+          metadata?: DocumentRelationship['metadata'];
+          created_at?: string;
+        };
+      };
+      document_changes: {
+        Row: {
+          id: string;
+          document_id: string;
+          change_data: DocumentChange;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          document_id: string;
+          change_data: DocumentChange;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          document_id?: string;
+          change_data?: DocumentChange;
+          created_at?: string;
+        };
+      };
+      version_compatibility: {
+        Row: {
+          id: string;
+          document_id: string;
+          compatibility_data: VersionCompatibility;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          document_id: string;
+          compatibility_data: VersionCompatibility;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          document_id?: string;
+          compatibility_data?: VersionCompatibility;
           created_at?: string;
           updated_at?: string;
         };
@@ -49,12 +135,15 @@ export interface Database {
           match_count: number;
           filter?: Json;
         };
-        Returns: {
+        Returns: Array<{
           id: string;
           content: string;
           metadata: AudiusMetadata;
           similarity: number;
-        }[];
+          validation_status: DocumentValidation;
+          version: SemanticVersion;
+          usage_stats: DocumentUsageStats;
+        }>;
       };
     };
     Enums: {
