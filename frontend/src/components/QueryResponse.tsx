@@ -11,27 +11,28 @@ export function QueryResponse({ data }: QueryResponseProps) {
       return <div className="text-red-500">{state.error.message}</div>;
     }
 
-    if (!state.response?.data) {
-      return <div>No data available</div>;
-    }
-
     return (
       <div className="space-y-4">
-        {Array.isArray(state.response.data) ? (
-          state.response.data.map((item, index) => (
-            <div key={index} className="p-4 bg-white rounded-lg shadow">
-              <pre className="whitespace-pre-wrap">
-                {JSON.stringify(item, null, 2)}
-              </pre>
-            </div>
-          ))
-        ) : (
-          <div className="p-4 bg-white rounded-lg shadow">
-            <pre className="whitespace-pre-wrap">
-              {JSON.stringify(state.response.data, null, 2)}
-            </pre>
+        <div className="p-4 bg-white rounded-lg shadow">
+          <div className="prose max-w-none">
+            {state.response?.data?.toString()}
           </div>
-        )}
+          {state.urls && (
+            <div className="mt-4 text-sm text-gray-500">
+              <div className="font-medium">Sources:</div>
+              <ul className="list-disc pl-5">
+                {state.urls?.map((url, index) => (
+                  <li key={index}>
+                    <a href={url} target="_blank" rel="noopener noreferrer" 
+                      className="text-blue-500 hover:underline">
+                      {url}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -42,4 +43,4 @@ export function QueryResponse({ data }: QueryResponseProps) {
       {formatResponse(data)}
     </div>
   );
-} 
+}

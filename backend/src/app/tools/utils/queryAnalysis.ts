@@ -2,6 +2,21 @@ import { HIGH_LEVEL_CATEGORIES, HighLevelCategory, isAudiusQuery, CategoryTrigge
 import { entityPropertyMap } from '../propertyMap.js';
 import type { EntityType } from '../../types.js';
 
+// Technical keywords that indicate a non-entity query
+const TECHNICAL_KEYWORDS = [
+  // API-related
+  'endpoint', 'api', 'request', 'response', 'authentication',
+  // SDK-related
+  'sdk', 'implementation', 'integration', 'initialize',
+  // Protocol-related
+  'node', 'architecture', 'protocol', 'network',
+  // Development-related
+  'implement', 'develop', 'build', 'create',
+  // Documentation-related
+  'documentation', 'docs', 'guide', 'tutorial',
+  // Technical concepts
+  'function', 'method', 'parameter', 'return', 'value'
+] as const;
 
 interface QueryAnalysis {
   highLevelCategory: HighLevelCategory | null;
@@ -11,11 +26,18 @@ interface QueryAnalysis {
   confidence: number;
   isTrendingQuery: boolean;
   isGenreQuery: boolean;
+  isTechnicalQuery: boolean;  // New field
 }
 
 export function analyzeQuery(query: string): QueryAnalysis {
   const normalizedQuery = query.toLowerCase();
   const isAudiusRelated = isAudiusQuery(query);
+
+  // Check for technical keywords
+  const technicalMatches = TECHNICAL_KEYWORDS.filter(keyword => 
+    normalizedQuery.includes(keyword.toLowerCase())
+  );
+  const isTechnicalQuery = technicalMatches.length > 0;
 
   // If not Audius-related, return early
   if (!isAudiusRelated) {
@@ -26,7 +48,8 @@ export function analyzeQuery(query: string): QueryAnalysis {
       isAudiusRelated: false,
       confidence: 1.0,
       isTrendingQuery: false,
-      isGenreQuery: false
+      isGenreQuery: false,
+      isTechnicalQuery: true
     };
   }
 
@@ -117,20 +140,53 @@ export function analyzeQuery(query: string): QueryAnalysis {
     isAudiusRelated: true,
     confidence: complexity,
     isTrendingQuery,
-    isGenreQuery
+    isGenreQuery,
+    isTechnicalQuery
   };
 }
 
-// Helper function to detect entity type
+// Helper function to detect entity type with improved accuracy
 function detectEntityType(query: string): EntityType | null {
-  if (query.includes('playlist') || query.includes('album') || query.includes('collection')) {
+  // First check if it's a technical query
+  const isTechnicalQuery = TECHNICAL_KEYWORDS.some(keyword => 
+    query.includes(keyword.toLowerCase())
+  );
+  
+  // If it's a technical query, it's less likely to be about a specific entity
+  if (isTechnicalQuery) {
+    return null;
+  }
+
+  // Enhanced entity detection with more context-aware checks
+  const words = query.split(' ');
+  
+  // Check for playlist/album indicators
+  if (
+    query.includes('playlist') || 
+    query.includes('album') || 
+    (query.includes('collection') && !query.includes('collection of'))
+  ) {
     return 'playlist';
   }
-  if (query.includes('artist') || query.includes('user') || query.includes('profile')) {
+  
+  // Check for user/artist indicators
+  if (
+    query.includes('artist') || 
+    query.includes('user') || 
+    query.includes('profile') ||
+    query.includes('creator')
+  ) {
     return 'user';
   }
-  if (query.includes('track') || query.includes('song') || query.includes('music')) {
+  
+  // Check for track/song indicators with better context
+  if (
+    query.includes('track') || 
+    query.includes('song') || 
+    (query.includes('music') && !query.includes('music platform'))
+  ) {
     return 'track';
   }
+  
   return null;
-} 
+}

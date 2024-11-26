@@ -7,7 +7,8 @@ export const extractCategoryTool = tool(
     queryType: QueryType,
     entityType: EntityType | null,
     isEntityQuery: boolean,
-    complexity: ComplexityLevel
+    complexity: ComplexityLevel,
+    categories: string[]
   }> => {
     console.log("\n=== Extract Category Tool Input ===");
     console.log("Query:", input.query);
@@ -17,10 +18,17 @@ export const extractCategoryTool = tool(
     // Entity detection
     const entityType = detectEntityType(normalizedQuery);
     
-    // Query type detection
-    const queryType = normalizedQuery.includes('trending') ? 
-      'trending_tracks' as QueryType : 
-      'general' as QueryType;
+    // Query type detection and category mapping
+    let queryType: QueryType;
+    let categories: string[];
+    
+    if (normalizedQuery.includes('trending')) {
+      queryType = 'trending_tracks' as QueryType;
+      categories = ['TRENDING'];
+    } else {
+      queryType = 'general' as QueryType;
+      categories = ['SEARCH'];
+    }
 
     // Complexity analysis
     const complexity = analyzeComplexity(normalizedQuery);
@@ -29,7 +37,8 @@ export const extractCategoryTool = tool(
       queryType,
       entityType,
       isEntityQuery: entityType !== null,
-      complexity
+      complexity,
+      categories
     };
   },
   {
@@ -41,6 +50,7 @@ export const extractCategoryTool = tool(
   }
 );
 
+// Helper functions
 function detectEntityType(query: string): EntityType | null {
   const trackWords = ['track', 'song', 'play', 'plays', 'genre'];
   const userWords = ['user', 'artist', 'follower', 'followers'];
@@ -51,7 +61,6 @@ function detectEntityType(query: string): EntityType | null {
   if (playlistWords.some(word => query.includes(word))) return 'playlist';
   return null;
 }
-
 
 // TODO: we must implement the below definition of complexity
 // NOTE: complexity in this context is a reference to the following:
@@ -67,4 +76,4 @@ function analyzeComplexity(query: string): ComplexityLevel {
   if (words > 10 || conditions > 2) return 'complex';
   if (words > 5 || conditions > 1) return 'moderate';
   return 'simple';
-} 
+}
