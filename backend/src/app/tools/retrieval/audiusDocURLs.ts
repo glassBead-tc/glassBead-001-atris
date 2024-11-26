@@ -57,6 +57,25 @@ export const audiusDocURLs: DocURL[] = [
         category: "api"
     },
 
+    // Community SDKs
+    {
+        path: "/developers/community-projects/go-sdk",
+        title: "Go SDK",
+        description: "Community-maintained Go implementation of the Audius SDK",
+        category: "sdk"
+    },
+    {
+        path: "/developers/community-projects/python-sdk",
+        title: "Python SDK",
+        description: "Community-maintained Python implementation of the Audius SDK",
+        category: "sdk"
+    },
+    {
+        path: "/developers/community-projects/rust-sdk",
+        title: "Rust SDK",
+        description: "Community-maintained Rust implementation of the Audius SDK",
+        category: "sdk"
+    },
     // SDK Documentation
     {
         path: "/sdk",
