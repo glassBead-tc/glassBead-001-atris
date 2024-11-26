@@ -110,8 +110,11 @@ Location: `backend/src/app/index.ts`
 
 ### 6. Implementation Order
 
-1. Phase 1: Core Infrastructure
-   - Enhance entity detection
+1. Phase 1: Core Infrastructure ✓
+   - Enhance entity detection ✓
+     - Added technical keywords for non-entity detection
+     - Improved context-aware entity detection
+     - Added isTechnicalQuery field to interface
    - Set up retrieval graph structure
    - Implement URL selector
 

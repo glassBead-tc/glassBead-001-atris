@@ -3,7 +3,6 @@ import { GraphState, ErrorState, DatasetSchema, ComplexityLevel, EntityType, Que
 import { Messages } from '@langchain/langgraph'
 import dotenv from 'dotenv';
 import {
-  extractCategoryTool,
   selectApiTool,
   extractParametersTool,
   createFetchRequestTool,
@@ -13,10 +12,11 @@ import {
   formatResponseTool,
   enhanceResponseTool
 } from "./tools/tools.js";
+import { extractCategoryTool } from "./tools/toolfiles/extractCategoryTool.js";
 import { StateGraph, END, START } from "@langchain/langgraph";
 import { ApiEndpoint } from './types.js';
 import { analyzeQuery } from "./tools/utils/queryAnalysis.js";
-
+import { createRetrievalGraph } from "./graphs/retrieval_graph.js";
 
 dotenv.config();
 
@@ -169,6 +169,26 @@ export function createGraph() {
         console.error("Error in extract_category_node:", error);
         throw error;
       }
+    })
+    .addConditionalEdges(
+      "extract_category_node",
+      async (state: GraphState) => {
+        if (!state.isEntityQuery) {
+          return "retrieval_node";
+        }
+        return "select_api_node";
+      }
+    )
+    .addNode("retrieval_node", async (state: GraphState) => {
+      const retrievalGraph = createRetrievalGraph();
+      const retrievalResult = await retrievalGraph.invoke({
+        query: state.query || ""
+      });
+      return {
+        response: retrievalResult.response,
+        formattedResponse: retrievalResult.response,
+        // Map any additional required fields
+      };
     })
     .addNode("select_api_node", async (state: GraphState) => {
       try {
@@ -357,7 +377,6 @@ export function createGraph() {
       "init_sdk_node",
       async (input: GraphState, config: any) => input.initialized ? "extract_category_node" : END
     )
-    .addEdge("extract_category_node", "select_api_node")
     .addEdge("select_api_node", "extract_params_node")
     .addConditionalEdges(
       "extract_params_node",
