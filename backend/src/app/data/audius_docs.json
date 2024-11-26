@@ -17,6 +17,11 @@
       "https://docs.audius.org/developers/sdk/oauth",
       "https://docs.audius.org/developers/sdk/advanced-options"
     ],
+    "community_projects": [
+      "https://docs.audius.org/developers/community-projects/go-sdk",
+      "https://docs.audius.org/developers/community-projects/python-sdk",
+      "https://docs.audius.org/developers/community-projects/rust-sdk"
+    ],
     "architecture": [
       "https://docs.audius.org/learn/architecture/content-node",
       "https://docs.audius.org/learn/architecture/discovery-node"
