@@ -3,27 +3,138 @@ import { Document } from "langchain/document";
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { LangGraphRunnableConfig, StateType } from "@langchain/langgraph";
+import { 
+  GraphState, 
+  ApiEndpoint, 
+  QueryType, 
+  ComplexityLevel, 
+  EntityType, 
+  ErrorState,
+  ApiResponse
+} from '../types.js';
+import { MinimalAudiusSDK } from '../services/sdkClient.js';
+import { ChatOpenAI } from "@langchain/openai";
+import { Messages } from '@langchain/langgraph';
 
-// Extending StateDefinition to include RetrievalState properties
-interface StateDefinition {
-  // ... other parent state properties
+// Base state definition extending GraphState
+interface StateDefinition extends GraphState {
+  // No additional base properties needed
 }
 
+// Retrieval-specific state extending base state
 interface RetrievalState extends StateDefinition {
-  query: string;
+  // Retrieval-specific properties
   urls: string[];
   relevantDocs: Document[];
   grade: number;
-  response: string;
   fallbackUsed: boolean;
+  retrievalResponse: string; // Renamed to avoid conflict with base response
 }
 
-// Define channels explicitly
+// Define channels explicitly, including all parent state channels
 const retrievalChannels = {
+  // Base GraphState channels
+  llm: {
+    value: (old: ChatOpenAI | null, next: ChatOpenAI | null) => next ?? old,
+    default: () => null
+  },
   query: {
     value: (old: string | null, next: string) => next ?? old ?? "",
     default: () => ""
   },
+  queryType: {
+    value: (old: QueryType | null, next: QueryType | null) => next ?? old,
+    default: () => null
+  },
+  categories: {
+    value: (old: string[] | null, next: string[] | null) => next ?? old,
+    default: () => null
+  },
+  apis: {
+    value: (old: ApiEndpoint[] | null, next: ApiEndpoint[] | null) => next ?? old,
+    default: () => null
+  },
+  bestApi: {
+    value: (old: ApiEndpoint | null, next: ApiEndpoint | null) => next ?? old,
+    default: () => null
+  },
+  parameters: {
+    value: (old: Record<string, any> | null, next: Record<string, any> | null) => next ?? old,
+    default: () => null
+  },
+  response: {
+    value: (old: ApiResponse | null, next: ApiResponse | null) => next ?? old,
+    default: () => null
+  },
+  formattedResponse: {
+    value: (old: string | null, next: string | null) => next ?? old,
+    default: () => null
+  },
+  complexity: {
+    value: (old: ComplexityLevel | null, next: ComplexityLevel | null) => next ?? old,
+    default: () => null
+  },
+  isEntityQuery: {
+    value: (old: boolean | null, next: boolean | null) => next ?? old,
+    default: () => null
+  },
+  entityName: {
+    value: (old: string | null, next: string | null) => next ?? old,
+    default: () => null
+  },
+  entityType: {
+    value: (old: EntityType | null, next: EntityType | null) => next ?? old,
+    default: () => null
+  },
+  error: {
+    value: (old: ErrorState | null, next: ErrorState | null) => next ?? old,
+    default: () => null
+  },
+  errorHistory: {
+    value: (old: ErrorState[], next: ErrorState) => [...(old || []), next],
+    default: () => []
+  },
+  messages: {
+    value: (old: Messages | null, next: Messages | null) => next ?? old,
+    default: () => null
+  },
+  messageHistory: {
+    value: (old: Messages[], next: Messages) => [...(old || []), next],
+    default: () => []
+  },
+  secondaryApi: {
+    value: (old: ApiEndpoint | null, next: ApiEndpoint | null) => next ?? old,
+    default: () => null
+  },
+  secondaryResponse: {
+    value: (old: string | null, next: string | null) => next ?? old,
+    default: () => null
+  },
+  sdk: {
+    value: (old: MinimalAudiusSDK | null, next: MinimalAudiusSDK | null) => next ?? old,
+    default: () => null
+  },
+  initialized: {
+    value: (old: boolean | null, next: boolean | null) => next ?? old,
+    default: () => null
+  },
+  sdkInitialized: {
+    value: (old: boolean | null, next: boolean | null) => next ?? old,
+    default: () => null
+  },
+  sdkConfig: {
+    value: (old: any, next: any) => ({
+      ...old,
+      ...next,
+    }),
+    default: () => ({
+      apiKey: null,
+      baseUrl: null,
+      initialized: null
+    })
+  },
+
+  // Retrieval-specific channels
   urls: {
     value: (old: string[] | null, next: string[]) => next ?? old ?? [],
     default: () => []
@@ -36,13 +147,13 @@ const retrievalChannels = {
     value: (old: number | null, next: number) => next ?? old ?? 0,
     default: () => 0
   },
-  response: {
-    value: (old: string | null, next: string) => next ?? old ?? "",
-    default: () => ""
-  },
   fallbackUsed: {
     value: (old: boolean | null, next: boolean) => next ?? old ?? false,
     default: () => false
+  },
+  retrievalResponse: {
+    value: (old: string | null, next: string) => next ?? old ?? "",
+    default: () => ""
   }
 } as const;
 
@@ -132,6 +243,9 @@ export function createRetrievalGraph() {
   // Define nodes
   workflow
     .addNode("url_selector", async (state: RetrievalState) => {
+      if (!state.query) {
+        throw new Error("Query is required for URL selection");
+      }
       const result = await urlSelectorTool.invoke({ query: state.query });
       return { urls: result.urls };
     })
@@ -140,6 +254,9 @@ export function createRetrievalGraph() {
       return { relevantDocs: result.docs };
     })
     .addNode("grader", async (state: RetrievalState) => {
+      if (!state.query) {
+        throw new Error("Query is required for grading");
+      }
       const result = await graderTool.invoke({ 
         docs: state.relevantDocs,
         query: state.query 
@@ -147,13 +264,19 @@ export function createRetrievalGraph() {
       return { grade: result.grade };
     })
     .addNode("generator", async (state: RetrievalState) => {
+      if (!state.query) {
+        throw new Error("Query is required for response generation");
+      }
       const result = await generatorTool.invoke({ 
         docs: state.relevantDocs,
         query: state.query
       });
-      return { response: result.response };
+      return { retrievalResponse: result.response };
     })
     .addNode("fallback", async (state: RetrievalState) => {
+      if (!state.query) {
+        throw new Error("Query is required for fallback search");
+      }
       const result = await fallbackTool.invoke({ query: state.query });
       return { 
         relevantDocs: result.docs,
