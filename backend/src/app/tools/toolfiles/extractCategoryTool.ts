@@ -22,7 +22,20 @@ export const extractCategoryTool = tool(
     let queryType: QueryType;
     let categories: string[];
     
-    if (normalizedQuery.includes('trending')) {
+    // Check for technical keywords
+    const technicalKeywords = [
+      'protocol', 'sdk', 'api', 'implementation', 'architecture',
+      'network', 'node', 'documentation', 'docs', 'function'
+    ];
+    
+    const isTechnical = technicalKeywords.some(keyword => 
+      normalizedQuery.includes(keyword)
+    );
+
+    if (isTechnical) {
+      queryType = 'technical' as QueryType;
+      categories = ['TECHNICAL'];
+    } else if (normalizedQuery.includes('trending')) {
       queryType = 'trending_tracks' as QueryType;
       categories = ['TRENDING'];
     } else {

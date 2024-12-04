@@ -446,10 +446,11 @@ export async function main(queries: string[]) {
 if (process.env.NODE_ENV !== 'test') {
   const testQueries = [
     "What are the top 10 trending tracks on Audius?",
-    "What are the most popular playlists right now?",
-    "Who are the trending artists this week?",
-    "What genres are most popular on Audius?",
-    "Show me the top hip-hop tracks"
+    "What is the Audius protocol?"
+    // "What are the most popular playlists right now?",
+    // "Who are the trending artists this week?",
+    // "What genres are most popular on Audius?",
+    // "Show me the top hip-hop tracks"
   ];
   
   console.log("\n=== Starting Atris Backend ===");

@@ -22,10 +22,13 @@ const embeddings = new OpenAIEmbeddings();
 const urlEmbeddingCache = new Map<string, number[]>();
 
 /**
- * Calculates the dot product of two vectors
+ * Calculates the cosine similarity between two vectors
  */
-function dotProduct(a: number[], b: number[]): number {
-  return a.reduce((sum, val, i) => sum + val * b[i], 0);
+function cosineSimilarity(a: number[], b: number[]): number {
+  const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0);
+  const magnitudeA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
+  const magnitudeB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
+  return dotProduct / (magnitudeA * magnitudeB);
 }
 
 /**
@@ -34,54 +37,121 @@ function dotProduct(a: number[], b: number[]): number {
 export const urlSelectorTool = tool(
   async (input: UrlSelectorInput): Promise<UrlSelectorOutput> => {
     try {
-      const { query } = input;
-      // Get query embedding
-      const queryEmbedding = await embeddings.embedQuery(query);
+      console.log("\n=== URL Selector Input ===");
+      console.log("Query:", input.query);
 
-      // Get or compute embeddings for each URL
-      const urlEmbeddings = await Promise.all(
+      // Get query embedding
+      const queryEmbedding = await embeddings.embedQuery(input.query);
+
+      // Process each URL and get its embedding
+      const urlSimilarities = await Promise.all(
         audiusDocURLs.map(async (docUrl: DocURL) => {
+          let urlEmbedding: number[];
+          
+          // Check cache first
           if (urlEmbeddingCache.has(docUrl.path)) {
-            return urlEmbeddingCache.get(docUrl.path)!;
+            urlEmbedding = urlEmbeddingCache.get(docUrl.path)!;
+          } else {
+            // Create a richer document context
+            const enrichedContent = [
+              docUrl.title,
+              docUrl.description,
+              `Category: ${docUrl.category}`,
+              // Add key terms for better matching
+              docUrl.path.includes('sdk') ? 'SDK implementation development integration' : '',
+              docUrl.path.includes('api') ? 'API endpoints requests responses' : '',
+              docUrl.path.includes('community') ? 'Community projects implementations SDKs' : ''
+            ].join('\n');
+
+            const doc = new Document({
+              pageContent: enrichedContent,
+              metadata: { url: docUrl.path }
+            });
+            
+            // Get embedding for the document
+            const embedResult = await embeddings.embedDocuments([doc.pageContent]);
+            urlEmbedding = embedResult[0];
+            urlEmbeddingCache.set(docUrl.path, urlEmbedding);
           }
           
-          // Create a document from the URL's metadata
-          const doc = new Document({
-            pageContent: `${docUrl.title} - ${docUrl.description}`,
-            metadata: { url: docUrl.path }
-          });
-          
-          const embedding = await embeddings.embedDocuments([doc.pageContent]);
-          urlEmbeddingCache.set(docUrl.path, embedding[0]);
-          return embedding[0];
+          // Calculate similarity
+          const similarity = cosineSimilarity(queryEmbedding, urlEmbedding);
+
+          // Check term matches
+          const terms = input.query.toLowerCase().split(/\W+/);
+          const content = docUrl.title.toLowerCase() + ' ' + docUrl.description.toLowerCase();
+          const termMatches = terms.filter(term => content.includes(term)).length;
+          const hasTermMatch = termMatches > 0;
+
+          // Check category match
+          const isCoreContent = docUrl.category === 'learn';
+
+          // Check protocol match
+          const isProtocolMatch = input.query.toLowerCase().includes('protocol') && 
+            (docUrl.path.includes('protocol') || docUrl.title.toLowerCase().includes('protocol'));
+
+          // Binary relevance: Document is relevant if it has semantic similarity OR term match OR is core content OR matches protocol query
+          const isRelevant = similarity > 0.7 || hasTermMatch || isCoreContent || isProtocolMatch ? 1 : 0;
+
+          console.log(`\nRelevance check for ${docUrl.path}:
+            Similarity > 0.7: ${similarity > 0.7}
+            Has Term Match: ${hasTermMatch}
+            Is Core Content: ${isCoreContent}
+            Protocol Match: ${isProtocolMatch}
+            Is Relevant: ${isRelevant}
+          `);
+
+          return {
+            url: `https://docs.audius.org${docUrl.path}`,
+            similarity: isRelevant,
+            category: docUrl.category,
+            isSDK: docUrl.path.includes('sdk')
+          };
         })
       );
 
-      // Calculate similarity scores (using dot product since OpenAI embeddings are normalized)
-      const similarities = urlEmbeddings.map(embedding => 
-        dotProduct(queryEmbedding, embedding)
-      );
+      // Sort by similarity
+      const sortedUrls = urlSimilarities.sort((a, b) => b.similarity - a.similarity);
 
-      // Sort URLs by similarity and take top 3
-      const urlsWithScores = audiusDocURLs.map((docUrl, i) => ({
-        url: docUrl.path,
-        score: similarities[i]
-      }));
+      // If query is about SDKs, include community implementations
+      const isSDKQuery = input.query.toLowerCase().includes('sdk') || 
+                        input.query.toLowerCase().includes('implementation');
 
-      const sortedUrls = urlsWithScores
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 3)
-        .map(item => item.url);
+      let selectedUrls = sortedUrls.slice(0, 3).map(result => result.url);
 
-      return { urls: sortedUrls };
+      // Add community projects URL for SDK queries
+      if (isSDKQuery) {
+        selectedUrls.push("https://docs.audius.org/developers/community-projects");
+      }
+
+      console.log("Selected URLs:", selectedUrls);
+
+      return { urls: selectedUrls };
     } catch (error) {
-      console.error('Error in urlSelectorTool:', error);
-      return { urls: [] };
+      console.error("Error in URL selector:", error);
+      // Return broader set of URLs for SDK queries
+      if (input.query.toLowerCase().includes('sdk')) {
+        return {
+          urls: [
+            "https://docs.audius.org/developers/sdk",
+            "https://docs.audius.org/developers/community-projects",
+            "https://docs.audius.org/developers/sdk/advanced-options"
+          ]
+        };
+      }
+      // Default fallback
+      return {
+        urls: [
+          "https://docs.audius.org/learn/concepts/protocol",
+          "https://docs.audius.org/developers/sdk",
+          "https://docs.audius.org/developers/api"
+        ]
+      };
     }
   },
   {
     name: "url_selector",
-    description: "Selects relevant documentation URLs based on the query",
+    description: "Selects relevant documentation URLs based on query",
     schema: urlSelectorInputSchema
   }
 );

@@ -64,7 +64,7 @@ async function testStorageAdapter() {
     const { SupabaseStorageAdapter } = await import('../storage/supabase-adapter.js');
     
     const adapter = new SupabaseStorageAdapter({
-        supabaseUrl: SUPABASE_URL,
+        supabaseUrl: SUPABASE_URL!,
         supabaseKey: SUPABASE_RETRIEVAL_KEY!
     });
     
