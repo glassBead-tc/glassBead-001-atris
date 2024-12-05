@@ -1,4 +1,4 @@
-import { AudiusDocsCrawler } from '../crawlers/audius-docs-crawler';
+import { AudiusDocsCrawler } from '../crawlers/audius-docs-crawler.js';
 
 async function main() {
   try {

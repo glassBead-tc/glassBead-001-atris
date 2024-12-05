@@ -1,4 +1,5 @@
 import { tool } from "@langchain/core/tools";
+import { SelectorType } from "cheerio";
 import { Document } from "langchain/document";
 import { CheerioWebBaseLoader } from "langchain/document_loaders/web/cheerio";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
@@ -108,7 +109,7 @@ async function loadWithFallback(url: string): Promise<Document[]> {
     try {
       // First load the page
       const loader = new CheerioWebBaseLoader(url, {
-        selector: selector
+        selector: selector as SelectorType
       });
       
       // Get the Cheerio instance and remove unwanted elements
