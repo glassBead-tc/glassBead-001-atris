@@ -1,0 +1,41 @@
+{
+  "extends": "@tsconfig/recommended",
+  "compilerOptions": {
+    "target": "ES2021",
+    "useDefineForClassFields": true,
+    "lib": ["ES2021", "ES2022.Object", "DOM", "DOM.Iterable"],
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "skipLibCheck": true,
+    "jsxImportSource": "@emotion/react",
+    "allowImportingTsExtensions": true,
+    "noEmit": true, // Add this line
+    
+    /* Module and Build Options */
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "outDir": "dist",
+    
+    /* React Options */
+    "jsx": "react-jsx",
+    
+    /* Linting and Type Checking */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "strictPropertyInitialization": false,
+    "strictFunctionTypes": false,
+    
+    /* Additional Options */
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["jest", "node"]
+  },
+  "include": ["src", "**/*.ts", "**/*.js", "vite.config.ts"],
+  "exclude": ["node_modules", "dist"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
