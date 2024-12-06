@@ -1,11 +1,9 @@
-import { Message } from './types';
-
 export interface ApiResponse {
   response: string;
   error?: string;
 }
 
-export async function sendMessage(content: string, threadId: string): Promise<ApiResponse> {
+export async function sendMessage(content: string): Promise<ApiResponse> {
   try {
     const response = await fetch('http://localhost:3000/api/agent', {
       method: 'POST',
@@ -15,7 +13,6 @@ export async function sendMessage(content: string, threadId: string): Promise<Ap
       body: JSON.stringify({ 
         query: content,
         // We'll add these later when backend supports them
-        // threadId,
         // userId: 'user-1' 
       }),
     });

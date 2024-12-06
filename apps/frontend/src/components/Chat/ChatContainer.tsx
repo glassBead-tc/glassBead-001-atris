@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Message, Thread } from '@/lib/types';
+import { Message } from '@/lib/types';
 import { sendMessage } from '@/lib/api';
 import { ChatInput } from './ChatInput';
 import { ChatThread } from './ChatThread';
@@ -25,7 +25,7 @@ export function ChatContainer() {
     setIsProcessing(true);
 
     try {
-      const response = await sendMessage(content, DEFAULT_THREAD_ID);
+      const response = await sendMessage(content);
       
       // Update user message status
       setMessages(prev => 
@@ -50,26 +50,28 @@ export function ChatContainer() {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      // Update user message status to error
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === userMessage.id 
-            ? { ...msg, status: 'error' } 
-            : msg
-        )
-      );
-
-      const errorMessage: Message = {
-        id: uuidv4(),
-        content: 'Sorry, I encountered an error processing your request.',
-        role: 'assistant',
-        timestamp: Date.now(),
-        threadId: DEFAULT_THREAD_ID,
-        status: 'error'
-      };
-
-      setMessages(prev => [...prev, errorMessage]);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        const errorMessage: Message = {
+          id: uuidv4(),
+          content: `Sorry, I encountered an error processing your request: ${err.message}`,
+          role: 'assistant',
+          timestamp: Date.now(),
+          threadId: DEFAULT_THREAD_ID,
+          status: 'error'
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      } else {
+        const errorMessage: Message = {
+          id: uuidv4(),
+          content: 'Sorry, an unknown error occurred',
+          role: 'assistant',
+          timestamp: Date.now(),
+          threadId: DEFAULT_THREAD_ID,
+          status: 'error'
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      }
     } finally {
       setIsProcessing(false);
     }
