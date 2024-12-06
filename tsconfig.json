@@ -13,7 +13,7 @@
     "types": ["node", "jest"],
     "resolveJsonModule": true
   },
-  "include": ["backend/src/**/*"],
+  "include": ["backend/src/**/*", "documentation/audius-sdk", "tools/tests"],
   "exclude": [
     "node_modules/",
     "backend/dist/",

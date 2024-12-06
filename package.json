@@ -6,45 +6,18 @@
   "license": "MIT",
   "type": "module",
   "workspaces": [
-    "backend",
-    "frontend"
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
-    "start:backend": "yarn turbo run start --filter=backend",
-    "build": "tsc",
-    "start": "node dist/app/index.js",
-    "dev": "ts-node backend/src/index.ts",
+    "build": "yarn turbo run build",
+    "dev": "yarn turbo run dev",
     "lint": "yarn turbo run lint",
     "format": "yarn turbo run format"
   },
   "devDependencies": {
-    "@types/express": "^5.0.0",
-    "@types/lodash": "^4.17.13",
-    "@types/react-toastify": "^4.1.0",
-    "turbo": "latest"
-  },
-  "resolutions": {
-    "web3": "^1.8.2",
-    "google-protobuf": "^3.21.0"
-  },
-  "dependencies": {
-    "@audius/sdk": "^6.0.1",
-    "@langchain/core": "^0.3.18",
-    "@langchain/langgraph": "^0.2.22",
-    "@langchain/openai": "^0.3.14",
-    "@supabase/supabase-js": "^2.45.4",
-    "@types/joi": "^17.2.2",
-    "@types/react": "^18.3.11",
-    "@types/winston": "^2.4.4",
-    "ai": "^3.4.20",
-    "dotenv": "^16.4.5",
-    "express": "^4.21.1",
-    "joi": "^17.13.3",
-    "next": "^15.0.1",
-    "react-toastify": "^10.0.6",
-    "vercel": "^37.12.1",
-    "winston": "^3.15.0",
-    "zod": "^3.23.8"
+    "turbo": "latest",
+    "typescript": "latest"
   },
   "packageManager": "yarn@4.5.0"
 }

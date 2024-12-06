@@ -1,3 +1,0 @@
-yarn run v1.22.22
-$ tsx --experimental-wasm-modules -r dotenv/config app/index.ts dotenv_config_path=.env
-info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.

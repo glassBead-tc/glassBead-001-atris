@@ -1,0 +1,42 @@
+{
+  "name": "@atris/backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc",
+    "start": "node --env-file=.env dist/index.js",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "init-db": "ts-node src/scripts/init-supabase.mjs",
+    "crawl-docs": "ts-node src/scripts/crawl-audius-docs.ts"
+  },
+  "dependencies": {
+    "@atris/types": "workspace:*",
+    "@audius/sdk": "latest",
+    "@langchain/community": "^0.3.17",
+    "@langchain/core": "^0.3.22",
+    "@langchain/langgraph": "^0.2.26",
+    "@langchain/openai": "^0.3.14",
+    "@supabase/supabase-js": "^2.47.1",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/xml2js": "^0.4.14",
+    "better-sqlite3": "^11.6.0",
+    "cheerio": "^1.0.0",
+    "express": "latest",
+    "jsdom": "^25.0.1",
+    "langchain": "^0.3.6",
+    "vitest": "^2.1.8",
+    "winston": "^3.17.0",
+    "xml2js": "^0.6.2"
+  },
+  "devDependencies": {
+    "@types/express": "latest",
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "latest",
+    "supabase": "2.0.0",
+    "ts-node-dev": "latest",
+    "typescript": "latest"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "documentation_urls": {
+    "overview": [
+      "https://docs.audius.org/developers/introduction/overview",
+      "https://docs.audius.org/learn/concepts/protocol",
+      "https://docs.audius.org/learn/concepts/token"
+    ],
+    "api": [
+      "https://docs.audius.org/developers/api/api",
+      "https://docs.audius.org/api"
+    ],
+    "sdk": [
+      "https://docs.audius.org/developers/sdk/tracks",
+      "https://docs.audius.org/developers/sdk/users",
+      "https://docs.audius.org/developers/sdk/playlists",
+      "https://docs.audius.org/developers/sdk/albums",
+      "https://docs.audius.org/developers/sdk/oauth",
+      "https://docs.audius.org/developers/sdk/advanced-options"
+    ],
+    "community_projects": [
+      "https://docs.audius.org/developers/community-projects/go-sdk",
+      "https://docs.audius.org/developers/community-projects/python-sdk",
+      "https://docs.audius.org/developers/community-projects/rust-sdk"
+    ],
+    "architecture": [
+      "https://docs.audius.org/learn/architecture/content-node",
+      "https://docs.audius.org/learn/architecture/discovery-node"
+    ],
+    "guides": [
+      "https://docs.audius.org/developers/guides/create-audius-app",
+      "https://docs.audius.org/developers/guides/log-in-with-audius",
+      "https://docs.audius.org/developers/guides/hedgehog"
+    ],
+    "api_endpoints": {
+      "tracks": [
+        "https://docs.audius.org/developers/api/get-track",
+        "https://docs.audius.org/developers/api/get-tracks-by-user",
+        "https://docs.audius.org/developers/api/get-trending-tracks",
+        "https://docs.audius.org/developers/api/search-tracks",
+        "https://docs.audius.org/developers/api/stream-track"
+      ],
+      "users": [
+        "https://docs.audius.org/developers/api/get-user",
+        "https://docs.audius.org/developers/api/get-user-by-handle",
+        "https://docs.audius.org/developers/api/search-users",
+        "https://docs.audius.org/developers/api/get-followers",
+        "https://docs.audius.org/developers/api/get-following"
+      ],
+      "playlists": [
+        "https://docs.audius.org/developers/api/get-playlist",
+        "https://docs.audius.org/developers/api/get-playlist-tracks",
+        "https://docs.audius.org/developers/api/search-playlists",
+        "https://docs.audius.org/developers/api/get-trending-playlists"
+      ]
+    }
+  }
+}
