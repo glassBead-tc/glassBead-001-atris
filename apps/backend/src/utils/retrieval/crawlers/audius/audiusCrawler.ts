@@ -4,12 +4,12 @@ import * as cheerio from 'cheerio';
 import { URL } from 'url';
 import { delay } from '../../utils/delay';
 
-interface SitemapURL {
+export interface SitemapURL {
   loc: string[];
   lastmod?: string[];
 }
 
-interface ProcessedPage {
+export interface ProcessedPage {
   url: string;
   section: string;
   parentPath: string;

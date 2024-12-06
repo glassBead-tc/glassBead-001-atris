@@ -15,12 +15,13 @@ import {
 import { MinimalAudiusSDK } from '../services/sdkClient.js';
 import { ChatOpenAI } from "@langchain/openai";
 import { Messages } from '@langchain/langgraph';
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { HumanMessage, SystemMessage, AIMessage } from "@langchain/core/messages";
 import { audiusDocURLs } from "../tools/retrieval/audiusDocURLs.js";
+import { redisService } from '../services/redisService.js';
 
 // Base state definition extending GraphState
 interface StateDefinition extends GraphState {
-  // No additional base properties needed
+  threadId?: string;  // Add threadId for persistence
 }
 
 // Retrieval-specific state extending base state
@@ -294,7 +295,7 @@ export const graderTool = tool(
 
 // Generator tool
 export const generatorTool = tool(
-  async (input: { docs: Document[], query: string }): Promise<{ response: string }> => {
+  async (input: { docs: Document[], query: string, systemPrompt: string }): Promise<{ response: string }> => {
     try {
       console.log("\n=== Generator Input ===");
       console.log("Query:", input.query);
@@ -317,16 +318,8 @@ export const generatorTool = tool(
         .map(doc => doc.pageContent)
         .join("\n\n");
 
-      const systemPrompt = `You are a helpful assistant that answers questions about the Audius SDK.
-Your task: Answer the query using ONLY the provided documentation context.
-If the context doesn't contain relevant information, respond with "I apologize, but I couldn't find that information in the documentation."
-Format your response in a clear, direct manner.
-
-Documentation context:
-${context}`;
-
       const messages = [
-        new SystemMessage(systemPrompt),
+        new SystemMessage(input.systemPrompt),
         new HumanMessage(input.query)
       ];
 
@@ -358,7 +351,8 @@ ${context}`;
     description: "Generates user-friendly response from relevant documents",
     schema: z.object({
       docs: z.array(z.any()).describe("Relevant documents to use"),
-      query: z.string().describe("Original query for context")
+      query: z.string().describe("Original query for context"),
+      systemPrompt: z.string().describe("System prompt for context")
     })
   }
 );
@@ -436,22 +430,39 @@ export function createRetrievalGraph() {
         throw new Error("Query is required for response generation");
       }
       
+      // Ensure messages is an array before spreading
+      const currentMessages = Array.isArray(state.messages) ? state.messages : [];
+
       // If no relevant docs and fallback wasn't used, return error
       if (state.relevantDocs.length === 0 && !state.fallbackUsed) {
+        const errorResponse = "I apologize, but I couldn't find any relevant documentation to answer your question.";
         return { 
-          response: "I apologize, but I couldn't find any relevant documentation to answer your question.",
-          formattedResponse: "I apologize, but I couldn't find any relevant documentation to answer your question."
+          response: errorResponse,
+          formattedResponse: errorResponse,
+          messages: [...currentMessages, 
+            { role: "user", content: state.query },
+            { role: "assistant", content: errorResponse }
+          ]
         };
       }
       
+      const systemPrompt = `You are a helpful assistant with knowledge about the Audius protocol. 
+      Use the conversation history to provide more contextual and relevant responses.
+      Previous conversation: ${JSON.stringify(currentMessages)}`;
+      
       const result = await generatorTool.invoke({ 
         docs: state.relevantDocs,
-        query: state.query
+        query: state.query,
+        systemPrompt
       });
       
       return { 
         response: result.response,
-        formattedResponse: result.response // For retrieval, these are the same
+        formattedResponse: result.response,
+        messages: [...currentMessages, 
+          { role: "user", content: state.query },
+          { role: "assistant", content: result.response }
+        ]
       };
     })
     .addNode("fallback", async (state: RetrievalState) => {
@@ -467,7 +478,7 @@ export function createRetrievalGraph() {
       };
     })
 
-    // Define edges with corrected method and typed conditions
+    // Define edges
     .addEdge(START, "url_selector")
     .addEdge("url_selector", "retriever")
     .addEdge("retriever", "grader")

@@ -16,6 +16,7 @@
     "format": "yarn turbo run format"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.14",
     "turbo": "latest",
     "typescript": "latest"
   },
