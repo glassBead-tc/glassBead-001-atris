@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SemanticVersion } from './documents';
+import { SemanticVersion } from './document-relationships.js';
 
 /**
  * Represents the source and authority level of a document
