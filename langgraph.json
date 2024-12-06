@@ -2,7 +2,7 @@
   "docker_compose_file": "./docker-compose.yml",
   "dockerfile_lines": [],
   "graphs": {
-    "graph": "./app/index.ts:graph"
+    "app": "./apps/backend/src/app/index.ts:app"
   },
   "env": [
     "OPENAI_API_KEY",
