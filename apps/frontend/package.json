@@ -9,12 +9,20 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@audius/stems": "^1.5.56",
     "@types/uuid": "^10.0.0",
     "ai": "^3.0.0",
+    "axios": "^1.7.9",
+    "bn.js": "^5.2.1",
     "clsx": "^2.1.1",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.4",
     "next": "15.0.4",
+    "prop-types": "^15.8.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-spring": "^9.7.3",
+    "react-toastify": "^10.0.6",
     "tailwind-merge": "^2.5.5",
     "uuid": "^11.0.3"
   },
