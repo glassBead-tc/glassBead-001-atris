@@ -187,3 +187,6 @@ old_apps
 old_apps/*
 
 .cursorignore
+
+/langchain-nextjs-template
+/langchain-nextjs-template/*
