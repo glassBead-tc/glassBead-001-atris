@@ -1,23 +1,22 @@
 'use server'
 
 import { AgentChatbot } from '@/lib/chatbot'
-import { HumanMessage } from '@langchain/core/messages'
-import { ChatResponse } from '@/features/chat/types'
+import { Message, ChatResponse } from '@/features/chat/types'
 import { revalidatePath } from 'next/cache'
 
 export async function sendMessage(message: string): Promise<ReadableStream<ChatResponse>> {
   const chatbot = new AgentChatbot()
-  const encoder = new TextEncoder()
 
   return new ReadableStream({
     async start(controller) {
       try {
-        const stream = chatbot.chatStream([new HumanMessage(message)])
+        const messages: Message[] = [{ role: 'user', content: message }]
+        const stream = chatbot.chatStream(messages)
         
         for await (const chunk of stream) {
           if (chunk.done) {
             // If we have domain info, send it
-            if ('domain' in chunk) {
+            if (chunk.domain) {
               controller.enqueue({
                 message: '',
                 domain: chunk.domain,
@@ -31,12 +30,13 @@ export async function sendMessage(message: string): Promise<ReadableStream<ChatR
         }
       } catch (error) {
         console.error('Error in chat stream:', error)
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
         controller.enqueue({ 
-          message: 'Sorry, I encountered an error. Please try again.'
+          message: `Sorry, I encountered an error: ${errorMessage}`
         })
         controller.close()
       } finally {
-        revalidatePath('/')
+        revalidatePath('/chat')
       }
     }
   })

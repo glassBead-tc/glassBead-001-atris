@@ -16,11 +16,32 @@ export async function POST(request: NextRequest) {
 
     const stream = new TransformStream({
       async transform(chunk, controller) {
-        controller.enqueue(encoder.encode(JSON.stringify(chunk) + '\n'));
+        if (chunk.isAIMessage) {
+          // Handle AI messages
+          controller.enqueue(encoder.encode(JSON.stringify({
+            id: chunk.id,
+            role: 'assistant',
+            content: chunk.content,
+          }) + '\n'));
+        } else {
+          // Handle intermediate steps (thoughts and actions)
+          controller.enqueue(encoder.encode(JSON.stringify({
+            id: chunk.id || Date.now().toString(),
+            role: 'assistant',
+            content: JSON.stringify({
+              thought: chunk.thought,
+              action: chunk.action ? {
+                name: chunk.action.name,
+                args: chunk.action.args || {},
+              } : undefined,
+              observation: chunk.observation,
+            }),
+          }) + '\n'));
+        }
       }
     });
 
-    const agentStream = await agent.stream({
+    const agentStream = await agent.compile().stream({
       messages: [{ role: 'user', content }]
     });
 
@@ -31,7 +52,7 @@ export async function POST(request: NextRequest) {
       try {
         for await (const output of agentStream) {
           if (output === END) break;
-          await writer.write(encoder.encode(JSON.stringify(output) + '\n'));
+          await writer.write(output);
         }
       } finally {
         writer.close();

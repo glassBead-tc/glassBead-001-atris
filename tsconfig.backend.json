@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "declaration": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./backend/dist",
+    "rootDir": "backend/src",
+    "types": ["node", "jest"],
+    "resolveJsonModule": true
+  },
+  "include": ["backend/src/**/*", "documentation/audius-sdk", "tools/tests"],
+  "exclude": [
+    "node_modules/",
+    "backend/dist/",
+    "backend/__tests__/"
+  ]
+}

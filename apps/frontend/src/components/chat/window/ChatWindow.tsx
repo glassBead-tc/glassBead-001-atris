@@ -3,15 +3,12 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import { Message } from 'ai';
 import { useRef, useState, ReactElement, FormEvent, useEffect } from "react";
-import axios from 'axios';
 import { Button } from '@audius/harmony';
-
 import { ChatMessageBubble } from "../message/ChatMessageBubble";
 import { IntermediateStep } from "../steps/IntermediateStep";
-import { createAgent, END } from 'langgraph'; // Import createAgent and END from LangGraph.js
 
 export function ChatWindow(props: {
-  endpoint: string,
+  endpoint?: string,
   emptyStateComponent: ReactElement,
   placeholder?: string,
   titleText?: string,
@@ -21,12 +18,12 @@ export function ChatWindow(props: {
   threadId: string
 }) {
   const { 
-    endpoint, 
+    endpoint = '', 
     emptyStateComponent, 
     placeholder = "Type a message...", 
     titleText = "AI Chat",
     showIntermediateStepsToggle = false,
-    threadId 
+    threadId = uuidv4()
   } = props;
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -62,8 +59,6 @@ export function ChatWindow(props: {
     setIsLoading(true);
 
     try {
-      const agent = createAgent();
-      
       // Create a temporary message for streaming updates
       const streamingMessage: Message = {
         id: Date.now().toString(),
@@ -72,28 +67,59 @@ export function ChatWindow(props: {
       };
       setMessages(prevMessages => [...prevMessages, streamingMessage]);
 
-      const stream = await agent.stream({
-        messages: messages.map(msg => ({
-          content: msg.content,
-          role: msg.role
-        }))
+      const response = await fetch('/api/agent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: input,
+          threadId
+        })
       });
 
-      for await (const output of stream) {
-        if (output === END) break;
-        
-        // Update the streaming message with new content
-        setMessages(prevMessages => 
-          prevMessages.map(msg => 
-            msg.id === streamingMessage.id
-              ? { ...msg, content: output.formattedResponse || '' }
-              : msg
-          )
-        );
+      if (!response.ok) {
+        throw new Error('Failed to get response from agent');
+      }
 
-        // If there are intermediate steps, show them
-        if (output.intermediateSteps) {
-          // Update your intermediate steps UI here
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error('No reader available');
+      }
+
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) {
+          break;
+        }
+
+        // Decode the stream chunk and parse the JSON
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(Boolean);
+        
+        for (const line of lines) {
+          try {
+            const output = JSON.parse(line);
+            
+            // Update the streaming message with new content
+            setMessages(prevMessages => 
+              prevMessages.map(msg => 
+                msg.id === streamingMessage.id
+                  ? { ...msg, content: msg.content + (output.formattedResponse || output.content || '') }
+                  : msg
+              )
+            );
+
+            // If there are intermediate steps, show them
+            if (output.intermediateSteps) {
+              // Update your intermediate steps UI here
+            }
+          } catch (e) {
+            console.error('Error parsing stream chunk:', e);
+          }
         }
       }
 

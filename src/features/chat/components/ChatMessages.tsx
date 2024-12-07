@@ -8,9 +8,16 @@ interface ChatMessagesProps {
   isLoading?: boolean
   streamedContent?: string
   retryCount?: number
+  error?: string | null
 }
 
-export function ChatMessages({ messages, isLoading, streamedContent, retryCount = 0 }: ChatMessagesProps) {
+export function ChatMessages({ 
+  messages, 
+  isLoading, 
+  streamedContent, 
+  retryCount = 0,
+  error 
+}: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -44,9 +51,14 @@ export function ChatMessages({ messages, isLoading, streamedContent, retryCount 
           <div className="max-w-[80%] rounded-lg px-4 py-2 bg-gray-100 dark:bg-gray-700">
             <p className="whitespace-pre-wrap">
               {streamedContent}
-              {retryCount > 0 && (
+              {retryCount > 0 && !error && (
                 <span className="text-yellow-500">
                   {`\nRetrying... (${retryCount}/3)`}
+                </span>
+              )}
+              {error && (
+                <span className="text-red-500">
+                  {`\nError: ${error}`}
                 </span>
               )}
             </p>
@@ -54,18 +66,15 @@ export function ChatMessages({ messages, isLoading, streamedContent, retryCount 
         </div>
       )}
       
-      {/* Show loading indicator only when not streaming */}
+      {/* Loading indicator */}
       {isLoading && !streamedContent && (
         <div className="flex justify-start">
           <div className="max-w-[80%] rounded-lg px-4 py-2 bg-gray-100 dark:bg-gray-700">
-            <div className="flex space-x-2">
-              <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" />
-              <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-100" />
-              <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-200" />
-            </div>
+            <p className="text-gray-500">Thinking...</p>
           </div>
         </div>
       )}
+      
       <div ref={messagesEndRef} />
     </div>
   )

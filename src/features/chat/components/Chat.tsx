@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { ChatInput } from './ChatInput'
 import { ChatMessages } from './ChatMessages'
 import { sendMessage } from '@/app/actions/chat'
@@ -11,15 +11,17 @@ export function Chat() {
   const [isLoading, setIsLoading] = useState(false)
   const [currentStreamedContent, setCurrentStreamedContent] = useState('')
   const [retryCount, setRetryCount] = useState(0)
+  const [error, setError] = useState<string | null>(null)
 
-  const addMessage = (message: Message) => {
+  const addMessage = useCallback((message: Message) => {
     setMessages(prev => [...prev, message])
-  }
+    setCurrentStreamedContent('')
+    setError(null)
+  }, [])
 
-  const processStream = async (stream: ReadableStream<any>) => {
+  const processStream = useCallback(async (stream: ReadableStream<any>) => {
     const reader = stream.getReader()
     let streamedContent = ''
-    let errorContent = ''
     
     try {
       while (true) {
@@ -29,7 +31,7 @@ export function Chat() {
         
         // Handle error messages
         if (value.error) {
-          errorContent = value.error
+          setError(value.error)
           setRetryCount(prev => prev + 1)
           continue
         }
@@ -45,60 +47,58 @@ export function Chat() {
         
         // Reset error state on successful chunk
         if (value.content && !value.error) {
-          errorContent = ''
+          setError(null)
           setRetryCount(0)
         }
         
-        // Update the streamed content
-        streamedContent += value.content
-        setCurrentStreamedContent(
-          errorContent ? `${streamedContent}\n${errorContent}` : streamedContent
-        )
+        // Update streamed content
+        if (value.message) {
+          streamedContent += value.message
+          setCurrentStreamedContent(streamedContent)
+        }
       }
       
-      // Once done, add the complete message if we have content
+      // Add final message once streaming is complete
       if (streamedContent) {
-        addMessage({ 
-          role: 'assistant', 
-          content: errorContent ? `${streamedContent}\n${errorContent}` : streamedContent 
-        })
+        addMessage({ role: 'assistant', content: streamedContent })
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to process message stream')
+      console.error('Error processing stream:', err)
     } finally {
-      setCurrentStreamedContent('')
-      reader.releaseLock()
+      setIsLoading(false)
     }
-  }
+  }, [addMessage])
+
+  const handleSendMessage = useCallback(async (content: string) => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      addMessage({ role: 'user', content })
+      
+      const stream = await sendMessage(content)
+      await processStream(stream)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send message')
+      console.error('Error sending message:', err)
+      setIsLoading(false)
+    }
+  }, [addMessage, processStream])
 
   return (
-    <div className="flex flex-col h-[80vh] bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+    <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto p-4">
         <ChatMessages 
-          messages={messages} 
+          messages={messages}
           isLoading={isLoading}
           streamedContent={currentStreamedContent}
           retryCount={retryCount}
+          error={error}
         />
       </div>
-      <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+      <div className="p-4 border-t">
         <ChatInput 
-          onSend={async (content) => {
-            setIsLoading(true)
-            setRetryCount(0)
-            addMessage({ role: 'user', content })
-            
-            try {
-              const stream = await sendMessage(content)
-              await processStream(stream)
-            } catch (error) {
-              console.error('Chat error:', error)
-              addMessage({ 
-                role: 'assistant', 
-                content: 'Sorry, I encountered an error. Please try again.' 
-              })
-            } finally {
-              setIsLoading(false)
-            }
-          }}
+          onSend={handleSendMessage}
           disabled={isLoading}
         />
       </div>

@@ -127,7 +127,7 @@ export class AgentChatbot {
 
       const processedMessages = this.messagesToLangChain(messages);
       const response = await this.models[this.complexity].invoke(processedMessages);
-      return response.content;
+      return typeof response.content === 'string' ? response.content : JSON.stringify(response.content);
     } catch (error) {
       console.error('Error in chat:', error);
       return 'I encountered an error processing your message. Please try again.';
@@ -146,7 +146,7 @@ export class AgentChatbot {
 
       for await (const chunk of stream) {
         yield {
-          content: chunk.content,
+          content: typeof chunk.content === 'string' ? chunk.content : JSON.stringify(chunk.content),
           done: false,
           domain: this.domain === 'other' ? undefined : this.domain,
         };

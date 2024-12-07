@@ -2,15 +2,8 @@
   "docker_compose_file": "./docker-compose.yml",
   "dockerfile_lines": [],
   "graphs": {
-    "app": "./apps/backend/src/app/index.ts:app"
+    "app": "./apps/backend/src/app/index.ts"
   },
-  "env": [
-    "OPENAI_API_KEY",
-    "AUDIUS_API_KEY",
-    "AUDIUS_API_SECRET",
-    "AUDIUS_PROJECT_NAME",
-    "AUDIUS_DISCOVERY_PROVIDER_ENDPOINT",
-    "TAVILY_API_KEY"
-  ],
+  "env": ".env",
   "node_version": "20"
 }

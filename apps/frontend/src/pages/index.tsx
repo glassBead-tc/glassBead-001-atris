@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ChatWindow } from '../components/Chat/ChatWindow';
+import { ChatWindow } from '../components/chat/window/ChatWindow';
 import { v4 as uuidv4 } from 'uuid';
-import { IconChat } from '@audius/stems';
+import { IconChat } from '@audius/stems'; 
+
 
 export default function Home() {
   const [threadId] = useState(uuidv4());

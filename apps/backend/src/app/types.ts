@@ -47,7 +47,8 @@ import { GetTrendingTracksRequest, GetFavoritesRequest } from '@audius/sdk/dist/
 import { Messages, END } from '@langchain/langgraph'
 import { MinimalAudiusSDK } from './services/sdkClient.js';
 
-export { SearchFullResponse, 
+export type {
+  SearchFullResponse, 
   RemixablesResponse, 
   RemixingResponse, 
   SearchModel, 

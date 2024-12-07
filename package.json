@@ -24,7 +24,8 @@
   },
   "packageManager": "yarn@4.5.3",
   "dependencies": {
-    "@audius/harmony": "^0.3.1"
+    "@audius/harmony": "^0.3.1",
+    "@audius/stems": "^1.5.56"
   },
   "engines": {
     "node": ">=18.0.0"
