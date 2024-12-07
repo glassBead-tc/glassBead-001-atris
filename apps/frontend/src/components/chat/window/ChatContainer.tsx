@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Message } from '@/lib/types';
 import { sendMessage } from '@/lib/api';
-import { ChatInput } from './ChatInput';
-import { ChatThread } from './ChatThread';
+import { ChatInput } from '../input/ChatInput';
+import { ChatThread } from '../thread/ChatThread';
 
 const DEFAULT_THREAD_ID = 'default';
 

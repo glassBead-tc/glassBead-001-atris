@@ -14,19 +14,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_RETRIEVAL_KEY = process.env.SUPABASE_RETRIEVAL_KEY;
+const NEXT_PUBLIC_SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_RETRIEVAL_KEY) {
+if (!SUPABASE_URL || !NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     console.error('Missing required environment variables:');
     if (!SUPABASE_URL) console.error('- SUPABASE_URL');
-    if (!SUPABASE_RETRIEVAL_KEY) console.error('- SUPABASE_RETRIEVAL_KEY');
+    if (!NEXT_PUBLIC_SUPABASE_ANON_KEY) console.error('- NEXT_PUBLIC_SUPABASE_ANON_KEY');
     throw new Error('Missing required environment variables');
 }
 
 async function initializeDatabase() {
     console.log('Initializing Supabase database...');
     
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_RETRIEVAL_KEY!);
+    const supabase = createClient(SUPABASE_URL!, NEXT_PUBLIC_SUPABASE_ANON_KEY!);
     
     // Read the SQL file
     const sqlPath = path.join(__dirname, '../../supabase/migrations/00001_create_documentation_tables.sql');
@@ -65,7 +65,7 @@ async function testStorageAdapter() {
     
     const adapter = new SupabaseStorageAdapter({
         supabaseUrl: SUPABASE_URL!,
-        supabaseKey: SUPABASE_RETRIEVAL_KEY!
+        supabaseKey: NEXT_PUBLIC_SUPABASE_ANON_KEY!
     });
     
     // Test adding a source

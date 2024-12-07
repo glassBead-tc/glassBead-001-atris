@@ -5,18 +5,18 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_RETRIEVAL_KEY;
+const NEXT_PUBLIC_SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_KEY) {
+if (!SUPABASE_URL || !NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     console.error('Missing required environment variables:');
     if (!SUPABASE_URL) console.error('- SUPABASE_URL');
-    if (!SUPABASE_KEY) console.error('- SUPABASE_RETRIEVAL_KEY');
+    if (!NEXT_PUBLIC_SUPABASE_ANON_KEY) console.error('- NEXT_PUBLIC_SUPABASE_ANON_KEY');
     throw new Error('Missing required environment variables');
 }
 
 async function testConnection() {
     console.log('Testing Supabase connection...');
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = createClient(SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY);
     
     try {
         const { data, error } = await supabase.from('documentation_sources').select('count').single();
@@ -32,7 +32,7 @@ async function testConnection() {
 async function testStorageAdapter() {
     console.log('Testing Supabase storage adapter...');
     
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = createClient(SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY);
     
     // Test adding a source
     try {

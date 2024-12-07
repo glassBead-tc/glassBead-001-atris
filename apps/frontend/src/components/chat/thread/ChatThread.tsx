@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Message } from '@/lib/types';
-import { ChatMessage } from './ChatMessage';
+import { ChatMessage } from '../message/ChatMessage';
 
 interface ChatThreadProps {
   messages: Message[];
