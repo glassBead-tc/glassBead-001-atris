@@ -19,5 +19,6 @@
       "src": "/(.*)",
       "dest": "apps/frontend/$1"
     }
-  ]
+  ],
+  "installCommand": "npm install -g yarn && yarn set version stable && yarn install"
 }

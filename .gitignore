@@ -190,3 +190,11 @@ old_apps/*
 
 /documentation
 /documentation/*
+
+# Yarn Berry
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
