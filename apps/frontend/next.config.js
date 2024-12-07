@@ -6,7 +6,7 @@ const nextConfig = {
       return [
         {
           source: '/api/:path*',
-          destination: 'http://localhost:8000/api/:path*'
+          destination: 'http://localhost:3001/api/:path*'
         }
       ];
     }
@@ -19,4 +19,4 @@ const nextConfig = {
   }
 };
 
-module.exports = nextConfig;
+export default nextConfig;
