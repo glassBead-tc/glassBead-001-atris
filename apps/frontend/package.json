@@ -1,6 +1,6 @@
 {
-  "name": "@atris/frontend",
-  "version": "1.0.0",
+  "name": "frontend",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,15 +9,31 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@atris/types": "workspace:*",
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest"
+    "@audius/stems": "^1.5.56",
+    "@types/uuid": "^10.0.0",
+    "ai": "^3.0.0",
+    "axios": "^1.7.9",
+    "bn.js": "^5.2.1",
+    "clsx": "^2.1.1",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.4",
+    "next": "15.0.4",
+    "prop-types": "^15.8.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-spring": "^9.7.3",
+    "react-toastify": "^10.0.6",
+    "tailwind-merge": "^2.5.5",
+    "uuid": "^11.0.3"
   },
   "devDependencies": {
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "typescript": "latest"
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^8",
+    "eslint-config-next": "15.0.4",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
   }
 }

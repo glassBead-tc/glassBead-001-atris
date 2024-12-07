@@ -16,8 +16,12 @@
     "format": "yarn turbo run format"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.14",
     "turbo": "latest",
     "typescript": "latest"
   },
-  "packageManager": "yarn@4.5.0"
+  "packageManager": "yarn@4.5.0",
+  "dependencies": {
+    "@audius/harmony": "^0.3.1"
+  }
 }
