@@ -10,10 +10,12 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "yarn turbo run build",
-    "dev": "yarn turbo run dev",
-    "lint": "yarn turbo run lint",
-    "format": "yarn turbo run format"
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "turbo run format",
+    "start": "turbo run start",
+    "vercel-build": "turbo run build"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
@@ -23,5 +25,8 @@
   "packageManager": "yarn@4.5.3",
   "dependencies": {
     "@audius/harmony": "^0.3.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

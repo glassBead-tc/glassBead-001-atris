@@ -1,13 +1,18 @@
 {
   "version": 2,
+  "buildCommand": "turbo run build",
+  "installCommand": "yarn install --immutable",
   "builds": [
     {
-      "src": "apps/frontend/package.json",
+      "src": "apps/frontend/next.config.js",
       "use": "@vercel/next"
     },
     {
       "src": "apps/backend/src/index.ts",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["dist/**"]
+      }
     }
   ],
   "routes": [
@@ -20,5 +25,5 @@
       "dest": "apps/frontend/$1"
     }
   ],
-  "installCommand": "yarn install --immutable"
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./apps/frontend ./apps/backend"
 }
