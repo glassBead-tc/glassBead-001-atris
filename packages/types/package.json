@@ -9,6 +9,10 @@
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""
   },
+  "dependencies": {
+    "@langchain/core": "^0.3.22",
+    "ai": "^3.0.0"
+  },
   "devDependencies": {
     "typescript": "latest"
   }
